@@ -211,6 +211,57 @@
                     </div>
                 </div>
 
+                <!-- Department Leave Calendar Card -->
+                <div class="bg-white p-5 sm:p-6 rounded-3xl shadow-xs border border-gray-100/90 space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 pb-3">
+                        <div>
+                            <h2 class="text-base font-bold text-gray-800 flex items-center space-x-2">
+                                <span class="text-lg">🗓️</span>
+                                <span>ปฏิทินวันลาของแผนก (Department Leave Calendar)</span>
+                            </h2>
+                            <p class="text-xs text-gray-500 mt-0.5">
+                                แผนก <span id="cal-dept-name" class="cal-dept-name font-semibold text-blue-900">Assembly</span> 
+                                • โควตาสูงสุด <span id="cal-max-quota" class="cal-max-quota font-semibold text-emerald-700">2 คน/วัน</span>
+                            </p>
+                        </div>
+                        <!-- Month Navigation -->
+                        <div class="flex items-center space-x-2 self-start sm:self-auto">
+                            <button type="button" onclick="changeCalendarMonth(-1)" class="w-8 h-8 rounded-xl border border-gray-200 hover:bg-gray-50 flex items-center justify-center text-gray-600 transition text-sm">◀</button>
+                            <span id="cal-month-label" class="cal-month-label text-xs font-bold text-gray-800 px-2 min-w-[120px] text-center">กำลังโหลด...</span>
+                            <button type="button" onclick="changeCalendarMonth(1)" class="w-8 h-8 rounded-xl border border-gray-200 hover:bg-gray-50 flex items-center justify-center text-gray-600 transition text-sm">▶</button>
+                        </div>
+                    </div>
+
+                    <!-- Legend -->
+                    <div class="flex flex-wrap items-center gap-3 text-[11px] text-gray-600 bg-gray-50/70 p-2.5 rounded-xl border border-gray-100">
+                        <span class="font-semibold text-gray-700">สัญลักษณ์:</span>
+                        <span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span><span>ว่าง (0 คน)</span></span>
+                        <span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span><span>มีคนลาแล้ว (ยังมีที่ว่าง)</span></span>
+                        <span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span><span>เต็มโควตา (ลาไม่ได้ ยกเว้นป่วย)</span></span>
+                    </div>
+
+                    <!-- Calendar Grid -->
+                    <div class="space-y-1.5">
+                        <div class="grid grid-cols-7 gap-1 text-center text-xs font-bold text-gray-500 py-1 border-b border-gray-100">
+                            <span class="text-rose-500">อา</span>
+                            <span>จ</span>
+                            <span>อ</span>
+                            <span>พ</span>
+                            <span>พฤ</span>
+                            <span>ศ</span>
+                            <span class="text-blue-500">ส</span>
+                        </div>
+                        <div id="calendar-days-grid" class="grid grid-cols-7 gap-1.5 pt-1">
+                            <!-- Dynamic Day Cells Inserted Here -->
+                        </div>
+                    </div>
+
+                    <!-- Selected Day Details Tooltip/Notice -->
+                    <div id="cal-selected-info" class="hidden text-xs p-3 rounded-2xl bg-blue-50 border border-blue-100 text-blue-900 transition">
+                        <!-- Populated on click of day cell -->
+                    </div>
+                </div>
+
                 <!-- Request Leave Form -->
                 <div class="bg-white p-6 rounded-3xl shadow-xs border border-gray-100/90">
                     <div class="flex items-center justify-between mb-4 border-b border-gray-100 pb-3">
@@ -316,6 +367,57 @@
                 <div id="supervisor-pending-list" class="space-y-4">
                     <!-- Dynamic pending leave cards inserted here -->
                 </div>
+
+                <!-- Supervisor Department Leave Calendar Card -->
+                <div class="bg-white p-5 sm:p-6 rounded-3xl shadow-xs border border-gray-100/90 space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 pb-3">
+                        <div>
+                            <h2 class="text-base font-bold text-gray-800 flex items-center space-x-2">
+                                <span class="text-lg">🗓️</span>
+                                <span>ปฏิทินภาพรวมการลาของแผนก (Department Leave Calendar)</span>
+                            </h2>
+                            <p class="text-xs text-gray-500 mt-0.5">
+                                แผนก <span class="cal-dept-name font-semibold text-blue-900">Assembly</span> 
+                                • โควตาสูงสุด <span class="cal-max-quota font-semibold text-emerald-700">2 คน/วัน</span>
+                            </p>
+                        </div>
+                        <!-- Month Navigation -->
+                        <div class="flex items-center space-x-2 self-start sm:self-auto">
+                            <button type="button" onclick="changeCalendarMonth(-1)" class="w-8 h-8 rounded-xl border border-gray-200 hover:bg-gray-50 flex items-center justify-center text-gray-600 transition text-sm">◀</button>
+                            <span class="cal-month-label text-xs font-bold text-gray-800 px-2 min-w-[120px] text-center">กำลังโหลด...</span>
+                            <button type="button" onclick="changeCalendarMonth(1)" class="w-8 h-8 rounded-xl border border-gray-200 hover:bg-gray-50 flex items-center justify-center text-gray-600 transition text-sm">▶</button>
+                        </div>
+                    </div>
+
+                    <!-- Legend -->
+                    <div class="flex flex-wrap items-center gap-3 text-[11px] text-gray-600 bg-gray-50/70 p-2.5 rounded-xl border border-gray-100">
+                        <span class="font-semibold text-gray-700">สัญลักษณ์:</span>
+                        <span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span><span>ว่าง (0 คน)</span></span>
+                        <span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span><span>มีคนลาแล้ว (ยังมีที่ว่าง)</span></span>
+                        <span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span><span>เต็มโควตา (2/2 คน)</span></span>
+                    </div>
+
+                    <!-- Calendar Grid -->
+                    <div class="space-y-1.5">
+                        <div class="grid grid-cols-7 gap-1 text-center text-xs font-bold text-gray-500 py-1 border-b border-gray-100">
+                            <span class="text-rose-500">อา</span>
+                            <span>จ</span>
+                            <span>อ</span>
+                            <span>พ</span>
+                            <span>พฤ</span>
+                            <span>ศ</span>
+                            <span class="text-blue-500">ส</span>
+                        </div>
+                        <div id="sup-calendar-days-grid" class="calendar-days-grid grid grid-cols-7 gap-1.5 pt-1">
+                            <!-- Dynamic Day Cells Inserted Here -->
+                        </div>
+                    </div>
+
+                    <!-- Selected Day Details Tooltip/Notice -->
+                    <div id="sup-cal-selected-info" class="hidden text-xs p-3 rounded-2xl bg-blue-50 border border-blue-100 text-blue-900 transition">
+                        <!-- Populated on click of day cell -->
+                    </div>
+                </div>
             </div>
 
         </div>
@@ -398,7 +500,171 @@
             }
         });
 
-        // Calculate requested leave days live on input change
+        // Calendar State & Helpers
+        let currentCalendarDate = new Date();
+        let departmentCalendarData = null;
+
+        const thaiMonths = [
+            'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+            'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+        ];
+
+        function getLocalDateString(d = new Date()) {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        }
+
+        function changeCalendarMonth(offset) {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + offset);
+            loadDepartmentCalendar();
+        }
+
+        async function loadDepartmentCalendar() {
+            if (!currentUser) return;
+            const year = currentCalendarDate.getFullYear();
+            const monthIdx = currentCalendarDate.getMonth();
+            const monthStr = `${year}-${String(monthIdx + 1).padStart(2, '0')}`;
+
+            document.querySelectorAll('.cal-month-label').forEach(el => {
+                el.innerText = `${thaiMonths[monthIdx]} ${year + 543} (${year})`;
+            });
+            
+            document.querySelectorAll('.cal-dept-name').forEach(el => {
+                el.innerText = currentUser.department || 'Assembly';
+            });
+
+            const grids = [
+                document.getElementById('calendar-days-grid'),
+                document.getElementById('sup-calendar-days-grid')
+            ].filter(Boolean);
+
+            grids.forEach(grid => {
+                grid.innerHTML = '<div class="col-span-7 text-center py-4 text-xs text-gray-400">กำลังโหลดปฏิทิน...</div>';
+            });
+
+            try {
+                const res = await fetch(`/api/department-calendar?department=${encodeURIComponent(currentUser.department || 'Assembly')}&month=${monthStr}`);
+                const data = await res.json();
+                departmentCalendarData = data;
+
+                const maxQuota = data.maxDailyLeaves || 2;
+                document.querySelectorAll('.cal-max-quota').forEach(el => {
+                    el.innerText = `${maxQuota} คน/วัน`;
+                });
+                
+                if (document.getElementById('sup-stat-quota')) {
+                    document.getElementById('sup-stat-quota').innerText = `สูงสุด ${maxQuota} คน/วัน`;
+                }
+
+                const firstDayIndex = new Date(year, monthIdx, 1).getDay(); // 0 = Sun
+                const totalDaysInMonth = new Date(year, monthIdx + 1, 0).getDate();
+                const todayStr = getLocalDateString(new Date());
+
+                grids.forEach(grid => {
+                    grid.innerHTML = '';
+
+                    // Pad empty cells before first day
+                    for (let i = 0; i < firstDayIndex; i++) {
+                        const emptyCell = document.createElement('div');
+                        emptyCell.className = 'h-11 rounded-xl bg-gray-50/40 border border-transparent';
+                        grid.appendChild(emptyCell);
+                    }
+
+                    for (let day = 1; day <= totalDaysInMonth; day++) {
+                        const dateStr = `${year}-${String(monthIdx + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                        const usage = data.dailyUsage && data.dailyUsage[dateStr];
+                        const count = usage ? usage.count : 0;
+                        const isFull = usage ? usage.isFull : false;
+                        const hasLeaves = count > 0;
+
+                        let bgClass = 'bg-gray-50/60 hover:bg-blue-50 border-gray-100 text-gray-700';
+                        let badgeHtml = '';
+
+                        if (isFull) {
+                            bgClass = 'bg-rose-50/90 border-rose-200 text-rose-900 font-bold hover:bg-rose-100';
+                            badgeHtml = `<span class="text-[9px] px-1 py-0.2 rounded-md bg-rose-500 text-white leading-none font-bold">เต็ม ${count}/${maxQuota}</span>`;
+                        } else if (hasLeaves) {
+                            bgClass = 'bg-amber-50/90 border-amber-200 text-amber-900 font-semibold hover:bg-amber-100';
+                            badgeHtml = `<span class="text-[9px] px-1 py-0.2 rounded-md bg-amber-500 text-white leading-none font-bold">${count}/${maxQuota} คน</span>`;
+                        } else {
+                            badgeHtml = `<span class="text-[9px] text-emerald-600 font-medium">ว่าง (0)</span>`;
+                        }
+
+                        if (dateStr === todayStr) {
+                            bgClass += ' ring-2 ring-blue-500/60 shadow-xs';
+                        }
+
+                        const cell = document.createElement('div');
+                        cell.className = `${bgClass} h-12 p-1 rounded-xl border flex flex-col justify-between items-center cursor-pointer transition transform hover:scale-102 select-none`;
+                        cell.innerHTML = `
+                            <span class="text-xs ${dateStr === todayStr ? 'font-black text-blue-600' : ''}">${day}</span>
+                            ${badgeHtml}
+                        `;
+
+                        cell.onclick = () => selectCalendarDate(dateStr, usage, maxQuota);
+                        grid.appendChild(cell);
+                    }
+                });
+
+                // Refresh requested days calculation with new calendar data
+                calculateRequestedDays();
+
+            } catch (err) {
+                console.error('Fetch calendar error:', err);
+                grids.forEach(grid => {
+                    grid.innerHTML = '<div class="col-span-7 text-center py-4 text-xs text-red-500">เกิดข้อผิดพลาดในการโหลดปฏิทิน</div>';
+                });
+            }
+        }
+
+        function selectCalendarDate(dateStr, usage, maxQuota) {
+            // Set form start & end date to this date (for employee view)
+            const startInput = document.getElementById('req-start-date');
+            const endInput = document.getElementById('req-end-date');
+            if (startInput && endInput) {
+                startInput.value = dateStr;
+                endInput.value = dateStr;
+                calculateRequestedDays();
+            }
+
+            // Display details info box in both employee and supervisor views
+            const infoBoxes = [
+                document.getElementById('cal-selected-info'),
+                document.getElementById('sup-cal-selected-info')
+            ].filter(Boolean);
+
+            const count = usage ? usage.count : 0;
+            const employeesList = usage && usage.employees && usage.employees.length > 0
+                ? usage.employees.map(e => {
+                    const statusTag = e.status === 'APPROVED' ? '<span class="text-emerald-600 font-bold">อนุมัติแล้ว</span>' : '<span class="text-amber-600 font-medium">รออนุมัติ</span>';
+                    return `<b class="text-gray-900">${e.name}</b> (${translateLeaveType(e.type)} - ${statusTag})`;
+                  }).join(', ')
+                : 'ยังไม่มีใครขอลางาน';
+
+            let statusLabel = `<span class="text-emerald-700 font-bold">🟢 โควตาว่าง (ลาได้ครบ ${maxQuota} ที่)</span>`;
+            if (usage && usage.isFull) {
+                statusLabel = `<span class="text-rose-700 font-bold">🔴 เต็มโควตาแล้ว (${count}/${maxQuota} คน) (ลาพักร้อน/ลากิจไม่ได้ ยกเว้นลาป่วย)</span>`;
+            } else if (count > 0) {
+                statusLabel = `<span class="text-amber-700 font-bold">🟡 มีคนลาแล้ว ${count}/${maxQuota} คน (เหลืออีก ${maxQuota - count} ที่)</span>`;
+            }
+
+            infoBoxes.forEach(box => {
+                box.classList.remove('hidden');
+                box.innerHTML = `
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 border-b border-blue-200/60 pb-1.5 mb-1.5">
+                        <span class="font-bold text-blue-950">📅 ข้อมูลวันที่เลือก: ${dateStr}</span>
+                        <span>${statusLabel}</span>
+                    </div>
+                    <div class="text-[11px] text-blue-900">
+                        👥 <b>ผู้ที่ลาในวันนี้:</b> ${employeesList}
+                    </div>
+                `;
+            });
+        }
+
+        // Calculate requested leave days live on input change & check calendar quota
         function calculateRequestedDays() {
             const startVal = document.getElementById('req-start-date').value;
             const endVal = document.getElementById('req-end-date').value;
@@ -411,8 +677,10 @@
                 return;
             }
 
-            const start = new Date(startVal);
-            const end = new Date(endVal);
+            const [sy, sm, sd] = startVal.split('-').map(Number);
+            const start = new Date(sy, sm - 1, sd);
+            const [ey, em, ed] = endVal.split('-').map(Number);
+            const end = new Date(ey, em - 1, ed);
 
             if (start > end) {
                 chip.classList.remove('hidden');
@@ -424,13 +692,58 @@
             }
 
             const diffTime = Math.abs(end - start);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
             chip.classList.remove('hidden');
-            chip.className = 'bg-blue-50/90 border border-blue-200/70 p-3 rounded-2xl flex items-center justify-between text-xs text-blue-900';
             daysText.innerText = `${diffDays} วัน`;
-            statusBadge.className = 'text-[11px] px-2.5 py-0.5 rounded-full font-medium bg-blue-100 text-blue-800';
-            statusBadge.innerText = '✓ ระบุวันที่เรียบร้อย';
+
+            // Real-time Quota Checking against department calendar
+            if (departmentCalendarData && departmentCalendarData.dailyUsage) {
+                const maxQuota = departmentCalendarData.maxDailyLeaves || 2;
+                const leaveType = document.getElementById('req-leave-type').value;
+                const isSick = leaveType === 'Sick';
+
+                let fullDateFound = null;
+                let usedDateFound = null;
+
+                const curr = new Date(sy, sm - 1, sd);
+
+                while (curr <= end) {
+                    const dStr = `${curr.getFullYear()}-${String(curr.getMonth() + 1).padStart(2, '0')}-${String(curr.getDate()).padStart(2, '0')}`;
+                    const usage = departmentCalendarData.dailyUsage[dStr];
+                    if (usage && usage.isFull) {
+                        fullDateFound = { date: dStr, count: usage.count };
+                        break;
+                    } else if (usage && usage.count > 0 && !usedDateFound) {
+                        usedDateFound = { date: dStr, count: usage.count };
+                    }
+                    curr.setDate(curr.getDate() + 1);
+                }
+
+                if (fullDateFound) {
+                    if (isSick) {
+                        chip.className = 'bg-blue-50 border border-blue-200 p-3 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between text-xs text-blue-900 gap-1.5';
+                        statusBadge.className = 'text-[11px] px-2.5 py-0.5 rounded-full font-medium bg-blue-100 text-blue-800';
+                        statusBadge.innerText = `ℹ️ วันที่ ${fullDateFound.date} โควตาเต็ม แต่ลาป่วยส่งได้`;
+                    } else {
+                        chip.className = 'bg-rose-50 border border-rose-200 p-3 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between text-xs text-rose-900 gap-1.5';
+                        statusBadge.className = 'text-[11px] px-2.5 py-0.5 rounded-full font-bold bg-rose-200 text-rose-800';
+                        statusBadge.innerText = `⚠️ วันที่ ${fullDateFound.date} โควตาเต็ม (${fullDateFound.count}/${maxQuota} คน)`;
+                    }
+                } else if (usedDateFound) {
+                    chip.className = 'bg-amber-50 border border-amber-200 p-3 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between text-xs text-amber-900 gap-1.5';
+                    statusBadge.className = 'text-[11px] px-2.5 py-0.5 rounded-full font-semibold bg-amber-100 text-amber-800';
+                    statusBadge.innerText = `💡 วันที่ ${usedDateFound.date} มีคนลาแล้ว ${usedDateFound.count}/${maxQuota} คน (เหลืออีก ${maxQuota - usedDateFound.count} ที่)`;
+                } else {
+                    chip.className = 'bg-emerald-50 border border-emerald-200 p-3 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between text-xs text-emerald-900 gap-1.5';
+                    statusBadge.className = 'text-[11px] px-2.5 py-0.5 rounded-full font-medium bg-emerald-100 text-emerald-800';
+                    statusBadge.innerText = `✓ ทุกวันที่เลือกโควตายังว่างครบ (${maxQuota} ที่)`;
+                }
+            } else {
+                chip.className = 'bg-blue-50/90 border border-blue-200/70 p-3 rounded-2xl flex items-center justify-between text-xs text-blue-900';
+                statusBadge.className = 'text-[11px] px-2.5 py-0.5 rounded-full font-medium bg-blue-100 text-blue-800';
+                statusBadge.innerText = '✓ ระบุวันที่เรียบร้อย';
+            }
         }
 
         // Login Handler
@@ -493,20 +806,22 @@
                     document.getElementById('employee-view').classList.add('hidden-view');
                     document.getElementById('sup-stat-dept').innerText = currentUser.department;
                     loadPendingRequests();
+                    loadDepartmentCalendar();
                 } else {
                     document.getElementById('employee-view').classList.remove('hidden-view');
                     document.getElementById('supervisor-view').classList.add('hidden-view');
                     loadEmployeeQuota();
                     loadMyLeaveRequests();
+                    loadDepartmentCalendar();
                     
                     // Set default dates to tomorrow
                     const tomorrow = new Date();
                     tomorrow.setDate(tomorrow.getDate() + 1);
-                    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+                    const tomorrowStr = getLocalDateString(tomorrow);
                     document.getElementById('req-start-date').value = tomorrowStr;
                     document.getElementById('req-end-date').value = tomorrowStr;
-                    document.getElementById('req-start-date').min = new Date().toISOString().split('T')[0];
-                    document.getElementById('req-end-date').min = new Date().toISOString().split('T')[0];
+                    document.getElementById('req-start-date').min = getLocalDateString(new Date());
+                    document.getElementById('req-end-date').min = getLocalDateString(new Date());
                     calculateRequestedDays();
                 }
 
@@ -616,9 +931,10 @@
                 showToast(data.message || 'ส่งคำขอลางานเรียบร้อยแล้ว', 'success');
                 document.getElementById('req-reason').value = '';
                 
-                // Refresh quota and request list
+                // Refresh quota, request list, and department calendar
                 loadEmployeeQuota();
                 loadMyLeaveRequests();
+                loadDepartmentCalendar();
 
             } catch (err) {
                 console.error('Submit request error:', err);
@@ -796,6 +1112,7 @@
 
                 showToast(status === 'APPROVED' ? 'อนุมัติคำขอลางานเรียบร้อยแล้ว' : 'ปฏิเสธคำขอลางานเรียบร้อยแล้ว', status === 'APPROVED' ? 'success' : 'info');
                 loadPendingRequests();
+                loadDepartmentCalendar();
 
             } catch (err) {
                 console.error('Review request error:', err);

@@ -128,6 +128,24 @@ async function runTests() {
     }
   });
 
+  // 5.1 Department Calendar API
+  await test('GET /api/department-calendar returns daily usage and max limit', async () => {
+    const res = await request({
+      hostname: 'localhost',
+      port: PORT,
+      path: '/api/department-calendar?department=Assembly&month=2026-09',
+      method: 'GET'
+    });
+
+    if (res.status !== 200 || !res.data.success || !res.data.dailyUsage) {
+      throw new Error(`Invalid calendar response: ${JSON.stringify(res.data)}`);
+    }
+
+    if (res.data.department !== 'Assembly' || typeof res.data.maxDailyLeaves !== 'number') {
+      throw new Error(`Invalid department or maxDailyLeaves: ${JSON.stringify(res.data)}`);
+    }
+  });
+
   // 6. Leave Request Submission
   await test('POST /api/leave-requests creates a pending leave request', async () => {
     const res = await request({

@@ -24,11 +24,13 @@ function normalizeLeaveType(type) {
 // Helper: Generate array of YYYY-MM-DD date strings between start and end date
 function getDatesInRange(startDateStr, endDateStr) {
   const dates = [];
-  const curr = new Date(startDateStr);
-  const end = new Date(endDateStr);
+  const [sy, sm, sd] = startDateStr.split('-').map(Number);
+  const [ey, em, ed] = endDateStr.split('-').map(Number);
+  const curr = new Date(Date.UTC(sy, sm - 1, sd));
+  const end = new Date(Date.UTC(ey, em - 1, ed));
   while (curr <= end) {
     dates.push(curr.toISOString().split('T')[0]);
-    curr.setDate(curr.getDate() + 1);
+    curr.setUTCDate(curr.getUTCDate() + 1);
   }
   return dates;
 }
@@ -198,6 +200,96 @@ app.get('/api/employees/:id/quota', async (req, res) => {
   } catch (error) {
     console.error('Fetch quota error:', error);
     res.status(500).json({ error: 'ไม่สามารถโหลดข้อมูลโควตาได้' });
+  }
+});
+
+// ==========================================
+// 3.1 Department Calendar & Quota Usage API
+// Returns active leaves per day for the department
+// ==========================================
+app.get('/api/department-calendar', async (req, res) => {
+  try {
+    const department = req.query.department || 'Assembly';
+    const month = req.query.month; // e.g. "2026-09"
+
+    let maxDailyLeaves = 2;
+    if (pool) {
+      const quotaRes = await query('SELECT max_daily_leaves FROM quota_settings WHERE department = $1', [department]);
+      if (quotaRes.rows.length > 0) {
+        maxDailyLeaves = quotaRes.rows[0].max_daily_leaves;
+      }
+    }
+
+    let year, m;
+    if (month && /^\d{4}-\d{2}$/.test(month)) {
+      const parts = month.split('-').map(Number);
+      year = parts[0];
+      m = parts[1] - 1;
+    } else {
+      const now = new Date();
+      year = now.getFullYear();
+      m = now.getMonth();
+    }
+    const pad = (n) => String(n).padStart(2, '0');
+    const firstDayStr = `${year}-${pad(m + 1)}-01`;
+    const totalDays = new Date(year, m + 1, 0).getDate();
+    const lastDayStr = `${year}-${pad(m + 1)}-${pad(totalDays)}`;
+
+    const dailyUsage = {};
+
+    if (pool) {
+      const leavesRes = await query(
+        `SELECT 
+           lr.id,
+           lr.employee_id,
+           COALESCE(e.name, lr.employee_id) as employee_name,
+           lr.leave_type,
+           TO_CHAR(lr.start_date, 'YYYY-MM-DD') as start_date,
+           TO_CHAR(lr.end_date, 'YYYY-MM-DD') as end_date,
+           lr.status
+         FROM leave_requests lr
+         JOIN employees e ON lr.employee_id = e.id
+         WHERE e.department = $1
+           AND lr.status IN ('APPROVED', 'PENDING')
+           AND lr.start_date <= $3
+           AND lr.end_date >= $2`,
+        [department, firstDayStr, lastDayStr]
+      );
+
+      leavesRes.rows.forEach(row => {
+        const dates = getDatesInRange(row.start_date, row.end_date);
+        dates.forEach(d => {
+          if (!dailyUsage[d]) {
+            dailyUsage[d] = { count: 0, employees: [] };
+          }
+          const isSick = normalizeLeaveType(row.leave_type) === 'Sick';
+          if (!isSick) {
+            dailyUsage[d].count += 1;
+          }
+          dailyUsage[d].employees.push({
+            name: row.employee_name,
+            type: normalizeLeaveType(row.leave_type),
+            status: row.status
+          });
+        });
+      });
+    }
+
+    Object.keys(dailyUsage).forEach(d => {
+      dailyUsage[d].isFull = dailyUsage[d].count >= maxDailyLeaves;
+    });
+
+    res.json({
+      success: true,
+      department,
+      maxDailyLeaves,
+      firstDay: firstDayStr,
+      lastDay: lastDayStr,
+      dailyUsage
+    });
+  } catch (error) {
+    console.error('Department calendar error:', error);
+    res.status(500).json({ error: 'ไม่สามารถดึงข้อมูลปฏิทินแผนกได้' });
   }
 });
 
