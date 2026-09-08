@@ -57,11 +57,11 @@
                     <form onsubmit="event.preventDefault(); handleLogin();" class="space-y-4">
                         <div>
                             <label class="block text-xs font-medium text-gray-600 mb-1">รหัสพนักงาน (Employee ID)</label>
-                            <input type="text" id="emp-id" required class="w-full border-2 border-gray-200 rounded-lg p-2.5 text-sm focus:border-blue-500 focus:outline-none transition uppercase" placeholder="เช่น EMP-001 หรือ SUP-001" autocomplete="username">
+                            <input type="text" id="emp-id" required class="w-full border-2 border-gray-200 rounded-lg p-2.5 text-sm focus:border-blue-500 focus:outline-none transition uppercase" placeholder="กรอกรหัสพนักงาน (เช่น EMP-001)" autocomplete="username">
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-600 mb-1">รหัสผ่าน (PIN)</label>
-                            <input type="password" id="emp-pin" required class="w-full border-2 border-gray-200 rounded-lg p-2.5 text-sm focus:border-blue-500 focus:outline-none transition" placeholder="เช่น 1234" autocomplete="current-password">
+                            <input type="password" id="emp-pin" required class="w-full border-2 border-gray-200 rounded-lg p-2.5 text-sm focus:border-blue-500 focus:outline-none transition tracking-wider" placeholder="••••••••" autocomplete="current-password">
                         </div>
                         <button type="submit" id="btn-login" class="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg mt-2 hover:bg-blue-700 shadow-md transition transform active:scale-98 flex items-center justify-center space-x-2">
                             <span>เข้าสู่ระบบ (Login)</span>
@@ -123,7 +123,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-600 mb-1">เหตุผล (Reason)</label>
-                            <textarea id="req-reason" rows="2" class="w-full border rounded-lg p-2.5 outline-none text-sm focus:border-blue-500" placeholder="ระบุเหตุผลการลางาน..."></textarea>
+                            <textarea id="req-reason" rows="2" class="w-full border rounded-lg p-2.5 outline-none text-sm focus:border-blue-500" placeholder="ระบุรายละเอียดเพิ่มเติม (ถ้ามี)..."></textarea>
                         </div>
                         <button type="submit" id="btn-submit-req" class="w-full bg-blue-600 text-white font-semibold py-2.5 rounded-lg mt-2 hover:bg-blue-700 shadow-md transition active:scale-98 flex items-center justify-center space-x-2">
                             <span>ส่งคำขอ (Submit Request)</span>
