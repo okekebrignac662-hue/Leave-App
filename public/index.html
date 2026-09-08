@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Department Leave Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Prompt', sans-serif; background-color: #f3f4f6; }
+        .hidden-view { display: none !important; }
+        .toast-slide { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    </style>
+</head>
+<body class="text-gray-800 antialiased min-h-screen flex flex-col justify-between">
+
+    <!-- Toast Notification Banner -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col space-y-2 max-w-sm w-full pointer-events-none"></div>
+
+    <div>
+        <!-- Navbar -->
+        <nav id="navbar" class="bg-blue-900 text-white p-4 shadow-md flex justify-between items-center hidden-view sticky top-0 z-40">
+            <div class="flex items-center space-x-3">
+                <div class="bg-blue-700 p-1.5 rounded-lg">
+                    <svg class="w-5 h-5 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                <h1 class="text-lg font-semibold tracking-wide">Online Leave App</h1>
+            </div>
+            <div class="text-sm flex items-center space-x-3">
+                <span id="user-name-display" class="font-medium text-blue-200 text-xs sm:text-sm"></span>
+                <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg transition text-xs font-semibold shadow flex items-center space-x-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                    </svg>
+                    <span>ออกจากระบบ</span>
+                </button>
+            </div>
+        </nav>
+
+        <div class="max-w-md mx-auto mt-4 sm:mt-6 p-4">
+
+            <!-- 1. LOGIN VIEW -->
+            <div id="login-view" class="flex flex-col items-center justify-center min-h-[75vh]">
+                <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-100 w-full">
+                    <div class="text-center mb-6">
+                        <div class="bg-blue-50 text-blue-600 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-inner">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"></path>
+                            </svg>
+                        </div>
+                        <h2 class="text-2xl font-bold text-blue-900">เข้าสู่ระบบลางาน</h2>
+                        <p class="text-xs text-gray-500 mt-1">กรุณากรอกรหัสพนักงานและรหัสผ่าน</p>
+                    </div>
+                    
+                    <form onsubmit="event.preventDefault(); handleLogin();" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">รหัสพนักงาน (Employee ID)</label>
+                            <input type="text" id="emp-id" required class="w-full border-2 border-gray-200 rounded-lg p-2.5 text-sm focus:border-blue-500 focus:outline-none transition uppercase" placeholder="เช่น EMP-001 หรือ SUP-001" autocomplete="username">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">รหัสผ่าน (PIN)</label>
+                            <input type="password" id="emp-pin" class="w-full border-2 border-gray-200 rounded-lg p-2.5 text-sm focus:border-blue-500 focus:outline-none transition" placeholder="เช่น 1234" autocomplete="current-password">
+                        </div>
+                        <button type="submit" id="btn-login" class="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg mt-2 hover:bg-blue-700 shadow-md transition transform active:scale-98 flex items-center justify-center space-x-2">
+                            <span>เข้าสู่ระบบ (Login)</span>
+                        </button>
+                    </form>
+
+                    <div class="mt-6 p-3 bg-blue-50/60 rounded-xl text-xs text-gray-600 space-y-1.5 border border-blue-100">
+                        <p class="font-semibold text-blue-900">📌 สำหรับทดสอบระบบ (PIN: 1234):</p>
+                        <p>• พนักงาน: <b class="text-blue-700 cursor-pointer hover:underline" onclick="quickFill('EMP-001', '1234')">EMP-001</b> (สมชาย ใจดี แผนก Assembly)</p>
+                        <p>• พนักงาน 2: <b class="text-blue-700 cursor-pointer hover:underline" onclick="quickFill('EMP-002', '1234')">EMP-002</b> (สมหญิง รักงาน)</p>
+                        <p>• หัวหน้างาน: <b class="text-amber-700 cursor-pointer hover:underline" onclick="quickFill('SUP-001', '1234')">SUP-001</b> (สมศักดิ์ คุมงาน - หัวหน้า)</p>
+                        <p class="text-[11px] text-gray-500 italic">* รหัสขึ้นต้นด้วย SUP จะได้สิทธิ์หัวหน้างานโดยอัตโนมัติ</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. EMPLOYEE VIEW -->
+            <div id="employee-view" class="hidden-view space-y-6">
+                <!-- Quota Card -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-blue-500 space-y-3">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-sm font-semibold text-gray-800 flex items-center space-x-1.5">
+                            <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                            <span>โควตาของคุณ (My Quota)</span>
+                        </h2>
+                        <button onclick="loadEmployeeQuota()" class="text-xs text-blue-600 hover:text-blue-800">รีเฟรช</button>
+                    </div>
+                    <div class="flex justify-between text-sm items-center py-1 border-b border-gray-100">
+                        <span class="text-gray-600">ลาพักร้อน (Vacation)</span>
+                        <span id="quota-vacation" class="font-bold text-green-600">กำลังโหลด...</span>
+                    </div>
+                    <div class="flex justify-between text-sm items-center py-1 border-b border-gray-100">
+                        <span class="text-gray-600">ลากิจ (Personal)</span>
+                        <span id="quota-personal" class="font-bold text-yellow-600">กำลังโหลด...</span>
+                    </div>
+                    <div class="flex justify-between text-sm items-center py-1">
+                        <span class="text-gray-600">ลาป่วย (Sick Leave)</span>
+                        <span id="quota-sick" class="font-bold text-blue-600">กำลังโหลด...</span>
+                    </div>
+                </div>
+
+                <!-- Request Leave Form -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm">
+                    <h2 class="text-base font-semibold mb-4 border-b pb-2 text-gray-800 flex items-center space-x-2">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        <span>ขอลางาน (Request Leave)</span>
+                    </h2>
+                    <form id="leave-form" onsubmit="event.preventDefault(); submitLeaveRequest();" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">ประเภทการลา (Type)</label>
+                            <select id="req-leave-type" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:border-blue-500 bg-white">
+                                <option value="Vacation">ลาพักร้อน (Vacation)</option>
+                                <option value="Personal">ลากิจ (Personal Leave)</option>
+                                <option value="Sick">ลาป่วย (Sick Leave - ไม่ติดโควตาแผนก)</option>
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">เริ่ม (Start)</label>
+                                <input type="date" id="req-start-date" required class="w-full border rounded-lg p-2 text-xs sm:text-sm outline-none focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">ถึง (End)</label>
+                                <input type="date" id="req-end-date" required class="w-full border rounded-lg p-2 text-xs sm:text-sm outline-none focus:border-blue-500">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">เหตุผล (Reason)</label>
+                            <textarea id="req-reason" rows="2" class="w-full border rounded-lg p-2.5 outline-none text-sm focus:border-blue-500" placeholder="ระบุเหตุผลการลางาน..."></textarea>
+                        </div>
+                        <button type="submit" id="btn-submit-req" class="w-full bg-blue-600 text-white font-semibold py-2.5 rounded-lg mt-2 hover:bg-blue-700 shadow-md transition active:scale-98 flex items-center justify-center space-x-2">
+                            <span>ส่งคำขอ (Submit Request)</span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- My Leave History -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm space-y-3">
+                    <div class="flex justify-between items-center border-b pb-2">
+                        <h2 class="text-sm font-semibold text-gray-800">ประวัติการขอลา (My Requests)</h2>
+                        <span id="history-count" class="text-xs text-gray-500">0 รายการ</span>
+                    </div>
+                    <div id="my-requests-list" class="space-y-3">
+                        <p class="text-xs text-gray-400 text-center py-4">ยังไม่มีประวัติการขอลา</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. SUPERVISOR VIEW -->
+            <div id="supervisor-view" class="hidden-view space-y-6">
+                <div class="bg-white p-4 rounded-2xl shadow-sm border-l-4 border-yellow-500 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-base font-semibold text-gray-800">รออนุมัติ (Pending Approvals)</h2>
+                        <p id="pending-subtitle" class="text-xs text-gray-500">กำลังตรวจสอบรายการที่ค้าง...</p>
+                    </div>
+                    <button onclick="loadPendingRequests()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded text-xs font-medium transition">
+                        🔄 รีเฟรช
+                    </button>
+                </div>
+
+                <div id="supervisor-pending-list" class="space-y-4">
+                    <!-- Dynamic pending leave cards inserted here -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center py-4 text-xs text-gray-400">
+        Department Leave Management &copy; 2026
+    </footer>
+
+    <!-- Frontend Script -->
+    <script>
+        // State
+        let currentUser = null;
+
+        // Quick fill for testing
+        function quickFill(id, pin) {
+            document.getElementById('emp-id').value = id;
+            document.getElementById('emp-pin').value = pin;
+        }
+
+        // Custom Toast Notification
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const bgClass = type === 'success' ? 'bg-green-600' : (type === 'error' ? 'bg-red-600' : 'bg-blue-600');
+            const icon = type === 'success' 
+                ? '<svg class="w-5 h-5 text-white mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>'
+                : (type === 'error' 
+                    ? '<svg class="w-5 h-5 text-white mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'
+                    : '<svg class="w-5 h-5 text-white mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>');
+
+            toast.className = `${bgClass} text-white px-4 py-3 rounded-xl shadow-lg flex items-start text-xs sm:text-sm toast-slide transform translate-y-2 opacity-0 pointer-events-auto`;
+            toast.innerHTML = `
+                <div class="flex items-center w-full">
+                    ${icon}
+                    <div class="flex-1">${message}</div>
+                </div>
+            `;
+
+            container.appendChild(toast);
+
+            // Animate in
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            // Auto dismiss
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // Login Handler
+        async function handleLogin() {
+            const empIdInput = document.getElementById('emp-id').value.trim();
+            const pinInput = document.getElementById('emp-pin').value.trim();
+
+            if (!empIdInput) {
+                showToast('กรุณากรอกรหัสพนักงาน', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('btn-login');
+            btn.disabled = true;
+            btn.innerHTML = '<span>กำลังเข้าสู่ระบบ...</span>';
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ empId: empIdInput, pin: pinInput })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    showToast(data.error || 'เข้าสู่ระบบไม่สำเร็จ', 'error');
+                    return;
+                }
+
+                currentUser = data.user;
+
+                // Update UI Views
+                document.getElementById('login-view').classList.add('hidden-view');
+                document.getElementById('navbar').classList.remove('hidden-view');
+
+                const displayName = `${currentUser.name} (${currentUser.id}) ${currentUser.isSupervisor ? '👑 หัวหน้า' : ''}`;
+                document.getElementById('user-name-display').innerText = displayName;
+
+                if (currentUser.isSupervisor) {
+                    document.getElementById('supervisor-view').classList.remove('hidden-view');
+                    document.getElementById('employee-view').classList.add('hidden-view');
+                    loadPendingRequests();
+                } else {
+                    document.getElementById('employee-view').classList.remove('hidden-view');
+                    document.getElementById('supervisor-view').classList.add('hidden-view');
+                    loadEmployeeQuota();
+                    loadMyLeaveRequests();
+                    
+                    // Set default dates to tomorrow
+                    const tomorrow = new Date();
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+                    document.getElementById('req-start-date').value = tomorrowStr;
+                    document.getElementById('req-end-date').value = tomorrowStr;
+                    document.getElementById('req-start-date').min = new Date().toISOString().split('T')[0];
+                    document.getElementById('req-end-date').min = new Date().toISOString().split('T')[0];
+                }
+
+                showToast(`ยินดีต้อนรับคุณ ${currentUser.name}`, 'success');
+
+            } catch (err) {
+                console.error('Login error:', err);
+                showToast('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span>เข้าสู่ระบบ (Login)</span>';
+            }
+        }
+
+        // Logout Handler
+        function logout() {
+            currentUser = null;
+            document.getElementById('navbar').classList.add('hidden-view');
+            document.getElementById('employee-view').classList.add('hidden-view');
+            document.getElementById('supervisor-view').classList.add('hidden-view');
+            document.getElementById('login-view').classList.remove('hidden-view');
+            document.getElementById('emp-id').value = '';
+            document.getElementById('emp-pin').value = '';
+            showToast('ออกจากระบบเรียบร้อยแล้ว', 'info');
+        }
+
+        // Load Employee Quotas
+        async function loadEmployeeQuota() {
+            if (!currentUser) return;
+            try {
+                const res = await fetch(`/api/employees/${currentUser.id}/quota`);
+                const data = await res.json();
+                if (data.success && data.quota) {
+                    const q = data.quota;
+                    document.getElementById('quota-vacation').innerText = `เหลือ ${q.vacation.remaining}/${q.vacation.total} วัน`;
+                    document.getElementById('quota-personal').innerText = `เหลือ ${q.personal.remaining}/${q.personal.total} วัน`;
+                    document.getElementById('quota-sick').innerText = `เหลือ ${q.sick.remaining}/${q.sick.total} วัน`;
+                }
+            } catch (err) {
+                console.error('Fetch quota error:', err);
+            }
+        }
+
+        // Submit Leave Request
+        async function submitLeaveRequest() {
+            if (!currentUser) return;
+
+            const leaveType = document.getElementById('req-leave-type').value;
+            const startDate = document.getElementById('req-start-date').value;
+            const endDate = document.getElementById('req-end-date').value;
+            const reason = document.getElementById('req-reason').value.trim();
+
+            if (!startDate || !endDate) {
+                showToast('กรุณาระบุวันที่เริ่มและสิ้นสุด', 'error');
+                return;
+            }
+
+            if (new Date(startDate) > new Date(endDate)) {
+                showToast('วันเริ่มต้นต้องไม่เกินวันสิ้นสุด', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('btn-submit-req');
+            btn.disabled = true;
+            btn.innerHTML = '<span>กำลังตรวจสอบโควตาและส่งคำขอ...</span>';
+
+            try {
+                const res = await fetch('/api/leave-requests', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        employeeId: currentUser.id,
+                        leaveType,
+                        startDate,
+                        endDate,
+                        reason
+                    })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    showToast(data.error || 'ไม่สามารถส่งคำขอได้', 'error');
+                    return;
+                }
+
+                showToast(data.message || 'ส่งคำขอลางานเรียบร้อยแล้ว', 'success');
+                document.getElementById('req-reason').value = '';
+                
+                // Refresh quota and request list
+                loadEmployeeQuota();
+                loadMyLeaveRequests();
+
+            } catch (err) {
+                console.error('Submit request error:', err);
+                showToast('เกิดข้อผิดพลาดในการส่งคำขอ', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span>ส่งคำขอ (Submit Request)</span>';
+            }
+        }
+
+        // Load Employee Requests History
+        async function loadMyLeaveRequests() {
+            if (!currentUser) return;
+            const listEl = document.getElementById('my-requests-list');
+            try {
+                const res = await fetch(`/api/leave-requests?employee_id=${currentUser.id}`);
+                const data = await res.json();
+
+                if (!data.success || !data.requests || data.requests.length === 0) {
+                    listEl.innerHTML = '<p class="text-xs text-gray-400 text-center py-4">ยังไม่มีประวัติการขอลา</p>';
+                    document.getElementById('history-count').innerText = '0 รายการ';
+                    return;
+                }
+
+                document.getElementById('history-count').innerText = `${data.requests.length} รายการ`;
+
+                listEl.innerHTML = data.requests.map(req => {
+                    let statusBadge = '<span class="bg-yellow-100 text-yellow-800 text-[11px] px-2 py-0.5 rounded-full font-medium">รออนุมัติ (Pending)</span>';
+                    if (req.status === 'APPROVED') {
+                        statusBadge = '<span class="bg-green-100 text-green-800 text-[11px] px-2 py-0.5 rounded-full font-medium">✓ อนุมัติแล้ว</span>';
+                    } else if (req.status === 'REJECTED') {
+                        statusBadge = '<span class="bg-red-100 text-red-800 text-[11px] px-2 py-0.5 rounded-full font-medium">✕ ไม่อนุมัติ</span>';
+                    }
+
+                    return `
+                        <div class="border rounded-xl p-3 text-xs space-y-1.5 bg-gray-50/50">
+                            <div class="flex justify-between items-center">
+                                <span class="font-semibold text-gray-800">${translateLeaveType(req.leave_type)} (${req.days_count} วัน)</span>
+                                ${statusBadge}
+                            </div>
+                            <div class="text-gray-600">
+                                📅 <b>วันที่:</b> ${req.start_date} ${req.start_date !== req.end_date ? 'ถึง ' + req.end_date : ''}
+                            </div>
+                            ${req.reason ? `<div class="text-gray-500 italic">💬 "${req.reason}"</div>` : ''}
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (err) {
+                console.error('Fetch my requests error:', err);
+            }
+        }
+
+        // Load Pending Requests for Supervisor
+        async function loadPendingRequests() {
+            const listEl = document.getElementById('supervisor-pending-list');
+            const subtitleEl = document.getElementById('pending-subtitle');
+
+            listEl.innerHTML = '<div class="text-center py-6 text-gray-400 text-sm">กำลังโหลดรายการ...</div>';
+
+            try {
+                const res = await fetch('/api/leave-requests?status=PENDING');
+                const data = await res.json();
+
+                if (!data.success || !data.requests || data.requests.length === 0) {
+                    subtitleEl.innerText = 'ไม่มีรายการรออนุมัติในขณะนี้ (0 items pending)';
+                    listEl.innerHTML = `
+                        <div class="bg-white p-8 rounded-2xl shadow-sm text-center">
+                            <div class="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-2">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                            <p class="text-sm font-semibold text-gray-700">ไม่มีคำขอลางานค้างอยู่</p>
+                            <p class="text-xs text-gray-400 mt-1">คำขอทั้งหมดได้รับการตรวจสอบเรียบร้อยแล้ว</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                subtitleEl.innerText = `มี ${data.requests.length} รายการที่รอการตรวจสอบ (${data.requests.length} items pending)`;
+
+                listEl.innerHTML = data.requests.map(req => {
+                    const typeColor = req.leave_type === 'Sick' 
+                        ? 'bg-red-100 text-red-800' 
+                        : (req.leave_type === 'Personal' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800');
+
+                    return `
+                        <div id="request-card-${req.id}" class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 transition hover:shadow-md">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <h3 class="font-semibold text-blue-900 text-base">${req.employee_name}</h3>
+                                    <p class="text-xs text-gray-500">${req.department} (${req.employee_id})</p>
+                                </div>
+                                <span class="${typeColor} text-xs px-2.5 py-1 rounded-full font-medium">
+                                    ${translateLeaveType(req.leave_type)}
+                                </span>
+                            </div>
+                            <div class="text-xs sm:text-sm text-gray-700 space-y-1 mb-4 bg-gray-50 p-3 rounded-xl">
+                                <p><b>Date:</b> ${req.start_date} ${req.start_date !== req.end_date ? 'ถึง ' + req.end_date : ''} (${req.days_count} วัน)</p>
+                                <p><b>Reason:</b> ${req.reason || '<span class="text-gray-400">ไม่ได้ระบุเหตุผล</span>'}</p>
+                            </div>
+                            <div class="flex space-x-3">
+                                <button onclick="reviewRequest(${req.id}, 'APPROVED')" class="flex-1 bg-green-500 text-white py-2 rounded-lg font-medium text-xs sm:text-sm hover:bg-green-600 shadow transition active:scale-95 flex items-center justify-center space-x-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                    <span>Approve (อนุมัติ)</span>
+                                </button>
+                                <button onclick="reviewRequest(${req.id}, 'REJECTED')" class="flex-1 bg-red-500 text-white py-2 rounded-lg font-medium text-xs sm:text-sm hover:bg-red-600 shadow transition active:scale-95 flex items-center justify-center space-x-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                    <span>Reject (ไม่อนุมัติ)</span>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (err) {
+                console.error('Fetch pending requests error:', err);
+                subtitleEl.innerText = 'เกิดข้อผิดพลาดในการโหลดข้อมูล';
+            }
+        }
+
+        // Supervisor Review Request (Approve / Reject)
+        async function reviewRequest(requestId, status) {
+            if (!currentUser || !currentUser.isSupervisor) {
+                showToast('ไม่มีสิทธิ์ในการดำเนินการนี้', 'error');
+                return;
+            }
+
+            const card = document.getElementById(`request-card-${requestId}`);
+            if (card) card.style.opacity = '0.5';
+
+            try {
+                const res = await fetch(`/api/leave-requests/${requestId}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        status,
+                        reviewedBy: currentUser.id
+                    })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
+                    if (card) card.style.opacity = '1';
+                    return;
+                }
+
+                showToast(status === 'APPROVED' ? 'อนุมัติคำขอลางานเรียบร้อยแล้ว' : 'ปฏิเสธคำขอลางานเรียบร้อยแล้ว', status === 'APPROVED' ? 'success' : 'info');
+                loadPendingRequests();
+
+            } catch (err) {
+                console.error('Review request error:', err);
+                showToast('ไม่สามารถส่งผลการพิจารณาได้', 'error');
+                if (card) card.style.opacity = '1';
+            }
+        }
+
+        // Helper: Friendly leave type label
+        function translateLeaveType(type) {
+            if (type === 'Sick') return 'ลาป่วย (Sick Leave)';
+            if (type === 'Personal') return 'ลากิจ (Personal Leave)';
+            return 'ลาพักร้อน (Vacation)';
+        }
+    </script>
+</body>
+</html>

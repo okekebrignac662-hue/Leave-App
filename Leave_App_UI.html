@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leave Management UI - Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Prompt', sans-serif; background-color: #f3f4f6; }
+        .hidden-view { display: none !important; }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <nav id="navbar" class="bg-blue-900 text-white p-4 shadow-md flex justify-between items-center hidden-view">
+        <h1 class="text-lg font-semibold">Online Leave App</h1>
+        <div class="text-sm flex items-center space-x-3">
+            <span id="user-name-display" class="font-medium text-blue-200"></span>
+            <button onclick="logout()" class="bg-red-500 px-3 py-1 rounded hover:bg-red-600 transition text-xs font-semibold">
+                ออกจากระบบ
+            </button>
+        </div>
+    </nav>
+
+    <div class="max-w-md mx-auto mt-6 p-4">
+
+        <div id="login-view" class="flex flex-col items-center justify-center min-h-[70vh]">
+            <div class="bg-white p-8 rounded-2xl shadow-md w-full">
+                <div class="text-center mb-6">
+                    <div class="bg-blue-100 text-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 shadow-inner">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-xl font-bold text-blue-900">เข้าสู่ระบบลางาน</h2>
+                    <p class="text-sm text-gray-500 mt-1">กรุณากรอกรหัสพนักงานและรหัสผ่าน</p>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">รหัสพนักงาน (Employee ID)</label>
+                        <input type="text" id="emp-id" class="w-full border-2 border-gray-200 rounded-lg p-2 focus:border-blue-500 focus:outline-none transition" placeholder="เช่น EMP-001">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">รหัสผ่าน (PIN)</label>
+                        <input type="password" id="emp-pin" class="w-full border-2 border-gray-200 rounded-lg p-2 focus:border-blue-500 focus:outline-none transition" placeholder="ตัวเลข 4-6 หลัก">
+                    </div>
+                    <button onclick="handleLogin()" class="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg mt-2 hover:bg-blue-700 shadow-lg transition transform active:scale-95">
+                        เข้าสู่ระบบ (Login)
+                    </button>
+                </div>
+
+                <div class="mt-6 p-3 bg-gray-50 rounded-lg text-xs text-gray-500 space-y-1">
+                    <p class="font-semibold text-gray-700">📌 สำหรับทดสอบระบบ (ใส่รหัสผ่านอะไรก็ได้):</p>
+                    <p>• พิมพ์ <b class="text-blue-600">EMP</b> เพื่อเข้าสู่หน้าจอ <b class="text-gray-700">พนักงาน</b></p>
+                    <p>• พิมพ์ <b class="text-blue-600">SUP</b> เพื่อเข้าสู่หน้าจอ <b class="text-gray-700">หัวหน้างาน</b></p>
+                </div>
+            </div>
+        </div>
+
+        <div id="employee-view" class="hidden-view space-y-6">
+            <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500">
+                <h2 class="text-md font-semibold mb-2">โควตาของคุณ (My Quota)</h2>
+                <div class="flex justify-between text-sm mb-1">
+                    <span>ลาพักร้อน (Vacation)</span>
+                    <span class="font-bold text-green-600">เหลือ 4/6 วัน</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span>ลากิจ (Personal)</span>
+                    <span class="font-bold text-yellow-600">เหลือ 1/6 วัน</span>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-xl shadow-sm">
+                <h2 class="text-lg font-semibold mb-4 border-b pb-2">ขอลางาน (Request Leave)</h2>
+                <form class="space-y-4">
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">ประเภทการลา (Type)</label>
+                        <select class="w-full border rounded-lg p-2 outline-none">
+                            <option>ลาพักร้อน (Vacation)</option>
+                            <option>ลากิจ (Personal Leave)</option>
+                            <option>ลาป่วย (Sick Leave)</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">เริ่ม (Start)</label>
+                            <input type="date" class="w-full border rounded-lg p-2 outline-none text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">ถึง (End)</label>
+                            <input type="date" class="w-full border rounded-lg p-2 outline-none text-sm">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">เหตุผล (Reason)</label>
+                        <textarea rows="2" class="w-full border rounded-lg p-2 outline-none text-sm" placeholder="ระบุเหตุผล..."></textarea>
+                    </div>
+                    <button type="button" class="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg mt-2 hover:bg-blue-700 shadow-md">
+                        ส่งคำขอ (Submit Request)
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div id="supervisor-view" class="hidden-view space-y-6">
+            <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-yellow-500">
+                <h2 class="text-md font-semibold text-gray-800">รออนุมัติ (Pending Approvals)</h2>
+                <p class="text-xs text-gray-500">มี 2 รายการที่รอการตรวจสอบ (2 items pending)</p>
+            </div>
+
+            <div class="bg-white p-5 rounded-xl shadow-sm border">
+                <div class="flex justify-between items-start mb-2">
+                    <div>
+                        <h3 class="font-semibold text-blue-900">สมชาย ใจดี</h3>
+                        <p class="text-xs text-gray-500">ประกอบ (Assembly)</p>
+                    </div>
+                    <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">ลาพักร้อน (Vacation)</span>
+                </div>
+                <div class="text-sm text-gray-700 space-y-1 mb-4">
+                    <p><b>Date:</b> 15 Sep 2026</p>
+                    <p><b>Reason:</b> พาครอบครัวไปทำธุระ</p>
+                </div>
+                <div class="flex space-x-3">
+                    <button class="flex-1 bg-green-500 text-white py-2 rounded-lg font-medium text-sm hover:bg-green-600 shadow">
+                        Approve (อนุมัติ)
+                    </button>
+                    <button class="flex-1 bg-red-500 text-white py-2 rounded-lg font-medium text-sm hover:bg-red-600 shadow">
+                        Reject (ไม่อนุมัติ)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function handleLogin() {
+            const empId = document.getElementById('emp-id').value.trim().toUpperCase();
+            if (!empId) { alert("กรุณากรอกรหัสพนักงาน"); return; }
+            document.getElementById('login-view').classList.add('hidden-view');
+            document.getElementById('navbar').classList.remove('hidden-view');
+            if (empId.includes('SUP')) {
+                document.getElementById('supervisor-view').classList.remove('hidden-view');
+                document.getElementById('user-name-display').innerText = empId + ' (หัวหน้า)';
+            } else {
+                document.getElementById('employee-view').classList.remove('hidden-view');
+                document.getElementById('user-name-display').innerText = empId;
+            }
+        }
+        function logout() {
+            document.getElementById('navbar').classList.add('hidden-view');
+            document.getElementById('employee-view').classList.add('hidden-view');
+            document.getElementById('supervisor-view').classList.add('hidden-view');
+            document.getElementById('login-view').classList.remove('hidden-view');
+            document.getElementById('emp-id').value = '';
+            document.getElementById('emp-pin').value = '';
+        }
+    </script>
+</body>
+</html>
