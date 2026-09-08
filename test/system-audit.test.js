@@ -75,8 +75,9 @@ async function runAudit() {
     // -------------------------------------------------------------
     const pingRes = await request({ host, port, path: '/ping', method: 'GET' });
     assert.strictEqual(pingRes.status, 200);
-    assert.strictEqual(pingRes.body, 'pong');
-    logPass('GET /ping returns 200 pong');
+    assert.strictEqual(pingRes.body.status, 'ok');
+    assert.strictEqual(pingRes.body.message, 'pong');
+    logPass('GET /ping returns 200 { status: "ok", message: "pong" }');
 
     const apiPingRes = await request({ host, port, path: '/api/ping', method: 'GET' });
     assert.strictEqual(apiPingRes.status, 200);

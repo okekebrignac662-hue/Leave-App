@@ -12,11 +12,19 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
+
+// =========================================================================
+// Public Health Check Endpoint (UptimeRobot / Keep-Alive / Cold-Start prevention)
+// 100% Public: Placed before body parsing, static files, and any auth/session checks
+// =========================================================================
+app.get('/ping', (req, res) => {
+  res.status(200).json({ status: 'ok', message: 'pong' });
+});
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
-// Lightweight Ping & Keep-Alive endpoints (for UptimeRobot / Cold-Start prevention)
-app.get('/ping', (req, res) => res.status(200).send('pong'));
+// Extended diagnostics ping endpoint
 app.get('/api/ping', (req, res) => {
   res.json({
     pong: true,
