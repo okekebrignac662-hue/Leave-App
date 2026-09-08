@@ -61,7 +61,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-600 mb-1">รหัสผ่าน (PIN)</label>
-                            <input type="password" id="emp-pin" class="w-full border-2 border-gray-200 rounded-lg p-2.5 text-sm focus:border-blue-500 focus:outline-none transition" placeholder="เช่น 1234" autocomplete="current-password">
+                            <input type="password" id="emp-pin" required class="w-full border-2 border-gray-200 rounded-lg p-2.5 text-sm focus:border-blue-500 focus:outline-none transition" placeholder="เช่น 1234" autocomplete="current-password">
                         </div>
                         <button type="submit" id="btn-login" class="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg mt-2 hover:bg-blue-700 shadow-md transition transform active:scale-98 flex items-center justify-center space-x-2">
                             <span>เข้าสู่ระบบ (Login)</span>
@@ -227,6 +227,11 @@
 
             if (!empIdInput) {
                 showToast('กรุณากรอกรหัสพนักงาน', 'error');
+                return;
+            }
+
+            if (!pinInput) {
+                showToast('กรุณากรอกรหัสผ่าน (PIN)', 'error');
                 return;
             }
 

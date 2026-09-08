@@ -60,44 +60,65 @@ app.get('/api/health', async (req, res) => {
 app.post('/api/login', async (req, res) => {
   try {
     const { empId, pin } = req.body;
-    if (!empId) {
+    if (!empId || !empId.trim()) {
       return res.status(400).json({ error: 'กรุณากรอกรหัสพนักงาน (Employee ID required)' });
+    }
+    if (!pin || !pin.trim()) {
+      return res.status(400).json({ error: 'กรุณากรอกรหัสผ่าน (PIN required)' });
     }
 
     const cleanEmpId = empId.trim().toUpperCase();
+    const cleanPin = pin.trim();
     const isSupPrefix = cleanEmpId.startsWith('SUP');
 
     // If database is connected, query employee details
     if (pool) {
       const result = await query('SELECT * FROM employees WHERE UPPER(id) = $1', [cleanEmpId]);
-      if (result.rows.length > 0) {
-        const emp = result.rows[0];
-        // Validate PIN if provided
-        if (pin && emp.pin && emp.pin !== pin.trim()) {
-          return res.status(401).json({ error: 'รหัสผ่าน (PIN) ไม่ถูกต้อง' });
-        }
-        const isSupervisor = isSupPrefix || emp.role === 'SUPERVISOR';
-        return res.json({
-          success: true,
-          user: {
-            id: emp.id,
-            name: emp.name,
-            department: emp.department,
-            role: isSupervisor ? 'SUPERVISOR' : 'EMPLOYEE',
-            isSupervisor
-          }
-        });
+      if (result.rows.length === 0) {
+        return res.status(401).json({ error: 'ไม่พบรหัสพนักงานนี้ในระบบ (Employee ID not found)' });
       }
+
+      const emp = result.rows[0];
+      // Validate PIN strictly
+      if (emp.pin !== cleanPin) {
+        return res.status(401).json({ error: 'รหัสผ่าน (PIN) ไม่ถูกต้อง (Incorrect PIN)' });
+      }
+
+      const isSupervisor = isSupPrefix || emp.role === 'SUPERVISOR';
+      return res.json({
+        success: true,
+        user: {
+          id: emp.id,
+          name: emp.name,
+          department: emp.department,
+          role: isSupervisor ? 'SUPERVISOR' : 'EMPLOYEE',
+          isSupervisor
+        }
+      });
     }
 
-    // Fallback for immediate testing / demo if DB is not seeded or matching
-    const isSupervisor = isSupPrefix;
+    // Strict Fallback if database is offline: only allow known demo IDs with PIN 1234
+    const validDemoUsers = {
+      'EMP-001': { name: 'สมชาย ใจดี', department: 'Assembly', role: 'EMPLOYEE', pin: '1234' },
+      'EMP-002': { name: 'สมหญิง รักงาน', department: 'Assembly', role: 'EMPLOYEE', pin: '1234' },
+      'SUP-001': { name: 'สมศักดิ์ คุมงาน (หัวหน้า)', department: 'Assembly', role: 'SUPERVISOR', pin: '1234' }
+    };
+
+    const demoUser = validDemoUsers[cleanEmpId];
+    if (!demoUser) {
+      return res.status(401).json({ error: 'ไม่พบรหัสพนักงานนี้ในระบบ (Employee ID not found)' });
+    }
+    if (demoUser.pin !== cleanPin) {
+      return res.status(401).json({ error: 'รหัสผ่าน (PIN) ไม่ถูกต้อง (Incorrect PIN)' });
+    }
+
+    const isSupervisor = isSupPrefix || demoUser.role === 'SUPERVISOR';
     return res.json({
       success: true,
       user: {
         id: cleanEmpId,
-        name: isSupervisor ? 'หัวหน้างาน (Demo Supervisor)' : 'พนักงาน (Demo Employee)',
-        department: 'Assembly',
+        name: demoUser.name,
+        department: demoUser.department,
         role: isSupervisor ? 'SUPERVISOR' : 'EMPLOYEE',
         isSupervisor
       }

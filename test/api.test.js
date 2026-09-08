@@ -84,6 +84,36 @@ async function runTests() {
     }
   });
 
+  // 4.1 Login API - Reject Unknown ID
+  await test('POST /api/login rejects unknown ID', async () => {
+    const res = await request({
+      hostname: 'localhost',
+      port: PORT,
+      path: '/api/login',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    }, { empId: 'RANDOM-999', pin: '1234' });
+
+    if (res.status !== 401) {
+      throw new Error(`Expected status 401 for unknown user, got ${res.status}`);
+    }
+  });
+
+  // 4.2 Login API - Reject Wrong PIN
+  await test('POST /api/login rejects wrong PIN', async () => {
+    const res = await request({
+      hostname: 'localhost',
+      port: PORT,
+      path: '/api/login',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    }, { empId: 'EMP-001', pin: 'wrong-pin' });
+
+    if (res.status !== 401) {
+      throw new Error(`Expected status 401 for wrong pin, got ${res.status}`);
+    }
+  });
+
   // 5. Employee Quota API
   await test('GET /api/employees/EMP-001/quota returns quota breakdown', async () => {
     const res = await request({
