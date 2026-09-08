@@ -167,6 +167,33 @@ async function runTests() {
     }
   });
 
+  // 6.1 Hourly Leave Request Submission
+  await test('POST /api/leave-requests supports hourly leave (10:00 - 11:00)', async () => {
+    const res = await request({
+      hostname: 'localhost',
+      port: PORT,
+      path: '/api/leave-requests',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    }, {
+      employeeId: 'EMP-002',
+      leaveType: 'Personal',
+      startDate: '2026-10-20',
+      durationType: 'HOURLY',
+      startTime: '10:00',
+      endTime: '11:00',
+      reason: 'ไปติดต่อราชการ 1 ชม.'
+    });
+
+    if (res.status !== 201 && res.status !== 200) {
+      throw new Error(`Failed to create hourly request: ${JSON.stringify(res.data)}`);
+    }
+
+    if (res.data.request.duration_type !== 'HOURLY' || String(res.data.request.hours_count) !== '1.00') {
+      throw new Error(`Invalid hourly request payload: ${JSON.stringify(res.data)}`);
+    }
+  });
+
   // 7. Supervisor Pending List
   await test('GET /api/leave-requests?status=PENDING lists requests', async () => {
     const res = await request({

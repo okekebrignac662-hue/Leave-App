@@ -31,7 +31,11 @@ CREATE TABLE IF NOT EXISTS leave_requests (
     leave_type VARCHAR(50) NOT NULL, -- 'Vacation', 'Personal', 'Sick'
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
-    days_count INT NOT NULL DEFAULT 1,
+    days_count NUMERIC(5, 2) NOT NULL DEFAULT 1,
+    duration_type VARCHAR(20) NOT NULL DEFAULT 'FULL_DAY', -- 'FULL_DAY' or 'HOURLY'
+    start_time VARCHAR(10), -- e.g. '10:00'
+    end_time VARCHAR(10),   -- e.g. '11:00'
+    hours_count NUMERIC(5, 2), -- e.g. 1.00, 1.50
     reason TEXT,
     status VARCHAR(20) NOT NULL DEFAULT 'PENDING', -- 'PENDING', 'APPROVED', 'REJECTED'
     reviewed_by VARCHAR(20) REFERENCES employees(id) ON DELETE SET NULL,

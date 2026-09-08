@@ -170,11 +170,15 @@ app.get('/api/employees/:id/quota', async (req, res) => {
 
       requestsRes.rows.forEach(row => {
         const type = normalizeLeaveType(row.leave_type);
-        const days = parseInt(row.total_days || 0, 10);
+        const days = parseFloat(row.total_days || 0);
         if (type === 'Vacation') usedVacation += days;
         if (type === 'Personal') usedPersonal += days;
         if (type === 'Sick') usedSick += days;
       });
+
+      usedVacation = Math.round(usedVacation * 100) / 100;
+      usedPersonal = Math.round(usedPersonal * 100) / 100;
+      usedSick = Math.round(usedSick * 100) / 100;
     }
 
     res.json({
@@ -183,17 +187,17 @@ app.get('/api/employees/:id/quota', async (req, res) => {
         vacation: {
           total: totalVacation,
           used: usedVacation,
-          remaining: Math.max(0, totalVacation - usedVacation)
+          remaining: Math.max(0, Math.round((totalVacation - usedVacation) * 100) / 100)
         },
         personal: {
           total: totalPersonal,
           used: usedPersonal,
-          remaining: Math.max(0, totalPersonal - usedPersonal)
+          remaining: Math.max(0, Math.round((totalPersonal - usedPersonal) * 100) / 100)
         },
         sick: {
           total: totalSick,
           used: usedSick,
-          remaining: Math.max(0, totalSick - usedSick)
+          remaining: Math.max(0, Math.round((totalSick - usedSick) * 100) / 100)
         }
       }
     });
@@ -246,6 +250,10 @@ app.get('/api/department-calendar', async (req, res) => {
            lr.leave_type,
            TO_CHAR(lr.start_date, 'YYYY-MM-DD') as start_date,
            TO_CHAR(lr.end_date, 'YYYY-MM-DD') as end_date,
+           lr.duration_type,
+           lr.start_time,
+           lr.end_time,
+           lr.hours_count,
            lr.status
          FROM leave_requests lr
          JOIN employees e ON lr.employee_id = e.id
@@ -269,7 +277,11 @@ app.get('/api/department-calendar', async (req, res) => {
           dailyUsage[d].employees.push({
             name: row.employee_name,
             type: normalizeLeaveType(row.leave_type),
-            status: row.status
+            status: row.status,
+            durationType: row.duration_type || 'FULL_DAY',
+            startTime: row.start_time || null,
+            endTime: row.end_time || null,
+            hoursCount: row.hours_count ? parseFloat(row.hours_count) : null
           });
         });
       });
@@ -300,26 +312,54 @@ app.get('/api/department-calendar', async (req, res) => {
 // ==========================================
 app.post('/api/leave-requests', async (req, res) => {
   try {
-    const { employeeId, leaveType, startDate, endDate, reason } = req.body;
+    const { employeeId, leaveType, startDate, endDate, durationType, startTime, endTime, reason } = req.body;
 
-    if (!employeeId || !leaveType || !startDate || !endDate) {
+    if (!employeeId || !leaveType || !startDate) {
       return res.status(400).json({ error: 'กรุณากรอกข้อมูลให้ครบถ้วน (All fields required)' });
     }
 
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+    const isHourly = durationType === 'HOURLY';
+    let cleanStartTime = null;
+    let cleanEndTime = null;
+    let cleanHoursCount = null;
+    let actualEndDate = endDate || startDate;
+    let daysCount = 1;
 
-    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-      return res.status(400).json({ error: 'รูปแบบวันที่ไม่ถูกต้อง' });
+    if (isHourly) {
+      if (!startTime || !endTime) {
+        return res.status(400).json({ error: 'กรุณาระบุเวลาเริ่มต้นและเวลาสิ้นสุดสำหรับการลารายชั่วโมง' });
+      }
+      const [sh, sm] = startTime.split(':').map(Number);
+      const [eh, em] = endTime.split(':').map(Number);
+      const startMinutes = sh * 60 + sm;
+      const endMinutes = eh * 60 + em;
+      if (endMinutes <= startMinutes) {
+        return res.status(400).json({ error: 'เวลาเริ่มต้นต้องน้อยกว่าเวลาสิ้นสุด (Start time must be before end time)' });
+      }
+      cleanStartTime = startTime;
+      cleanEndTime = endTime;
+      cleanHoursCount = Math.round(((endMinutes - startMinutes) / 60) * 100) / 100;
+      daysCount = Math.round((cleanHoursCount / 8) * 100) / 100;
+      actualEndDate = startDate;
+    } else {
+      if (!endDate) {
+        return res.status(400).json({ error: 'กรุณาระบุวันสิ้นสุด' });
+      }
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        return res.status(400).json({ error: 'รูปแบบวันที่ไม่ถูกต้อง' });
+      }
+
+      if (start > end) {
+        return res.status(400).json({ error: 'วันเริ่มต้นต้องไม่เกินวันสิ้นสุด (Start date must be before end date)' });
+      }
+
+      const diffTime = Math.abs(end - start);
+      daysCount = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+      actualEndDate = endDate;
     }
-
-    if (start > end) {
-      return res.status(400).json({ error: 'วันเริ่มต้นต้องไม่เกินวันสิ้นสุด (Start date must be before end date)' });
-    }
-
-    // Calculate days inclusive
-    const diffTime = Math.abs(end - start);
-    const daysCount = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
     const normalizedType = normalizeLeaveType(leaveType);
     const cleanEmpId = employeeId.trim().toUpperCase();
@@ -334,8 +374,12 @@ app.post('/api/leave-requests', async (req, res) => {
           employee_id: cleanEmpId,
           leave_type: normalizedType,
           start_date: startDate,
-          end_date: endDate,
+          end_date: actualEndDate,
           days_count: daysCount,
+          duration_type: isHourly ? 'HOURLY' : 'FULL_DAY',
+          start_time: cleanStartTime,
+          end_time: cleanEndTime,
+          hours_count: cleanHoursCount,
           reason,
           status: 'PENDING'
         }
@@ -363,25 +407,23 @@ app.post('/api/leave-requests', async (req, res) => {
            AND EXTRACT(YEAR FROM start_date) = $3`,
         [cleanEmpId, normalizedType, currentYear]
       );
-      const used = parseInt(usedRes.rows[0].used, 10);
+      const used = parseFloat(usedRes.rows[0].used || 0);
       const totalAllowed = normalizedType === 'Vacation' ? empRecord.vacation_quota : empRecord.personal_quota;
       if (used + daysCount > totalAllowed) {
         return res.status(400).json({
-          error: `โควตาวันลาของคุณไม่เพียงพอ (เหลือ ${Math.max(0, totalAllowed - used)} วัน, ต้องการขอ ${daysCount} วัน)`
+          error: `โควตาวันลาของคุณไม่เพียงพอ (เหลือ ${Math.max(0, Math.round((totalAllowed - used) * 100) / 100)} วัน, ต้องการขอ ${daysCount} วัน)`
         });
       }
     }
 
     // 3. Check Daily Quota from Quota_Settings (BLOCK IF FULL, EXCEPT SICK LEAVE)
     if (normalizedType !== 'Sick') {
-      // Fetch department daily limit
       const quotaRes = await query('SELECT max_daily_leaves FROM quota_settings WHERE department = $1', [department]);
       const maxDailyLeaves = quotaRes.rows.length > 0 ? quotaRes.rows[0].max_daily_leaves : 2;
 
-      const requestedDates = getDatesInRange(startDate, endDate);
+      const requestedDates = getDatesInRange(startDate, actualEndDate);
 
       for (const date of requestedDates) {
-        // Count how many people in this department have APPROVED or PENDING leave on this date
         const countRes = await query(
           `SELECT COUNT(DISTINCT lr.employee_id) as active_count
            FROM leave_requests lr
@@ -409,15 +451,31 @@ app.post('/api/leave-requests', async (req, res) => {
 
     // 4. Insert Leave Request
     const insertRes = await query(
-      `INSERT INTO leave_requests (employee_id, leave_type, start_date, end_date, days_count, reason, status)
-       VALUES ($1, $2, $3, $4, $5, $6, 'PENDING')
+      `INSERT INTO leave_requests (
+         employee_id, leave_type, start_date, end_date, days_count,
+         duration_type, start_time, end_time, hours_count, reason, status
+       )
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'PENDING')
        RETURNING *`,
-      [cleanEmpId, normalizedType, startDate, endDate, daysCount, reason || '']
+      [
+        cleanEmpId,
+        normalizedType,
+        startDate,
+        actualEndDate,
+        daysCount,
+        isHourly ? 'HOURLY' : 'FULL_DAY',
+        cleanStartTime,
+        cleanEndTime,
+        cleanHoursCount,
+        reason || ''
+      ]
     );
 
     res.status(201).json({
       success: true,
-      message: 'ส่งคำขอลางานเรียบร้อยแล้ว (Leave request submitted successfully)',
+      message: isHourly 
+        ? `ส่งคำขอลางานรายชั่วโมง (${cleanStartTime} - ${cleanEndTime} น. • ${cleanHoursCount} ชม.) เรียบร้อยแล้ว`
+        : 'ส่งคำขอลางานเรียบร้อยแล้ว (Leave request submitted successfully)',
       request: insertRes.rows[0]
     });
   } catch (error) {
@@ -465,6 +523,10 @@ app.get('/api/leave-requests', async (req, res) => {
         TO_CHAR(lr.start_date, 'YYYY-MM-DD') AS start_date,
         TO_CHAR(lr.end_date, 'YYYY-MM-DD') AS end_date,
         lr.days_count,
+        lr.duration_type,
+        lr.start_time,
+        lr.end_time,
+        lr.hours_count,
         lr.reason,
         lr.status,
         lr.reviewed_by,

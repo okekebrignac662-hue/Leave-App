@@ -283,14 +283,56 @@
                             </select>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-3.5">
+                        <!-- Duration Type Toggle (Full Day vs Hourly) -->
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1.5">รูปแบบการลา (Leave Duration)</label>
+                            <div class="grid grid-cols-2 gap-2 p-1 bg-gray-100/80 rounded-2xl border border-gray-200/70">
+                                <button type="button" id="btn-mode-full" onclick="setLeaveDurationMode('FULL_DAY')" class="py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5 bg-white text-blue-700 shadow-xs border border-gray-200/60">
+                                    <span>☀️ ลาเต็มวัน (Full Day)</span>
+                                </button>
+                                <button type="button" id="btn-mode-hourly" onclick="setLeaveDurationMode('HOURLY')" class="py-2 px-3 rounded-xl text-xs font-semibold text-gray-600 hover:text-gray-900 transition flex items-center justify-center space-x-1.5">
+                                    <span>⏰ ลารายชั่วโมง (Hourly)</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Date inputs container -->
+                        <div id="date-range-container" class="grid grid-cols-2 gap-3.5">
                             <div>
-                                <label class="block text-xs font-semibold text-gray-700 mb-1.5">วันเริ่มต้น (Start)</label>
+                                <label id="label-start-date" class="block text-xs font-semibold text-gray-700 mb-1.5">วันเริ่มต้น (Start)</label>
                                 <input type="date" id="req-start-date" required onchange="calculateRequestedDays()" class="w-full bg-gray-50/50 border border-gray-200 rounded-xl p-2.5 text-xs sm:text-sm outline-none focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 transition">
                             </div>
-                            <div>
+                            <div id="container-end-date">
                                 <label class="block text-xs font-semibold text-gray-700 mb-1.5">วันสิ้นสุด (End)</label>
                                 <input type="date" id="req-end-date" required onchange="calculateRequestedDays()" class="w-full bg-gray-50/50 border border-gray-200 rounded-xl p-2.5 text-xs sm:text-sm outline-none focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 transition">
+                            </div>
+                        </div>
+
+                        <!-- Time inputs container (Visible in HOURLY mode) -->
+                        <div id="time-inputs-container" class="hidden space-y-2.5 bg-blue-50/60 border border-blue-200/60 p-3.5 rounded-2xl transition">
+                            <div class="flex items-center justify-between">
+                                <label class="block text-xs font-bold text-blue-950 flex items-center space-x-1">
+                                    <span>⏰ ระบุช่วงเวลาที่ต้องการลา (เช่น 10:00 ถึง 11:00)</span>
+                                </label>
+                                <span class="text-[11px] text-blue-700 font-medium">คำนวณฐาน 8 ชม./วัน</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-gray-600 mb-1">เวลาเริ่ม (Start Time)</label>
+                                    <input type="time" id="req-start-time" value="10:00" onchange="calculateRequestedDays()" class="w-full bg-white border border-gray-200 rounded-xl p-2 text-xs sm:text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 transition">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-gray-600 mb-1">เวลาสิ้นสุด (End Time)</label>
+                                    <input type="time" id="req-end-time" value="11:00" onchange="calculateRequestedDays()" class="w-full bg-white border border-gray-200 rounded-xl p-2 text-xs sm:text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 transition">
+                                </div>
+                            </div>
+                            <!-- Quick Presets -->
+                            <div class="flex flex-wrap items-center gap-1.5 pt-0.5 text-[11px]">
+                                <span class="text-gray-500 font-medium">ปุ่มลัด:</span>
+                                <button type="button" onclick="setQuickTime('10:00', '11:00')" class="px-2.5 py-1 rounded-lg bg-white border border-gray-200 hover:border-blue-300 hover:text-blue-700 text-gray-600 font-medium transition shadow-2xs">10:00 - 11:00 (1 ชม.)</button>
+                                <button type="button" onclick="setQuickTime('08:00', '12:00')" class="px-2.5 py-1 rounded-lg bg-white border border-gray-200 hover:border-blue-300 hover:text-blue-700 text-gray-600 font-medium transition shadow-2xs">เช้า (4 ชม.)</button>
+                                <button type="button" onclick="setQuickTime('13:00', '17:00')" class="px-2.5 py-1 rounded-lg bg-white border border-gray-200 hover:border-blue-300 hover:text-blue-700 text-gray-600 font-medium transition shadow-2xs">บ่าย (4 ชม.)</button>
+                                <button type="button" onclick="setQuickTime('13:00', '15:00')" class="px-2.5 py-1 rounded-lg bg-white border border-gray-200 hover:border-blue-300 hover:text-blue-700 text-gray-600 font-medium transition shadow-2xs">2 ชม.</button>
                             </div>
                         </div>
 
@@ -639,7 +681,10 @@
             const employeesList = usage && usage.employees && usage.employees.length > 0
                 ? usage.employees.map(e => {
                     const statusTag = e.status === 'APPROVED' ? '<span class="text-emerald-600 font-bold">อนุมัติแล้ว</span>' : '<span class="text-amber-600 font-medium">รออนุมัติ</span>';
-                    return `<b class="text-gray-900">${e.name}</b> (${translateLeaveType(e.type)} - ${statusTag})`;
+                    const timeDetail = e.durationType === 'HOURLY' && e.startTime && e.endTime
+                        ? ` <span class="bg-blue-100/90 text-blue-900 px-1.5 py-0.5 rounded font-bold text-[10px]">⏰ ${e.startTime} - ${e.endTime} น. (${e.hoursCount} ชม.)</span>`
+                        : '';
+                    return `<b class="text-gray-900">${e.name}</b> (${translateLeaveType(e.type)}${timeDetail} - ${statusTag})`;
                   }).join(', ')
                 : 'ยังไม่มีใครขอลางาน';
 
@@ -664,19 +709,130 @@
             });
         }
 
+        // Duration Mode State (FULL_DAY vs HOURLY)
+        let currentDurationMode = 'FULL_DAY';
+
+        function setLeaveDurationMode(mode) {
+            currentDurationMode = mode;
+            const btnFull = document.getElementById('btn-mode-full');
+            const btnHourly = document.getElementById('btn-mode-hourly');
+            const timeContainer = document.getElementById('time-inputs-container');
+            const containerEndDate = document.getElementById('container-end-date');
+            const labelStartDate = document.getElementById('label-start-date');
+            const dateContainer = document.getElementById('date-range-container');
+
+            if (mode === 'HOURLY') {
+                btnHourly.className = 'py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5 bg-white text-blue-700 shadow-xs border border-gray-200/60';
+                btnFull.className = 'py-2 px-3 rounded-xl text-xs font-semibold text-gray-600 hover:text-gray-900 transition flex items-center justify-center space-x-1.5';
+                timeContainer.classList.remove('hidden');
+                containerEndDate.classList.add('hidden');
+                labelStartDate.innerText = 'วันที่ขอลา (Leave Date)';
+                dateContainer.className = 'grid grid-cols-1 gap-3.5';
+                document.getElementById('req-end-date').value = document.getElementById('req-start-date').value;
+            } else {
+                btnFull.className = 'py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5 bg-white text-blue-700 shadow-xs border border-gray-200/60';
+                btnHourly.className = 'py-2 px-3 rounded-xl text-xs font-semibold text-gray-600 hover:text-gray-900 transition flex items-center justify-center space-x-1.5';
+                timeContainer.classList.add('hidden');
+                containerEndDate.classList.remove('hidden');
+                labelStartDate.innerText = 'วันเริ่มต้น (Start)';
+                dateContainer.className = 'grid grid-cols-2 gap-3.5';
+            }
+
+            calculateRequestedDays();
+        }
+
+        function setQuickTime(start, end) {
+            document.getElementById('req-start-time').value = start;
+            document.getElementById('req-end-time').value = end;
+            calculateRequestedDays();
+        }
+
         // Calculate requested leave days live on input change & check calendar quota
         function calculateRequestedDays() {
             const startVal = document.getElementById('req-start-date').value;
-            const endVal = document.getElementById('req-end-date').value;
+            let endVal = document.getElementById('req-end-date').value;
             const chip = document.getElementById('date-calc-chip');
             const daysText = document.getElementById('date-calc-days');
             const statusBadge = document.getElementById('date-calc-status');
+
+            if (currentDurationMode === 'HOURLY') {
+                endVal = startVal;
+                document.getElementById('req-end-date').value = startVal;
+            }
 
             if (!startVal || !endVal) {
                 chip.classList.add('hidden');
                 return;
             }
 
+            if (currentDurationMode === 'HOURLY') {
+                const startTime = document.getElementById('req-start-time').value;
+                const endTime = document.getElementById('req-end-time').value;
+
+                if (!startTime || !endTime) {
+                    chip.classList.remove('hidden');
+                    chip.className = 'bg-amber-50 border border-amber-200 p-3 rounded-2xl flex items-center justify-between text-xs text-amber-800';
+                    daysText.innerText = 'กรุณาระบุเวลาเริ่มและสิ้นสุด';
+                    statusBadge.className = 'text-[11px] px-2 py-0.5 rounded-full font-medium bg-amber-100 text-amber-800';
+                    statusBadge.innerText = '⚠️ รอระบุเวลา';
+                    return;
+                }
+
+                const [sh, sm] = startTime.split(':').map(Number);
+                const [eh, em] = endTime.split(':').map(Number);
+                const startMinutes = sh * 60 + sm;
+                const endMinutes = eh * 60 + em;
+
+                if (endMinutes <= startMinutes) {
+                    chip.classList.remove('hidden');
+                    chip.className = 'bg-red-50 border border-red-200 p-3 rounded-2xl flex items-center justify-between text-xs text-red-700';
+                    daysText.innerText = 'เวลาเริ่มต้นต้องน้อยกว่าเวลาสิ้นสุด';
+                    statusBadge.className = 'text-[11px] px-2 py-0.5 rounded-full font-medium bg-red-100 text-red-800';
+                    statusBadge.innerText = '⚠️ เวลาไม่ถูกต้อง';
+                    return;
+                }
+
+                const hours = Math.round(((endMinutes - startMinutes) / 60) * 100) / 100;
+                const dayEquiv = Math.round((hours / 8) * 100) / 100;
+
+                chip.classList.remove('hidden');
+                daysText.innerText = `${hours} ชั่วโมง (${dayEquiv} วัน)`;
+
+                // Quota check on this date
+                if (departmentCalendarData && departmentCalendarData.dailyUsage) {
+                    const maxQuota = departmentCalendarData.maxDailyLeaves || 2;
+                    const leaveType = document.getElementById('req-leave-type').value;
+                    const isSick = leaveType === 'Sick';
+                    const usage = departmentCalendarData.dailyUsage[startVal];
+
+                    if (usage && usage.isFull) {
+                        if (isSick) {
+                            chip.className = 'bg-blue-50 border border-blue-200 p-3 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between text-xs text-blue-900 gap-1.5';
+                            statusBadge.className = 'text-[11px] px-2.5 py-0.5 rounded-full font-medium bg-blue-100 text-blue-800';
+                            statusBadge.innerText = `ℹ️ วันที่ ${startVal} โควตาเต็ม แต่ลาป่วยส่งได้`;
+                        } else {
+                            chip.className = 'bg-rose-50 border border-rose-200 p-3 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between text-xs text-rose-900 gap-1.5';
+                            statusBadge.className = 'text-[11px] px-2.5 py-0.5 rounded-full font-bold bg-rose-200 text-rose-800';
+                            statusBadge.innerText = `⚠️ วันที่ ${startVal} โควตาเต็ม (${usage.count}/${maxQuota} คน)`;
+                        }
+                    } else if (usage && usage.count > 0) {
+                        chip.className = 'bg-amber-50 border border-amber-200 p-3 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between text-xs text-amber-900 gap-1.5';
+                        statusBadge.className = 'text-[11px] px-2.5 py-0.5 rounded-full font-semibold bg-amber-100 text-amber-800';
+                        statusBadge.innerText = `💡 วันที่ ${startVal} มีคนลาแล้ว ${usage.count}/${maxQuota} คน (เหลืออีก ${maxQuota - usage.count} ที่)`;
+                    } else {
+                        chip.className = 'bg-emerald-50 border border-emerald-200 p-3 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between text-xs text-emerald-900 gap-1.5';
+                        statusBadge.className = 'text-[11px] px-2.5 py-0.5 rounded-full font-medium bg-emerald-100 text-emerald-800';
+                        statusBadge.innerText = `✓ ลารายชั่วโมงได้ โควตายังว่าง`;
+                    }
+                } else {
+                    chip.className = 'bg-blue-50/90 border border-blue-200/70 p-3 rounded-2xl flex items-center justify-between text-xs text-blue-900';
+                    statusBadge.className = 'text-[11px] px-2.5 py-0.5 rounded-full font-medium bg-blue-100 text-blue-800';
+                    statusBadge.innerText = '✓ ระบุเวลาเรียบร้อย';
+                }
+                return;
+            }
+
+            // FULL_DAY mode
             const [sy, sm, sd] = startVal.split('-').map(Number);
             const start = new Date(sy, sm - 1, sd);
             const [ey, em, ed] = endVal.split('-').map(Number);
@@ -891,17 +1047,43 @@
 
             const leaveType = document.getElementById('req-leave-type').value;
             const startDate = document.getElementById('req-start-date').value;
-            const endDate = document.getElementById('req-end-date').value;
+            let endDate = document.getElementById('req-end-date').value;
             const reason = document.getElementById('req-reason').value.trim();
 
-            if (!startDate || !endDate) {
-                showToast('กรุณาระบุวันที่เริ่มและสิ้นสุด', 'error');
+            if (!startDate) {
+                showToast('กรุณาระบุวันที่ขอลา', 'error');
                 return;
             }
 
-            if (new Date(startDate) > new Date(endDate)) {
-                showToast('วันเริ่มต้นต้องไม่เกินวันสิ้นสุด', 'error');
-                return;
+            const isHourly = currentDurationMode === 'HOURLY';
+            let startTime = null;
+            let endTime = null;
+
+            if (isHourly) {
+                endDate = startDate;
+                startTime = document.getElementById('req-start-time').value;
+                endTime = document.getElementById('req-end-time').value;
+
+                if (!startTime || !endTime) {
+                    showToast('กรุณาระบุเวลาเริ่มต้นและเวลาสิ้นสุด', 'error');
+                    return;
+                }
+
+                const [sh, sm] = startTime.split(':').map(Number);
+                const [eh, em] = endTime.split(':').map(Number);
+                if ((eh * 60 + em) <= (sh * 60 + sm)) {
+                    showToast('เวลาเริ่มต้นต้องน้อยกว่าเวลาสิ้นสุด', 'error');
+                    return;
+                }
+            } else {
+                if (!endDate) {
+                    showToast('กรุณาระบุวันสิ้นสุด', 'error');
+                    return;
+                }
+                if (new Date(startDate) > new Date(endDate)) {
+                    showToast('วันเริ่มต้นต้องไม่เกินวันสิ้นสุด', 'error');
+                    return;
+                }
             }
 
             const btn = document.getElementById('btn-submit-req');
@@ -917,6 +1099,9 @@
                         leaveType,
                         startDate,
                         endDate,
+                        durationType: isHourly ? 'HOURLY' : 'FULL_DAY',
+                        startTime,
+                        endTime,
                         reason
                     })
                 });
@@ -970,6 +1155,14 @@
                     }
 
                     const typeIcon = req.leave_type === 'Sick' ? '🏥' : (req.leave_type === 'Personal' ? '💼' : '🏖️');
+                    const isHourly = req.duration_type === 'HOURLY';
+                    const durationChip = isHourly
+                        ? `<span class="text-xs text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-lg font-bold">⏰ ${req.hours_count} ชม. (${req.days_count} วัน)</span>`
+                        : `<span class="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg font-medium">${req.days_count} วัน</span>`;
+
+                    const dateDisplay = isHourly
+                        ? `<span><b>วันที่:</b> ${req.start_date} <span class="font-bold text-indigo-700 ml-1">⏰ ${req.start_time} - ${req.end_time} น.</span></span>`
+                        : `<span><b>ช่วงวันที่:</b> ${req.start_date} ${req.start_date !== req.end_date ? 'ถึง ' + req.end_date : ''}</span>`;
 
                     return `
                         <div class="border border-gray-100 rounded-2xl p-4 text-xs space-y-2 bg-gradient-to-r from-gray-50/60 to-white hover:border-blue-200 transition">
@@ -977,13 +1170,13 @@
                                 <div class="flex items-center space-x-1.5 font-bold text-gray-800 text-sm">
                                     <span>${typeIcon}</span>
                                     <span>${translateLeaveType(req.leave_type)}</span>
-                                    <span class="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg font-medium">${req.days_count} วัน</span>
+                                    ${durationChip}
                                 </div>
                                 ${statusBadge}
                             </div>
                             <div class="text-gray-600 flex items-center space-x-1.5 text-xs">
                                 <span>📅</span>
-                                <span><b>ช่วงวันที่:</b> ${req.start_date} ${req.start_date !== req.end_date ? 'ถึง ' + req.end_date : ''}</span>
+                                ${dateDisplay}
                             </div>
                             ${req.reason ? `<div class="text-gray-500 italic bg-white p-2.5 rounded-xl border border-gray-100 text-xs">💬 "${req.reason}"</div>` : ''}
                             ${req.reviewed_by ? `<div class="text-[11px] text-gray-400 text-right">พิจารณาโดย: ${req.reviewed_by}</div>` : ''}
@@ -1033,6 +1226,14 @@
 
                     const typeIcon = req.leave_type === 'Sick' ? '🏥' : (req.leave_type === 'Personal' ? '💼' : '🏖️');
                     const initialLetter = (req.employee_name || req.employee_id).charAt(0);
+                    const isHourly = req.duration_type === 'HOURLY';
+                    const durationChip = isHourly
+                        ? `<span class="font-bold text-indigo-700 bg-white px-2.5 py-0.5 rounded-lg border border-indigo-200/60 shadow-2xs">⏰ ${req.hours_count} ชม. (${req.days_count} วัน)</span>`
+                        : `<span class="font-bold text-blue-700 bg-white px-2.5 py-0.5 rounded-lg border border-gray-200/60 shadow-2xs">${req.days_count} วัน</span>`;
+
+                    const dateDisplay = isHourly
+                        ? `<span>📅 <b>วันที่ขอลา:</b> ${req.start_date} <span class="font-bold text-indigo-700 ml-1">⏰ ${req.start_time} - ${req.end_time} น.</span></span>`
+                        : `<span>📅 <b>ช่วงวันที่ขอลา:</b> ${req.start_date} ${req.start_date !== req.end_date ? 'ถึง ' + req.end_date : ''}</span>`;
 
                     return `
                         <div id="request-card-${req.id}" class="bg-white p-5 sm:p-6 rounded-3xl shadow-xs border border-gray-100 hover:shadow-md transition duration-200">
@@ -1054,8 +1255,8 @@
 
                             <div class="text-xs text-gray-700 space-y-1.5 mb-4 bg-gray-50/80 border border-gray-100 p-3.5 rounded-2xl">
                                 <div class="flex items-center justify-between">
-                                    <span>📅 <b>ช่วงวันที่ขอลา:</b> ${req.start_date} ${req.start_date !== req.end_date ? 'ถึง ' + req.end_date : ''}</span>
-                                    <span class="font-bold text-blue-700 bg-white px-2.5 py-0.5 rounded-lg border border-gray-200/60 shadow-2xs">${req.days_count} วัน</span>
+                                    ${dateDisplay}
+                                    ${durationChip}
                                 </div>
                                 <div class="text-gray-600 pt-1">
                                     <b>เหตุผล:</b> ${req.reason ? `"${req.reason}"` : '<span class="text-gray-400 italic">ไม่ได้ระบุเหตุผล</span>'}
