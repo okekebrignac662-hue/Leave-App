@@ -137,10 +137,10 @@ async function runTests() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
     }, {
-      employeeId: 'EMP-001',
+      employeeId: 'EMP-003',
       leaveType: 'Vacation',
       startDate: '2026-10-01',
-      endDate: '2026-10-02',
+      endDate: '2026-10-01',
       reason: 'ไปพักผ่อนต่างจังหวัด'
     });
 

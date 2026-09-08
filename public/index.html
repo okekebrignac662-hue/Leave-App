@@ -42,31 +42,86 @@
         <div class="max-w-md mx-auto mt-4 sm:mt-6 p-4">
 
             <!-- 1. LOGIN VIEW -->
-            <div id="login-view" class="flex flex-col items-center justify-center min-h-[75vh]">
-                <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-100 w-full">
+            <div id="login-view" class="relative flex flex-col items-center justify-center min-h-[78vh] py-6">
+                <!-- Background Ambient Glow Blobs -->
+                <div class="absolute -top-6 -left-10 w-72 h-72 bg-blue-400/20 rounded-full blur-3xl pointer-events-none -z-10"></div>
+                <div class="absolute -bottom-8 -right-10 w-72 h-72 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none -z-10"></div>
+
+                <div class="bg-white/95 backdrop-blur-xl p-8 sm:p-9 rounded-3xl shadow-[0_20px_50px_-15px_rgba(30,58,138,0.14)] border border-white/80 w-full relative">
                     <div class="text-center mb-6">
-                        <div class="bg-blue-50 text-blue-600 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-inner">
-                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"></path>
-                            </svg>
+                        <!-- Portal Status Badge -->
+                        <div class="inline-flex items-center space-x-2 bg-blue-50/90 border border-blue-100/80 px-3 py-1 rounded-full text-blue-700 text-xs font-medium mb-4 shadow-xs">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span>ระบบบริการลางานออนไลน์ • Department Portal</span>
                         </div>
-                        <h2 class="text-2xl font-bold text-blue-900">เข้าสู่ระบบลางาน</h2>
-                        <p class="text-xs text-gray-500 mt-1">กรุณากรอกรหัสพนักงานและรหัสผ่าน</p>
+
+                        <!-- Brand Icon with Gradient & Glow -->
+                        <div class="relative w-16 h-16 mx-auto mb-3">
+                            <div class="absolute inset-0 bg-blue-600 rounded-2xl blur-md opacity-30"></div>
+                            <div class="relative bg-gradient-to-tr from-blue-600 to-indigo-600 text-white w-16 h-16 rounded-2xl flex items-center justify-center shadow-md transform hover:scale-105 transition duration-300">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"></path>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <h2 class="text-2xl font-bold text-gray-900 tracking-tight">เข้าสู่ระบบลางาน</h2>
+                        <p class="text-xs text-gray-500 mt-1">กรุณากรอกรหัสพนักงานและรหัสผ่านเพื่อเข้าใช้งาน</p>
                     </div>
                     
                     <form onsubmit="event.preventDefault(); handleLogin();" class="space-y-4">
                         <div>
-                            <label class="block text-xs font-medium text-gray-600 mb-1">รหัสพนักงาน (Employee ID)</label>
-                            <input type="text" id="emp-id" required class="w-full border-2 border-gray-200 rounded-lg p-2.5 text-sm focus:border-blue-500 focus:outline-none transition uppercase" placeholder="กรอกรหัสพนักงาน (เช่น EMP-001)" autocomplete="username">
+                            <label class="block text-xs font-semibold text-gray-700 mb-1.5 flex items-center space-x-1">
+                                <span>รหัสพนักงาน (Employee ID)</span>
+                            </label>
+                            <div class="relative">
+                                <input type="text" id="emp-id" required class="w-full bg-gray-50/50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 focus:outline-none transition uppercase placeholder:text-gray-400" placeholder="กรอกรหัสพนักงาน (เช่น EMP-001)" autocomplete="username">
+                            </div>
                         </div>
+
                         <div>
-                            <label class="block text-xs font-medium text-gray-600 mb-1">รหัสผ่าน (PIN)</label>
-                            <input type="password" id="emp-pin" required class="w-full border-2 border-gray-200 rounded-lg p-2.5 text-sm focus:border-blue-500 focus:outline-none transition tracking-wider" placeholder="••••••••" autocomplete="current-password">
+                            <label class="block text-xs font-semibold text-gray-700 mb-1.5 flex items-center space-x-1">
+                                <span>รหัสผ่าน (PIN)</span>
+                            </label>
+                            <div class="relative">
+                                <input type="password" id="emp-pin" required class="w-full bg-gray-50/50 border border-gray-200 rounded-xl pl-3.5 pr-10 py-2.5 text-sm focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 focus:outline-none transition tracking-wider placeholder:text-gray-400" placeholder="••••••••" autocomplete="current-password">
+                                <!-- Eye Toggle Button -->
+                                <button type="button" onclick="togglePinVisibility()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition focus:outline-none" title="ดูรหัสผ่าน">
+                                    <svg id="eye-icon-show" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                    <svg id="eye-icon-hide" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"></path>
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
-                        <button type="submit" id="btn-login" class="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg mt-2 hover:bg-blue-700 shadow-md transition transform active:scale-98 flex items-center justify-center space-x-2">
+
+                        <!-- Remember Me Checkbox -->
+                        <div class="flex items-center justify-between pt-1">
+                            <label class="flex items-center space-x-2 text-xs text-gray-600 cursor-pointer select-none">
+                                <input type="checkbox" id="remember-me" class="w-3.5 h-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                <span>จดจำรหัสพนักงานในเครื่องนี้</span>
+                            </label>
+                        </div>
+
+                        <!-- Submit Button with Gradient -->
+                        <button type="submit" id="btn-login" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium py-3 rounded-xl shadow-md shadow-blue-500/25 hover:shadow-lg hover:shadow-blue-500/35 transition-all duration-200 transform active:scale-[0.98] flex items-center justify-center space-x-2">
                             <span>เข้าสู่ระบบ (Login)</span>
+                            <svg class="w-4 h-4 text-blue-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                            </svg>
                         </button>
                     </form>
+
+                    <!-- Security Badge Note -->
+                    <div class="mt-6 pt-4 border-t border-gray-100 text-center flex items-center justify-center space-x-1.5 text-[11px] text-gray-400">
+                        <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                        </svg>
+                        <span>ระบบปลอดภัยด้วย SSL • Cloud Database</span>
+                    </div>
 
                 </div>
             </div>
@@ -213,6 +268,33 @@
             }, 4000);
         }
 
+        // Toggle PIN visibility
+        function togglePinVisibility() {
+            const pinInput = document.getElementById('emp-pin');
+            const showIcon = document.getElementById('eye-icon-show');
+            const hideIcon = document.getElementById('eye-icon-hide');
+            if (pinInput.type === 'password') {
+                pinInput.type = 'text';
+                showIcon.classList.add('hidden');
+                hideIcon.classList.remove('hidden');
+            } else {
+                pinInput.type = 'password';
+                showIcon.classList.remove('hidden');
+                hideIcon.classList.add('hidden');
+            }
+        }
+
+        // Initialize Remembered ID on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedEmpId = localStorage.getItem('leave_app_remembered_emp_id');
+            if (savedEmpId) {
+                const empInput = document.getElementById('emp-id');
+                const rememberBox = document.getElementById('remember-me');
+                if (empInput) empInput.value = savedEmpId;
+                if (rememberBox) rememberBox.checked = true;
+            }
+        });
+
         // Login Handler
         async function handleLogin() {
             const empIdInput = document.getElementById('emp-id').value.trim();
@@ -247,6 +329,14 @@
                 }
 
                 currentUser = data.user;
+
+                // Handle Remember Me storage
+                const rememberBox = document.getElementById('remember-me');
+                if (rememberBox && rememberBox.checked) {
+                    localStorage.setItem('leave_app_remembered_emp_id', currentUser.id);
+                } else {
+                    localStorage.removeItem('leave_app_remembered_emp_id');
+                }
 
                 // Update UI Views
                 document.getElementById('login-view').classList.add('hidden-view');
@@ -293,7 +383,9 @@
             document.getElementById('employee-view').classList.add('hidden-view');
             document.getElementById('supervisor-view').classList.add('hidden-view');
             document.getElementById('login-view').classList.remove('hidden-view');
-            document.getElementById('emp-id').value = '';
+            
+            const savedId = localStorage.getItem('leave_app_remembered_emp_id');
+            document.getElementById('emp-id').value = savedId || '';
             document.getElementById('emp-pin').value = '';
             showToast('ออกจากระบบเรียบร้อยแล้ว', 'info');
         }
