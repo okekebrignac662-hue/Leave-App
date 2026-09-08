@@ -241,7 +241,7 @@ app.get('/api/department-calendar', async (req, res) => {
 
     let maxDailyLeaves = 2;
     if (pool) {
-      const quotaRes = await query('SELECT max_daily_leaves FROM quota_settings WHERE department = $1', [department]);
+      const quotaRes = await query('SELECT max_daily_leaves FROM quota_settings WHERE UPPER(department) = UPPER($1)', [department]);
       if (quotaRes.rows.length > 0) {
         maxDailyLeaves = quotaRes.rows[0].max_daily_leaves;
       }
@@ -280,7 +280,7 @@ app.get('/api/department-calendar', async (req, res) => {
            lr.status
          FROM leave_requests lr
          JOIN employees e ON lr.employee_id = e.id
-         WHERE e.department = $1
+         WHERE UPPER(e.department) = UPPER($1)
            AND lr.status IN ('APPROVED', 'PENDING')
            AND lr.start_date <= $3
            AND lr.end_date >= $2`,
@@ -508,7 +508,7 @@ app.post('/api/leave-requests', async (req, res) => {
       // until this transaction commits, eliminating race conditions completely!
       if (normalizedType !== 'Sick') {
         const quotaRes = await client.query(
-          'SELECT max_daily_leaves FROM quota_settings WHERE department = $1 FOR UPDATE',
+          'SELECT max_daily_leaves FROM quota_settings WHERE UPPER(department) = UPPER($1) FOR UPDATE',
           [department]
         );
         const maxDailyLeaves = quotaRes.rows.length > 0 ? quotaRes.rows[0].max_daily_leaves : 2;
@@ -520,7 +520,7 @@ app.post('/api/leave-requests', async (req, res) => {
             `SELECT COUNT(DISTINCT lr.employee_id) as active_count
              FROM leave_requests lr
              JOIN employees e ON lr.employee_id = e.id
-             WHERE e.department = $1
+             WHERE UPPER(e.department) = UPPER($1)
                AND lr.status IN ('APPROVED', 'PENDING')
                AND lr.leave_type != 'Sick'
                AND $2 BETWEEN lr.start_date AND lr.end_date

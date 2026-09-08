@@ -533,6 +533,19 @@
         // State
         let currentUser = null;
 
+        // HTML Sanitizer to prevent XSS and quote-breaking syntax errors
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        let pendingRequestsMap = {};
+
         // =========================================================================
         // ROBUST NETWORK & TIMEOUT PROTECTION (safeFetch)
         // Prevents infinite hanging on cold starts or poor factory Wi-Fi / 4G
@@ -1331,9 +1344,9 @@
                                 <span>📅</span>
                                 ${dateDisplay}
                             </div>
-                            ${req.reason ? `<div class="text-gray-500 italic bg-white p-2.5 rounded-xl border border-gray-100 text-xs">💬 "${req.reason}"</div>` : ''}
+                            ${req.reason ? `<div class="text-gray-500 italic bg-white p-2.5 rounded-xl border border-gray-100 text-xs">💬 "${escapeHtml(req.reason)}"</div>` : ''}
                             ${rejectionNotice}
-                            ${req.reviewed_by ? `<div class="text-[11px] text-gray-400 text-right">พิจารณาโดย: ${req.reviewed_by}</div>` : ''}
+                            ${req.reviewed_by ? `<div class="text-[11px] text-gray-400 text-right">พิจารณาโดย: ${escapeHtml(req.reviewed_by)}</div>` : ''}
                         </div>
                     `;
                 }).join('');
@@ -1405,6 +1418,9 @@
                 if (statPendingEl) statPendingEl.innerText = data.requests.length;
                 subtitleEl.innerText = `มี ${data.requests.length} รายการที่รอการตรวจสอบ (${data.requests.length} items pending)`;
 
+                pendingRequestsMap = {};
+                data.requests.forEach(r => { pendingRequestsMap[r.id] = r; });
+
                 listEl.innerHTML = data.requests.map(req => {
                     const typeColor = req.leave_type === 'Sick' 
                         ? 'bg-rose-50 text-rose-700 border border-rose-200/70' 
@@ -1429,8 +1445,8 @@
                                         ${initialLetter}
                                     </div>
                                     <div>
-                                        <h3 class="font-bold text-gray-900 text-base leading-tight">${req.employee_name}</h3>
-                                        <p class="text-xs text-gray-500 mt-0.5">${req.department} • <span class="font-mono">${req.employee_id}</span></p>
+                                        <h3 class="font-bold text-gray-900 text-base leading-tight">${escapeHtml(req.employee_name)}</h3>
+                                        <p class="text-xs text-gray-500 mt-0.5">${escapeHtml(req.department)} • <span class="font-mono">${escapeHtml(req.employee_id)}</span></p>
                                     </div>
                                 </div>
                                 <span class="${typeColor} text-xs px-3 py-1 rounded-full font-semibold flex items-center space-x-1">
@@ -1445,7 +1461,7 @@
                                     ${durationChip}
                                 </div>
                                 <div class="text-gray-600 pt-1">
-                                    <b>เหตุผล:</b> ${req.reason ? `"${req.reason}"` : '<span class="text-gray-400 italic">ไม่ได้ระบุเหตุผล</span>'}
+                                    <b>เหตุผล:</b> ${req.reason ? `"${escapeHtml(req.reason)}"` : '<span class="text-gray-400 italic">ไม่ได้ระบุเหตุผล</span>'}
                                 </div>
                             </div>
 
@@ -1454,7 +1470,7 @@
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                                     <span>Approve (อนุมัติ)</span>
                                 </button>
-                                <button onclick="openRejectModal(${req.id}, '${req.employee_name}', '${translateLeaveType(req.leave_type)} • วันที่ ${req.start_date}')" class="btn-review flex-1 bg-white hover:bg-rose-50 border border-rose-200 text-rose-600 hover:text-rose-700 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition active:scale-95 flex items-center justify-center space-x-1.5">
+                                <button onclick="openRejectModal(${req.id})" class="btn-review flex-1 bg-white hover:bg-rose-50 border border-rose-200 text-rose-600 hover:text-rose-700 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition active:scale-95 flex items-center justify-center space-x-1.5">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                                     <span>Reject (ไม่อนุมัติ)</span>
                                 </button>
@@ -1519,8 +1535,8 @@
                         <div class="bg-white p-5 rounded-3xl shadow-xs border border-gray-100 hover:shadow-md transition">
                             <div class="flex justify-between items-start mb-2.5">
                                 <div>
-                                    <h4 class="font-bold text-gray-900 text-sm">${req.employee_name} <span class="font-normal text-xs text-gray-500 font-mono">(${req.employee_id})</span></h4>
-                                    <p class="text-[11px] text-gray-500 mt-0.5">${translateLeaveType(req.leave_type)} • ${req.department}</p>
+                                    <h4 class="font-bold text-gray-900 text-sm">${escapeHtml(req.employee_name)} <span class="font-normal text-xs text-gray-500 font-mono">(${escapeHtml(req.employee_id)})</span></h4>
+                                    <p class="text-[11px] text-gray-500 mt-0.5">${translateLeaveType(req.leave_type)} • ${escapeHtml(req.department)}</p>
                                 </div>
                                 <div class="flex items-center space-x-2">
                                     ${durationChip}
@@ -1530,9 +1546,9 @@
                             <div class="text-xs text-gray-700 space-y-1.5 bg-gray-50/80 border border-gray-100 p-3 rounded-2xl">
                                 <div class="flex items-center justify-between">
                                     ${dateDisplay}
-                                    ${req.reviewed_by ? `<span class="text-[11px] text-gray-400">พิจารณาโดย: ${req.reviewed_by}</span>` : ''}
+                                    ${req.reviewed_by ? `<span class="text-[11px] text-gray-400">พิจารณาโดย: ${escapeHtml(req.reviewed_by)}</span>` : ''}
                                 </div>
-                                ${req.reason ? `<div class="text-gray-600 pt-0.5"><b>เหตุผลขอลา:</b> "${req.reason}"</div>` : ''}
+                                ${req.reason ? `<div class="text-gray-600 pt-0.5"><b>เหตุผลขอลา:</b> "${escapeHtml(req.reason)}"</div>` : ''}
                             </div>
                             ${rejectionHtml}
                         </div>
@@ -1640,9 +1656,12 @@
 
         function openRejectModal(requestId, empName, leaveDetails) {
             currentRejectRequestId = requestId;
+            const req = pendingRequestsMap[requestId];
+            const nameToDisplay = empName || (req ? req.employee_name : '');
+            const detailsToDisplay = leaveDetails || (req ? `${translateLeaveType(req.leave_type)} • วันที่ ${req.start_date}` : '');
             document.getElementById('reject-modal-info').innerHTML = `
-                <div class="font-bold text-gray-800 text-xs">พนักงาน: ${empName}</div>
-                <div class="text-gray-500 text-[11px] mt-0.5">${leaveDetails}</div>
+                <div class="font-bold text-gray-800 text-xs">พนักงาน: ${escapeHtml(nameToDisplay)}</div>
+                <div class="text-gray-500 text-[11px] mt-0.5">${escapeHtml(detailsToDisplay)}</div>
             `;
             document.getElementById('reject-reason-input').value = '';
             document.getElementById('reject-modal').classList.remove('hidden-view');
