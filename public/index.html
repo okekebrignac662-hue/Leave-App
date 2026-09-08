@@ -1382,7 +1382,9 @@
             listEl.innerHTML = '<div class="text-center py-8 text-gray-400 text-sm">กำลังโหลดรายการ...</div>';
 
             try {
-                const res = await safeFetch('/api/leave-requests?status=PENDING');
+                const deptParam = currentUser && currentUser.department ? `&department=${encodeURIComponent(currentUser.department)}` : '';
+                const supParam = currentUser && currentUser.id ? `&supervisor_id=${encodeURIComponent(currentUser.id)}` : '';
+                const res = await safeFetch(`/api/leave-requests?status=PENDING${deptParam}${supParam}`);
                 const data = await res.json();
 
                 if (!data.success || !data.requests || data.requests.length === 0) {
@@ -1477,7 +1479,9 @@
             listEl.innerHTML = '<div class="text-center py-8 text-gray-400 text-sm">กำลังโหลดประวัติ...</div>';
 
             try {
-                const res = await safeFetch('/api/leave-requests?status=HISTORY');
+                const deptParam = currentUser && currentUser.department ? `&department=${encodeURIComponent(currentUser.department)}` : '';
+                const supParam = currentUser && currentUser.id ? `&supervisor_id=${encodeURIComponent(currentUser.id)}` : '';
+                const res = await safeFetch(`/api/leave-requests?status=HISTORY${deptParam}${supParam}`);
                 const data = await res.json();
 
                 if (!data.success || !data.requests || data.requests.length === 0) {

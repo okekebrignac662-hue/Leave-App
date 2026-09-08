@@ -680,19 +680,29 @@ app.delete('/api/leave-requests/:id', async (req, res) => {
 // - status=PENDING (For Supervisor pending queue)
 // - status=HISTORY (For Supervisor resolved history)
 // - employee_id=EMP-001 (For Employee history)
+// - department=Assembly (Filter by Department)
+// - supervisor_id=SUP-001 (Filter by Supervisor's Department)
 // ==========================================
 app.get('/api/leave-requests', async (req, res) => {
   try {
-    const { status, employee_id } = req.query;
+    const { status, employee_id, department, supervisor_id } = req.query;
+
+    let targetDept = (department || '').trim();
+    if (!targetDept && supervisor_id && pool) {
+      const supDeptRes = await query('SELECT department FROM employees WHERE UPPER(id) = $1', [supervisor_id.trim().toUpperCase()]);
+      if (supDeptRes.rows.length > 0) {
+        targetDept = supDeptRes.rows[0].department;
+      }
+    }
 
     if (!pool) {
       // Demo mock responses
-      const demoList = [
+      let demoList = [
         {
           id: 101,
           employee_id: 'EMP-001',
           employee_name: 'สมชาย ใจดี',
-          department: 'Assembly (ประกอบ)',
+          department: 'Assembly',
           leave_type: 'Vacation',
           start_date: '2026-09-15',
           end_date: '2026-09-15',
@@ -703,6 +713,9 @@ app.get('/api/leave-requests', async (req, res) => {
           created_at: new Date().toISOString()
         }
       ];
+      if (targetDept) {
+        demoList = demoList.filter(r => r.department && r.department.toLowerCase() === targetDept.toLowerCase());
+      }
       return res.json({ success: true, requests: demoList });
     }
 
@@ -727,7 +740,7 @@ app.get('/api/leave-requests', async (req, res) => {
         lr.rejection_reason,
         lr.created_at
       FROM leave_requests lr
-      LEFT JOIN employees e ON lr.employee_id = e.id
+      JOIN employees e ON lr.employee_id = e.id
       WHERE 1=1
     `;
     const params = [];
@@ -745,6 +758,11 @@ app.get('/api/leave-requests', async (req, res) => {
     if (employee_id) {
       params.push(employee_id.trim().toUpperCase());
       sql += ` AND UPPER(lr.employee_id) = $${params.length}`;
+    }
+
+    if (targetDept) {
+      params.push(targetDept.toUpperCase());
+      sql += ` AND UPPER(e.department) = $${params.length}`;
     }
 
     sql += ' ORDER BY lr.created_at DESC';
