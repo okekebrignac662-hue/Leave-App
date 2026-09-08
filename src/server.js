@@ -627,7 +627,13 @@ app.delete('/api/leave-requests/:id', async (req, res) => {
 
       const cleanEmpId = employeeId.trim().toUpperCase();
       const isOwner = leaveReq.employee_id.toUpperCase() === cleanEmpId;
-      const isSupervisor = cleanEmpId.startsWith('SUP');
+      let isSupervisor = cleanEmpId.startsWith('SUP');
+      if (!isSupervisor) {
+        const empRoleRes = await client.query('SELECT role FROM employees WHERE UPPER(id) = $1', [cleanEmpId]);
+        if (empRoleRes.rows.length > 0 && empRoleRes.rows[0].role === 'SUPERVISOR') {
+          isSupervisor = true;
+        }
+      }
       if (!isOwner && !isSupervisor) {
         await client.query('ROLLBACK');
         return res.status(403).json({ error: 'คุณไม่มีสิทธิ์ยกเลิกคำขอนี้' });
@@ -770,8 +776,15 @@ app.patch('/api/leave-requests/:id/status', async (req, res) => {
     const cleanStatus = status.toUpperCase();
     const supervisorId = (reviewedBy || 'SUP-001').trim().toUpperCase();
 
-    // Verify supervisor authorization (starts with SUP)
-    if (!supervisorId.startsWith('SUP')) {
+    // Verify supervisor authorization (starts with SUP or role is SUPERVISOR in DB)
+    let isAuthorizedSupervisor = supervisorId.startsWith('SUP');
+    if (!isAuthorizedSupervisor && pool) {
+      const supCheck = await query('SELECT role FROM employees WHERE UPPER(id) = $1', [supervisorId]);
+      if (supCheck.rows.length > 0 && supCheck.rows[0].role === 'SUPERVISOR') {
+        isAuthorizedSupervisor = true;
+      }
+    }
+    if (!isAuthorizedSupervisor) {
       return res.status(403).json({ error: 'เฉพาะหัวหน้างาน (Supervisor) เท่านั้นที่สามารถอนุมัติหรือปฏิเสธคำขอได้' });
     }
 
