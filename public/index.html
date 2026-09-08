@@ -19,27 +19,38 @@
 
     <div>
         <!-- Navbar -->
-        <nav id="navbar" class="bg-blue-900 text-white p-4 shadow-md flex justify-between items-center hidden-view sticky top-0 z-40">
+        <nav id="navbar" class="bg-slate-900/95 backdrop-blur-md text-white p-3.5 px-4 sm:px-6 shadow-md flex justify-between items-center hidden-view sticky top-0 z-40 border-b border-slate-800">
             <div class="flex items-center space-x-3">
-                <div class="bg-blue-700 p-1.5 rounded-lg">
-                    <svg class="w-5 h-5 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="bg-gradient-to-tr from-blue-600 to-indigo-600 p-2 rounded-xl shadow-md text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                     </svg>
                 </div>
-                <h1 class="text-lg font-semibold tracking-wide">Online Leave App</h1>
+                <div>
+                    <h1 class="text-base sm:text-lg font-bold tracking-tight">Online Leave App</h1>
+                    <p class="text-[10px] text-slate-400 font-light hidden sm:block">ระบบบริหารการลางานประจำแผนก</p>
+                </div>
             </div>
-            <div class="text-sm flex items-center space-x-3">
-                <span id="user-name-display" class="font-medium text-blue-200 text-xs sm:text-sm"></span>
-                <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg transition text-xs font-semibold shadow flex items-center space-x-1">
+            <div class="flex items-center space-x-3">
+                <div class="flex items-center space-x-2.5 bg-slate-800/80 border border-slate-700/60 px-3 py-1.5 rounded-xl text-xs">
+                    <div id="user-avatar-badge" class="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-inner">
+                        -
+                    </div>
+                    <div class="flex flex-col text-left">
+                        <span id="user-name-display" class="font-semibold text-slate-100 text-xs leading-none"></span>
+                        <span id="user-role-display" class="text-[10px] text-blue-300 font-medium leading-none mt-1"></span>
+                    </div>
+                </div>
+                <button onclick="logout()" class="bg-red-500/10 hover:bg-red-500 hover:text-white text-red-400 border border-red-500/20 px-3 py-1.5 rounded-xl transition text-xs font-semibold shadow-xs flex items-center space-x-1">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
                     </svg>
-                    <span>ออกจากระบบ</span>
+                    <span class="hidden sm:inline">ออกจากระบบ</span>
                 </button>
             </div>
         </nav>
 
-        <div class="max-w-md mx-auto mt-4 sm:mt-6 p-4">
+        <div class="max-w-md sm:max-w-xl md:max-w-2xl mx-auto mt-4 sm:mt-6 p-4 transition-all duration-300">
 
             <!-- 1. LOGIN VIEW -->
             <div id="login-view" class="relative flex flex-col items-center justify-center min-h-[78vh] py-6">
@@ -128,85 +139,177 @@
 
             <!-- 2. EMPLOYEE VIEW -->
             <div id="employee-view" class="hidden-view space-y-6">
-                <!-- Quota Card -->
-                <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-blue-500 space-y-3">
-                    <div class="flex justify-between items-center">
-                        <h2 class="text-sm font-semibold text-gray-800 flex items-center space-x-1.5">
-                            <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                            <span>โควตาของคุณ (My Quota)</span>
+                <!-- Quota Overview: 3 Metric Cards with Progress Gauges -->
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center px-1">
+                        <h2 class="text-sm font-bold text-gray-800 flex items-center space-x-2">
+                            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                            <span>โควตาวันลาของคุณ (My Quota Balance)</span>
                         </h2>
-                        <button onclick="loadEmployeeQuota()" class="text-xs text-blue-600 hover:text-blue-800">รีเฟรช</button>
+                        <button onclick="loadEmployeeQuota()" class="text-xs text-blue-600 hover:text-blue-800 flex items-center space-x-1 font-medium transition">
+                            <span>🔄 รีเฟรช</span>
+                        </button>
                     </div>
-                    <div class="flex justify-between text-sm items-center py-1 border-b border-gray-100">
-                        <span class="text-gray-600">ลาพักร้อน (Vacation)</span>
-                        <span id="quota-vacation" class="font-bold text-green-600">กำลังโหลด...</span>
-                    </div>
-                    <div class="flex justify-between text-sm items-center py-1 border-b border-gray-100">
-                        <span class="text-gray-600">ลากิจ (Personal)</span>
-                        <span id="quota-personal" class="font-bold text-yellow-600">กำลังโหลด...</span>
-                    </div>
-                    <div class="flex justify-between text-sm items-center py-1">
-                        <span class="text-gray-600">ลาป่วย (Sick Leave)</span>
-                        <span id="quota-sick" class="font-bold text-blue-600">กำลังโหลด...</span>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <!-- Vacation Card -->
+                        <div class="bg-white p-4 rounded-2xl shadow-xs border border-emerald-100 hover:shadow-md transition">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-xs font-semibold text-gray-600">ลาพักร้อน (Vacation)</span>
+                                <span class="text-lg">🏖️</span>
+                            </div>
+                            <div class="flex items-baseline space-x-1">
+                                <span id="quota-vac-rem" class="text-2xl font-extrabold text-emerald-600">--</span>
+                                <span class="text-xs text-gray-400">/ <span id="quota-vac-tot">--</span> วัน</span>
+                            </div>
+                            <div class="w-full bg-emerald-50 rounded-full h-2 mt-3 overflow-hidden">
+                                <div id="quota-vac-bar" class="bg-emerald-500 h-full rounded-full transition-all duration-700" style="width: 0%"></div>
+                            </div>
+                            <div class="flex justify-between text-[10px] text-gray-400 mt-1.5 font-medium">
+                                <span>เหลือใช้งาน</span>
+                                <span id="quota-vac-pct">--%</span>
+                            </div>
+                        </div>
+
+                        <!-- Personal Card -->
+                        <div class="bg-white p-4 rounded-2xl shadow-xs border border-amber-100 hover:shadow-md transition">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-xs font-semibold text-gray-600">ลากิจ (Personal)</span>
+                                <span class="text-lg">💼</span>
+                            </div>
+                            <div class="flex items-baseline space-x-1">
+                                <span id="quota-per-rem" class="text-2xl font-extrabold text-amber-600">--</span>
+                                <span class="text-xs text-gray-400">/ <span id="quota-per-tot">--</span> วัน</span>
+                            </div>
+                            <div class="w-full bg-amber-50 rounded-full h-2 mt-3 overflow-hidden">
+                                <div id="quota-per-bar" class="bg-amber-500 h-full rounded-full transition-all duration-700" style="width: 0%"></div>
+                            </div>
+                            <div class="flex justify-between text-[10px] text-gray-400 mt-1.5 font-medium">
+                                <span>เหลือใช้งาน</span>
+                                <span id="quota-per-pct">--%</span>
+                            </div>
+                        </div>
+
+                        <!-- Sick Card -->
+                        <div class="bg-white p-4 rounded-2xl shadow-xs border border-blue-100 hover:shadow-md transition">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-xs font-semibold text-gray-600">ลาป่วย (Sick Leave)</span>
+                                <span class="text-lg">🏥</span>
+                            </div>
+                            <div class="flex items-baseline space-x-1">
+                                <span id="quota-sic-rem" class="text-2xl font-extrabold text-blue-600">--</span>
+                                <span class="text-xs text-gray-400">/ <span id="quota-sic-tot">--</span> วัน</span>
+                            </div>
+                            <div class="w-full bg-blue-50 rounded-full h-2 mt-3 overflow-hidden">
+                                <div id="quota-sic-bar" class="bg-blue-500 h-full rounded-full transition-all duration-700" style="width: 0%"></div>
+                            </div>
+                            <div class="flex justify-between text-[10px] text-gray-400 mt-1.5 font-medium">
+                                <span>เหลือใช้งาน</span>
+                                <span id="quota-sic-pct">--%</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Request Leave Form -->
-                <div class="bg-white p-5 rounded-2xl shadow-sm">
-                    <h2 class="text-base font-semibold mb-4 border-b pb-2 text-gray-800 flex items-center space-x-2">
-                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                        <span>ขอลางาน (Request Leave)</span>
-                    </h2>
+                <div class="bg-white p-6 rounded-3xl shadow-xs border border-gray-100/90">
+                    <div class="flex items-center justify-between mb-4 border-b border-gray-100 pb-3">
+                        <h2 class="text-base font-bold text-gray-800 flex items-center space-x-2">
+                            <div class="w-7 h-7 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            </div>
+                            <span>ขอลางาน (Submit Leave Request)</span>
+                        </h2>
+                    </div>
+
                     <form id="leave-form" onsubmit="event.preventDefault(); submitLeaveRequest();" class="space-y-4">
                         <div>
-                            <label class="block text-xs font-medium text-gray-600 mb-1">ประเภทการลา (Type)</label>
-                            <select id="req-leave-type" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:border-blue-500 bg-white">
-                                <option value="Vacation">ลาพักร้อน (Vacation)</option>
-                                <option value="Personal">ลากิจ (Personal Leave)</option>
-                                <option value="Sick">ลาป่วย (Sick Leave - ไม่ติดโควตาแผนก)</option>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1.5">ประเภทการลา (Type of Leave)</label>
+                            <select id="req-leave-type" onchange="calculateRequestedDays()" class="w-full bg-gray-50/50 border border-gray-200 rounded-xl p-2.5 text-sm outline-none focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 transition">
+                                <option value="Vacation">🏖️ ลาพักร้อน (Vacation)</option>
+                                <option value="Personal">💼 ลากิจ (Personal Leave)</option>
+                                <option value="Sick">🏥 ลาป่วย (Sick Leave - ได้รับการยกเว้นโควตาแผนก)</option>
                             </select>
                         </div>
-                        <div class="grid grid-cols-2 gap-3">
+
+                        <div class="grid grid-cols-2 gap-3.5">
                             <div>
-                                <label class="block text-xs font-medium text-gray-600 mb-1">เริ่ม (Start)</label>
-                                <input type="date" id="req-start-date" required class="w-full border rounded-lg p-2 text-xs sm:text-sm outline-none focus:border-blue-500">
+                                <label class="block text-xs font-semibold text-gray-700 mb-1.5">วันเริ่มต้น (Start)</label>
+                                <input type="date" id="req-start-date" required onchange="calculateRequestedDays()" class="w-full bg-gray-50/50 border border-gray-200 rounded-xl p-2.5 text-xs sm:text-sm outline-none focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 transition">
                             </div>
                             <div>
-                                <label class="block text-xs font-medium text-gray-600 mb-1">ถึง (End)</label>
-                                <input type="date" id="req-end-date" required class="w-full border rounded-lg p-2 text-xs sm:text-sm outline-none focus:border-blue-500">
+                                <label class="block text-xs font-semibold text-gray-700 mb-1.5">วันสิ้นสุด (End)</label>
+                                <input type="date" id="req-end-date" required onchange="calculateRequestedDays()" class="w-full bg-gray-50/50 border border-gray-200 rounded-xl p-2.5 text-xs sm:text-sm outline-none focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 transition">
                             </div>
                         </div>
+
+                        <!-- Dynamic Days Calculation Chip -->
+                        <div id="date-calc-chip" class="hidden bg-blue-50/80 border border-blue-200/70 p-3 rounded-2xl flex items-center justify-between text-xs text-blue-900 transition-all duration-300">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-base">🗓️</span>
+                                <div>
+                                    <span class="font-medium">รวมระยะเวลาที่ขอลา:</span>
+                                    <b id="date-calc-days" class="text-blue-700 font-bold ml-1">- วัน</b>
+                                </div>
+                            </div>
+                            <span id="date-calc-status" class="text-[11px] px-2.5 py-0.5 rounded-full font-medium bg-blue-100 text-blue-800">
+                                อยู่ในเกณฑ์
+                            </span>
+                        </div>
+
                         <div>
-                            <label class="block text-xs font-medium text-gray-600 mb-1">เหตุผล (Reason)</label>
-                            <textarea id="req-reason" rows="2" class="w-full border rounded-lg p-2.5 outline-none text-sm focus:border-blue-500" placeholder="ระบุรายละเอียดเพิ่มเติม (ถ้ามี)..."></textarea>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1.5">เหตุผลการลางาน (Reason)</label>
+                            <textarea id="req-reason" rows="2" class="w-full bg-gray-50/50 border border-gray-200 rounded-xl p-3 outline-none text-sm focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 transition placeholder:text-gray-400" placeholder="ระบุรายละเอียดเพิ่มเติม (ถ้ามี)..."></textarea>
                         </div>
-                        <button type="submit" id="btn-submit-req" class="w-full bg-blue-600 text-white font-semibold py-2.5 rounded-lg mt-2 hover:bg-blue-700 shadow-md transition active:scale-98 flex items-center justify-center space-x-2">
-                            <span>ส่งคำขอ (Submit Request)</span>
+
+                        <button type="submit" id="btn-submit-req" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3 rounded-xl shadow-md shadow-blue-500/25 hover:shadow-lg hover:shadow-blue-500/35 transition-all duration-200 transform active:scale-[0.98] flex items-center justify-center space-x-2">
+                            <span>ส่งคำขอลางาน (Submit Request)</span>
+                            <svg class="w-4 h-4 text-blue-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                            </svg>
                         </button>
                     </form>
                 </div>
 
                 <!-- My Leave History -->
-                <div class="bg-white p-5 rounded-2xl shadow-sm space-y-3">
-                    <div class="flex justify-between items-center border-b pb-2">
-                        <h2 class="text-sm font-semibold text-gray-800">ประวัติการขอลา (My Requests)</h2>
-                        <span id="history-count" class="text-xs text-gray-500">0 รายการ</span>
+                <div class="bg-white p-6 rounded-3xl shadow-xs border border-gray-100/90 space-y-3">
+                    <div class="flex justify-between items-center border-b border-gray-100 pb-3">
+                        <div class="flex items-center space-x-2">
+                            <h2 class="text-base font-bold text-gray-800">ประวัติการขอลา (My Leave History)</h2>
+                            <span id="history-count" class="bg-gray-100 text-gray-600 text-xs px-2.5 py-0.5 rounded-full font-semibold">0 รายการ</span>
+                        </div>
                     </div>
-                    <div id="my-requests-list" class="space-y-3">
-                        <p class="text-xs text-gray-400 text-center py-4">ยังไม่มีประวัติการขอลา</p>
+                    <div id="my-requests-list" class="space-y-3 pt-1">
+                        <p class="text-xs text-gray-400 text-center py-6">ยังไม่มีประวัติการขอลา</p>
                     </div>
                 </div>
             </div>
 
             <!-- 3. SUPERVISOR VIEW -->
             <div id="supervisor-view" class="hidden-view space-y-6">
-                <div class="bg-white p-4 rounded-2xl shadow-sm border-l-4 border-yellow-500 flex justify-between items-center">
-                    <div>
-                        <h2 class="text-base font-semibold text-gray-800">รออนุมัติ (Pending Approvals)</h2>
-                        <p id="pending-subtitle" class="text-xs text-gray-500">กำลังตรวจสอบรายการที่ค้าง...</p>
+                <!-- Executive Summary Cards -->
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="bg-white p-4 rounded-2xl shadow-xs border border-amber-100">
+                        <span class="text-[11px] font-semibold text-gray-500 block">รออนุมัติ (Pending)</span>
+                        <span id="sup-stat-pending" class="text-2xl font-extrabold text-amber-600 mt-0.5 block">0</span>
                     </div>
-                    <button onclick="loadPendingRequests()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded text-xs font-medium transition">
-                        🔄 รีเฟรช
+                    <div class="bg-white p-4 rounded-2xl shadow-xs border border-blue-100">
+                        <span class="text-[11px] font-semibold text-gray-500 block">แผนก (Dept)</span>
+                        <span id="sup-stat-dept" class="text-base font-bold text-blue-900 mt-1 block truncate">Assembly</span>
+                    </div>
+                    <div class="bg-white p-4 rounded-2xl shadow-xs border border-emerald-100">
+                        <span class="text-[11px] font-semibold text-gray-500 block">โควตาลารายวัน</span>
+                        <span id="sup-stat-quota" class="text-base font-bold text-emerald-700 mt-1 block">สูงสุด 2 คน/วัน</span>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-xs border-l-4 border-amber-500 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-base font-bold text-gray-800">รายการคำขอรอการตรวจสอบ</h2>
+                        <p id="pending-subtitle" class="text-xs text-gray-500 mt-0.5">กำลังตรวจสอบรายการที่ค้าง...</p>
+                    </div>
+                    <button onclick="loadPendingRequests()" class="bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 px-3.5 py-1.5 rounded-xl text-xs font-medium transition flex items-center space-x-1 shadow-2xs">
+                        <span>🔄 รีเฟรช</span>
                     </button>
                 </div>
 
@@ -295,6 +398,41 @@
             }
         });
 
+        // Calculate requested leave days live on input change
+        function calculateRequestedDays() {
+            const startVal = document.getElementById('req-start-date').value;
+            const endVal = document.getElementById('req-end-date').value;
+            const chip = document.getElementById('date-calc-chip');
+            const daysText = document.getElementById('date-calc-days');
+            const statusBadge = document.getElementById('date-calc-status');
+
+            if (!startVal || !endVal) {
+                chip.classList.add('hidden');
+                return;
+            }
+
+            const start = new Date(startVal);
+            const end = new Date(endVal);
+
+            if (start > end) {
+                chip.classList.remove('hidden');
+                chip.className = 'bg-red-50 border border-red-200 p-3 rounded-2xl flex items-center justify-between text-xs text-red-700';
+                daysText.innerText = 'วันเริ่มต้นต้องไม่เกินวันสิ้นสุด';
+                statusBadge.className = 'text-[11px] px-2 py-0.5 rounded-full font-medium bg-red-100 text-red-800';
+                statusBadge.innerText = '⚠️ วันที่ไม่ถูกต้อง';
+                return;
+            }
+
+            const diffTime = Math.abs(end - start);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+            chip.classList.remove('hidden');
+            chip.className = 'bg-blue-50/90 border border-blue-200/70 p-3 rounded-2xl flex items-center justify-between text-xs text-blue-900';
+            daysText.innerText = `${diffDays} วัน`;
+            statusBadge.className = 'text-[11px] px-2.5 py-0.5 rounded-full font-medium bg-blue-100 text-blue-800';
+            statusBadge.innerText = '✓ ระบุวันที่เรียบร้อย';
+        }
+
         // Login Handler
         async function handleLogin() {
             const empIdInput = document.getElementById('emp-id').value.trim();
@@ -342,12 +480,18 @@
                 document.getElementById('login-view').classList.add('hidden-view');
                 document.getElementById('navbar').classList.remove('hidden-view');
 
-                const displayName = `${currentUser.name} (${currentUser.id}) ${currentUser.isSupervisor ? '👑 หัวหน้า' : ''}`;
-                document.getElementById('user-name-display').innerText = displayName;
+                // Navbar Profile Display
+                const initialLetter = (currentUser.name || currentUser.id).charAt(0);
+                document.getElementById('user-avatar-badge').innerText = initialLetter;
+                document.getElementById('user-name-display').innerText = currentUser.name;
+                document.getElementById('user-role-display').innerText = currentUser.isSupervisor 
+                    ? `👑 หัวหน้างาน • แผนก ${currentUser.department}` 
+                    : `พนักงาน • แผนก ${currentUser.department}`;
 
                 if (currentUser.isSupervisor) {
                     document.getElementById('supervisor-view').classList.remove('hidden-view');
                     document.getElementById('employee-view').classList.add('hidden-view');
+                    document.getElementById('sup-stat-dept').innerText = currentUser.department;
                     loadPendingRequests();
                 } else {
                     document.getElementById('employee-view').classList.remove('hidden-view');
@@ -363,6 +507,7 @@
                     document.getElementById('req-end-date').value = tomorrowStr;
                     document.getElementById('req-start-date').min = new Date().toISOString().split('T')[0];
                     document.getElementById('req-end-date').min = new Date().toISOString().split('T')[0];
+                    calculateRequestedDays();
                 }
 
                 showToast(`ยินดีต้อนรับคุณ ${currentUser.name}`, 'success');
@@ -390,7 +535,7 @@
             showToast('ออกจากระบบเรียบร้อยแล้ว', 'info');
         }
 
-        // Load Employee Quotas
+        // Load Employee Quotas with Animated Progress Gauges
         async function loadEmployeeQuota() {
             if (!currentUser) return;
             try {
@@ -398,9 +543,27 @@
                 const data = await res.json();
                 if (data.success && data.quota) {
                     const q = data.quota;
-                    document.getElementById('quota-vacation').innerText = `เหลือ ${q.vacation.remaining}/${q.vacation.total} วัน`;
-                    document.getElementById('quota-personal').innerText = `เหลือ ${q.personal.remaining}/${q.personal.total} วัน`;
-                    document.getElementById('quota-sick').innerText = `เหลือ ${q.sick.remaining}/${q.sick.total} วัน`;
+                    
+                    // Vacation Gauge
+                    document.getElementById('quota-vac-rem').innerText = q.vacation.remaining;
+                    document.getElementById('quota-vac-tot').innerText = q.vacation.total;
+                    const vacPct = Math.min(100, Math.round((q.vacation.remaining / (q.vacation.total || 1)) * 100));
+                    document.getElementById('quota-vac-bar').style.width = `${vacPct}%`;
+                    document.getElementById('quota-vac-pct').innerText = `${vacPct}%`;
+
+                    // Personal Gauge
+                    document.getElementById('quota-per-rem').innerText = q.personal.remaining;
+                    document.getElementById('quota-per-tot').innerText = q.personal.total;
+                    const perPct = Math.min(100, Math.round((q.personal.remaining / (q.personal.total || 1)) * 100));
+                    document.getElementById('quota-per-bar').style.width = `${perPct}%`;
+                    document.getElementById('quota-per-pct').innerText = `${perPct}%`;
+
+                    // Sick Gauge
+                    document.getElementById('quota-sic-rem').innerText = q.sick.remaining;
+                    document.getElementById('quota-sic-tot').innerText = q.sick.total;
+                    const sicPct = Math.min(100, Math.round((q.sick.remaining / (q.sick.total || 1)) * 100));
+                    document.getElementById('quota-sic-bar').style.width = `${sicPct}%`;
+                    document.getElementById('quota-sic-pct').innerText = `${sicPct}%`;
                 }
             } catch (err) {
                 console.error('Fetch quota error:', err);
@@ -462,11 +625,11 @@
                 showToast('เกิดข้อผิดพลาดในการส่งคำขอ', 'error');
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = '<span>ส่งคำขอ (Submit Request)</span>';
+                btn.innerHTML = '<span>ส่งคำขอลางาน (Submit Request)</span>';
             }
         }
 
-        // Load Employee Requests History
+        // Load Employee Requests History (Modern Timeline Cards)
         async function loadMyLeaveRequests() {
             if (!currentUser) return;
             const listEl = document.getElementById('my-requests-list');
@@ -475,7 +638,7 @@
                 const data = await res.json();
 
                 if (!data.success || !data.requests || data.requests.length === 0) {
-                    listEl.innerHTML = '<p class="text-xs text-gray-400 text-center py-4">ยังไม่มีประวัติการขอลา</p>';
+                    listEl.innerHTML = '<p class="text-xs text-gray-400 text-center py-6">ยังไม่มีประวัติการขอลา</p>';
                     document.getElementById('history-count').innerText = '0 รายการ';
                     return;
                 }
@@ -483,23 +646,31 @@
                 document.getElementById('history-count').innerText = `${data.requests.length} รายการ`;
 
                 listEl.innerHTML = data.requests.map(req => {
-                    let statusBadge = '<span class="bg-yellow-100 text-yellow-800 text-[11px] px-2 py-0.5 rounded-full font-medium">รออนุมัติ (Pending)</span>';
+                    let statusBadge = '<span class="bg-amber-50 text-amber-700 border border-amber-200/80 text-[11px] px-2.5 py-0.5 rounded-full font-semibold flex items-center space-x-1"><span>⏳</span><span>รออนุมัติ</span></span>';
                     if (req.status === 'APPROVED') {
-                        statusBadge = '<span class="bg-green-100 text-green-800 text-[11px] px-2 py-0.5 rounded-full font-medium">✓ อนุมัติแล้ว</span>';
+                        statusBadge = '<span class="bg-emerald-50 text-emerald-700 border border-emerald-200/80 text-[11px] px-2.5 py-0.5 rounded-full font-semibold flex items-center space-x-1"><span>✓</span><span>อนุมัติแล้ว</span></span>';
                     } else if (req.status === 'REJECTED') {
-                        statusBadge = '<span class="bg-red-100 text-red-800 text-[11px] px-2 py-0.5 rounded-full font-medium">✕ ไม่อนุมัติ</span>';
+                        statusBadge = '<span class="bg-rose-50 text-rose-700 border border-rose-200/80 text-[11px] px-2.5 py-0.5 rounded-full font-semibold flex items-center space-x-1"><span>✕</span><span>ไม่อนุมัติ</span></span>';
                     }
 
+                    const typeIcon = req.leave_type === 'Sick' ? '🏥' : (req.leave_type === 'Personal' ? '💼' : '🏖️');
+
                     return `
-                        <div class="border rounded-xl p-3 text-xs space-y-1.5 bg-gray-50/50">
+                        <div class="border border-gray-100 rounded-2xl p-4 text-xs space-y-2 bg-gradient-to-r from-gray-50/60 to-white hover:border-blue-200 transition">
                             <div class="flex justify-between items-center">
-                                <span class="font-semibold text-gray-800">${translateLeaveType(req.leave_type)} (${req.days_count} วัน)</span>
+                                <div class="flex items-center space-x-1.5 font-bold text-gray-800 text-sm">
+                                    <span>${typeIcon}</span>
+                                    <span>${translateLeaveType(req.leave_type)}</span>
+                                    <span class="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg font-medium">${req.days_count} วัน</span>
+                                </div>
                                 ${statusBadge}
                             </div>
-                            <div class="text-gray-600">
-                                📅 <b>วันที่:</b> ${req.start_date} ${req.start_date !== req.end_date ? 'ถึง ' + req.end_date : ''}
+                            <div class="text-gray-600 flex items-center space-x-1.5 text-xs">
+                                <span>📅</span>
+                                <span><b>ช่วงวันที่:</b> ${req.start_date} ${req.start_date !== req.end_date ? 'ถึง ' + req.end_date : ''}</span>
                             </div>
-                            ${req.reason ? `<div class="text-gray-500 italic">💬 "${req.reason}"</div>` : ''}
+                            ${req.reason ? `<div class="text-gray-500 italic bg-white p-2.5 rounded-xl border border-gray-100 text-xs">💬 "${req.reason}"</div>` : ''}
+                            ${req.reviewed_by ? `<div class="text-[11px] text-gray-400 text-right">พิจารณาโดย: ${req.reviewed_by}</div>` : ''}
                         </div>
                     `;
                 }).join('');
@@ -509,59 +680,78 @@
             }
         }
 
-        // Load Pending Requests for Supervisor
+        // Load Pending Requests for Supervisor (Executive Approvals Dashboard)
         async function loadPendingRequests() {
             const listEl = document.getElementById('supervisor-pending-list');
             const subtitleEl = document.getElementById('pending-subtitle');
+            const statPendingEl = document.getElementById('sup-stat-pending');
 
-            listEl.innerHTML = '<div class="text-center py-6 text-gray-400 text-sm">กำลังโหลดรายการ...</div>';
+            listEl.innerHTML = '<div class="text-center py-8 text-gray-400 text-sm">กำลังโหลดรายการ...</div>';
 
             try {
                 const res = await fetch('/api/leave-requests?status=PENDING');
                 const data = await res.json();
 
                 if (!data.success || !data.requests || data.requests.length === 0) {
-                    subtitleEl.innerText = 'ไม่มีรายการรออนุมัติในขณะนี้ (0 items pending)';
+                    if (statPendingEl) statPendingEl.innerText = '0';
+                    subtitleEl.innerText = 'ไม่มีคำขอลางานค้างอยู่ (0 items pending)';
                     listEl.innerHTML = `
-                        <div class="bg-white p-8 rounded-2xl shadow-sm text-center">
-                            <div class="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-2">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <div class="bg-white p-8 rounded-3xl shadow-xs text-center border border-gray-100">
+                            <div class="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                             </div>
-                            <p class="text-sm font-semibold text-gray-700">ไม่มีคำขอลางานค้างอยู่</p>
+                            <p class="text-sm font-bold text-gray-800">ไม่มีคำขอลางานค้างอยู่</p>
                             <p class="text-xs text-gray-400 mt-1">คำขอทั้งหมดได้รับการตรวจสอบเรียบร้อยแล้ว</p>
                         </div>
                     `;
                     return;
                 }
 
+                if (statPendingEl) statPendingEl.innerText = data.requests.length;
                 subtitleEl.innerText = `มี ${data.requests.length} รายการที่รอการตรวจสอบ (${data.requests.length} items pending)`;
 
                 listEl.innerHTML = data.requests.map(req => {
                     const typeColor = req.leave_type === 'Sick' 
-                        ? 'bg-red-100 text-red-800' 
-                        : (req.leave_type === 'Personal' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800');
+                        ? 'bg-rose-50 text-rose-700 border border-rose-200/70' 
+                        : (req.leave_type === 'Personal' ? 'bg-amber-50 text-amber-700 border border-amber-200/70' : 'bg-blue-50 text-blue-700 border border-blue-200/70');
+
+                    const typeIcon = req.leave_type === 'Sick' ? '🏥' : (req.leave_type === 'Personal' ? '💼' : '🏖️');
+                    const initialLetter = (req.employee_name || req.employee_id).charAt(0);
 
                     return `
-                        <div id="request-card-${req.id}" class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 transition hover:shadow-md">
-                            <div class="flex justify-between items-start mb-2">
-                                <div>
-                                    <h3 class="font-semibold text-blue-900 text-base">${req.employee_name}</h3>
-                                    <p class="text-xs text-gray-500">${req.department} (${req.employee_id})</p>
+                        <div id="request-card-${req.id}" class="bg-white p-5 sm:p-6 rounded-3xl shadow-xs border border-gray-100 hover:shadow-md transition duration-200">
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold flex items-center justify-center text-sm shadow-md">
+                                        ${initialLetter}
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold text-gray-900 text-base leading-tight">${req.employee_name}</h3>
+                                        <p class="text-xs text-gray-500 mt-0.5">${req.department} • <span class="font-mono">${req.employee_id}</span></p>
+                                    </div>
                                 </div>
-                                <span class="${typeColor} text-xs px-2.5 py-1 rounded-full font-medium">
-                                    ${translateLeaveType(req.leave_type)}
+                                <span class="${typeColor} text-xs px-3 py-1 rounded-full font-semibold flex items-center space-x-1">
+                                    <span>${typeIcon}</span>
+                                    <span>${translateLeaveType(req.leave_type)}</span>
                                 </span>
                             </div>
-                            <div class="text-xs sm:text-sm text-gray-700 space-y-1 mb-4 bg-gray-50 p-3 rounded-xl">
-                                <p><b>Date:</b> ${req.start_date} ${req.start_date !== req.end_date ? 'ถึง ' + req.end_date : ''} (${req.days_count} วัน)</p>
-                                <p><b>Reason:</b> ${req.reason || '<span class="text-gray-400">ไม่ได้ระบุเหตุผล</span>'}</p>
+
+                            <div class="text-xs text-gray-700 space-y-1.5 mb-4 bg-gray-50/80 border border-gray-100 p-3.5 rounded-2xl">
+                                <div class="flex items-center justify-between">
+                                    <span>📅 <b>ช่วงวันที่ขอลา:</b> ${req.start_date} ${req.start_date !== req.end_date ? 'ถึง ' + req.end_date : ''}</span>
+                                    <span class="font-bold text-blue-700 bg-white px-2.5 py-0.5 rounded-lg border border-gray-200/60 shadow-2xs">${req.days_count} วัน</span>
+                                </div>
+                                <div class="text-gray-600 pt-1">
+                                    <b>เหตุผล:</b> ${req.reason ? `"${req.reason}"` : '<span class="text-gray-400 italic">ไม่ได้ระบุเหตุผล</span>'}
+                                </div>
                             </div>
-                            <div class="flex space-x-3">
-                                <button onclick="reviewRequest(${req.id}, 'APPROVED')" class="flex-1 bg-green-500 text-white py-2 rounded-lg font-medium text-xs sm:text-sm hover:bg-green-600 shadow transition active:scale-95 flex items-center justify-center space-x-1">
+
+                            <div class="flex space-x-3 pt-1">
+                                <button onclick="reviewRequest(${req.id}, 'APPROVED')" class="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white py-2.5 rounded-xl font-semibold text-xs sm:text-sm shadow-md shadow-emerald-600/20 hover:shadow-lg hover:shadow-emerald-600/30 transition active:scale-95 flex items-center justify-center space-x-1.5">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                                     <span>Approve (อนุมัติ)</span>
                                 </button>
-                                <button onclick="reviewRequest(${req.id}, 'REJECTED')" class="flex-1 bg-red-500 text-white py-2 rounded-lg font-medium text-xs sm:text-sm hover:bg-red-600 shadow transition active:scale-95 flex items-center justify-center space-x-1">
+                                <button onclick="reviewRequest(${req.id}, 'REJECTED')" class="flex-1 bg-white hover:bg-rose-50 border border-rose-200 text-rose-600 hover:text-rose-700 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition active:scale-95 flex items-center justify-center space-x-1.5">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                                     <span>Reject (ไม่อนุมัติ)</span>
                                 </button>
@@ -584,7 +774,7 @@
             }
 
             const card = document.getElementById(`request-card-${requestId}`);
-            if (card) card.style.opacity = '0.5';
+            if (card) card.style.opacity = '0.4';
 
             try {
                 const res = await fetch(`/api/leave-requests/${requestId}/status`, {
