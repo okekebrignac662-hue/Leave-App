@@ -42,6 +42,12 @@ async function runTests() {
     }
   }
 
+  // Clean up any test records from prior runs to ensure idempotent testing
+  const { pool } = require('../src/db');
+  if (pool) {
+    await pool.query("DELETE FROM leave_requests WHERE start_date >= '2028-01-01'").catch(() => {});
+  }
+
   // 1. Health check
   await test('GET /api/health returns 200 OK', async () => {
     const res = await request({ hostname: 'localhost', port: PORT, path: '/api/health', method: 'GET' });
@@ -146,6 +152,15 @@ async function runTests() {
     }
   });
 
+  let createdRequestId = null;
+  const now = Date.now();
+  const randYear = 2028 + (now % 10);
+  const randMonth = String((Math.floor(now / 1000) % 12) + 1).padStart(2, '0');
+  const randDay1 = String((Math.floor(now / 100) % 20) + 1).padStart(2, '0');
+  const randDay2 = String((Math.floor(now / 100) % 20) + 2).padStart(2, '0');
+  const date1 = `${randYear}-${randMonth}-${randDay1}`;
+  const date2 = `${randYear}-${randMonth}-${randDay2}`;
+
   // 6. Leave Request Submission
   await test('POST /api/leave-requests creates a pending leave request', async () => {
     const res = await request({
@@ -155,16 +170,17 @@ async function runTests() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
     }, {
-      employeeId: 'EMP-003',
+      employeeId: 'EMP-004',
       leaveType: 'Vacation',
-      startDate: '2026-10-01',
-      endDate: '2026-10-01',
+      startDate: date1,
+      endDate: date1,
       reason: 'ไปพักผ่อนต่างจังหวัด'
     });
 
     if (res.status !== 201 && res.status !== 200) {
       throw new Error(`Failed to create request: ${JSON.stringify(res.data)}`);
     }
+    createdRequestId = res.data.request.id;
   });
 
   // 6.1 Hourly Leave Request Submission
@@ -176,9 +192,9 @@ async function runTests() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
     }, {
-      employeeId: 'EMP-002',
+      employeeId: 'EMP-004',
       leaveType: 'Personal',
-      startDate: '2026-10-20',
+      startDate: date2,
       durationType: 'HOURLY',
       startTime: '10:00',
       endTime: '11:00',
@@ -210,10 +226,11 @@ async function runTests() {
 
   // 8. Supervisor Review API (Approve)
   await test('PATCH /api/leave-requests/:id/status allows supervisor to approve', async () => {
+    const targetId = createdRequestId || 1;
     const res = await request({
       hostname: 'localhost',
       port: PORT,
-      path: '/api/leave-requests/1/status',
+      path: `/api/leave-requests/${targetId}/status`,
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' }
     }, {
@@ -228,10 +245,11 @@ async function runTests() {
 
   // 9. Supervisor Review API unauthorized check
   await test('PATCH /api/leave-requests/:id/status rejects non-supervisor review', async () => {
+    const targetId = createdRequestId || 1;
     const res = await request({
       hostname: 'localhost',
       port: PORT,
-      path: '/api/leave-requests/1/status',
+      path: `/api/leave-requests/${targetId}/status`,
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' }
     }, {

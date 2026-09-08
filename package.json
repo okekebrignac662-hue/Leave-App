@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "init-db": "node src/initDb.js"
+    "init-db": "node src/initDb.js",
+    "test": "node test/quota-logic.test.js && node test/concurrency.test.js && node test/api.test.js && node test/system-audit.test.js"
   },
   "keywords": ["leave", "management", "express", "postgresql", "supabase", "render"],
   "author": "",

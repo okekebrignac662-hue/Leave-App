@@ -1,7 +1,10 @@
+// Enforce Asia/Bangkok (UTC+7) across entire Node.js runtime
+process.env.TZ = 'Asia/Bangkok';
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { pool, query } = require('./db');
+const { pool, query, getClient } = require('./db');
 require('dotenv').config();
 
 const app = express();
@@ -11,6 +14,18 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '..', 'public')));
+
+// Lightweight Ping & Keep-Alive endpoints (for UptimeRobot / Cold-Start prevention)
+app.get('/ping', (req, res) => res.status(200).send('pong'));
+app.get('/api/ping', (req, res) => {
+  res.json({
+    pong: true,
+    status: 'ALIVE',
+    serverTime: new Date().toISOString(),
+    thaiTime: new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }),
+    timezone: 'Asia/Bangkok'
+  });
+});
 
 // Helper: Normalize Leave Type to standard key
 function normalizeLeaveType(type) {
@@ -364,6 +379,38 @@ app.post('/api/leave-requests', async (req, res) => {
     const normalizedType = normalizeLeaveType(leaveType);
     const cleanEmpId = employeeId.trim().toUpperCase();
 
+    // Business Rule Validation: Past Date Restrictions
+    const todayBangkok = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Bangkok',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).format(new Date());
+
+    if (normalizedType !== 'Sick') {
+      if (startDate < todayBangkok) {
+        return res.status(400).json({
+          error: 'การลาพักร้อนและลากิจต้องยื่นล่วงหน้า ไม่สามารถเลือกวันที่ในอดีตได้'
+        });
+      }
+    } else {
+      // Sick leave: allow maximum 3 calendar days in the past
+      const threeDaysAgo = new Date();
+      threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+      const minSickDate = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Bangkok',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).format(threeDaysAgo);
+
+      if (startDate < minSickDate) {
+        return res.status(400).json({
+          error: 'การยื่นขอลาป่วยย้อนหลังสามารถทำได้ไม่เกิน 3 วันทำการ'
+        });
+      }
+    }
+
     if (!pool) {
       // In case DB is not yet hooked up, simulate success
       return res.status(201).json({
@@ -386,98 +433,145 @@ app.post('/api/leave-requests', async (req, res) => {
       });
     }
 
-    // 1. Fetch employee & department
-    const empRes = await query('SELECT * FROM employees WHERE UPPER(id) = $1', [cleanEmpId]);
-    let department = 'Assembly';
-    let empRecord = null;
-    if (empRes.rows.length > 0) {
-      empRecord = empRes.rows[0];
-      department = empRecord.department;
-    }
+    // =========================================================================
+    // RACE CONDITION & ATOMIC TRANSACTION PROTECTION
+    // Use an exclusive transaction with FOR UPDATE row locking on quota_settings
+    // This serializes concurrent requests for the same department, guaranteeing
+    // that two simultaneous requests cannot both read quota=1 and both pass!
+    // =========================================================================
+    const client = await getClient();
+    try {
+      await client.query('BEGIN');
 
-    // 2. Check employee individual remaining balance (Vacation & Personal)
-    if (normalizedType !== 'Sick' && empRecord) {
-      const currentYear = new Date().getFullYear();
-      const usedRes = await query(
-        `SELECT COALESCE(SUM(days_count), 0) as used
+      // 1. Fetch employee & department
+      const empRes = await client.query('SELECT * FROM employees WHERE UPPER(id) = $1', [cleanEmpId]);
+      let department = 'Assembly';
+      let empRecord = null;
+      if (empRes.rows.length > 0) {
+        empRecord = empRes.rows[0];
+        department = empRecord.department;
+      }
+
+      // 2. Duplicate Request / Double-Click Guard:
+      // Prevent accidental duplicate submission for overlapping dates
+      const dupRes = await client.query(
+        `SELECT id, leave_type, TO_CHAR(start_date, 'YYYY-MM-DD') as start_date, 
+                TO_CHAR(end_date, 'YYYY-MM-DD') as end_date, status
          FROM leave_requests
          WHERE UPPER(employee_id) = $1
-           AND leave_type = $2
-           AND status IN ('APPROVED', 'PENDING')
-           AND EXTRACT(YEAR FROM start_date) = $3`,
-        [cleanEmpId, normalizedType, currentYear]
+           AND status IN ('PENDING', 'APPROVED')
+           AND start_date <= $2 AND end_date >= $3
+         LIMIT 1`,
+        [cleanEmpId, actualEndDate, startDate]
       );
-      const used = parseFloat(usedRes.rows[0].used || 0);
-      const totalAllowed = normalizedType === 'Vacation' ? empRecord.vacation_quota : empRecord.personal_quota;
-      if (used + daysCount > totalAllowed) {
+
+      if (dupRes.rows.length > 0) {
+        await client.query('ROLLBACK');
+        const dup = dupRes.rows[0];
         return res.status(400).json({
-          error: `โควตาวันลาของคุณไม่เพียงพอ (เหลือ ${Math.max(0, Math.round((totalAllowed - used) * 100) / 100)} วัน, ต้องการขอ ${daysCount} วัน)`
+          error: `⚠️ คุณมีคำขอลางาน (${dup.leave_type}) ในช่วงวันที่ดังกล่าวอยู่แล้ว (${dup.start_date} ถึง ${dup.end_date}, สถานะ: ${dup.status}) กรุณาอย่าส่งซ้ำ`
         });
       }
-    }
 
-    // 3. Check Daily Quota from Quota_Settings (BLOCK IF FULL, EXCEPT SICK LEAVE)
-    if (normalizedType !== 'Sick') {
-      const quotaRes = await query('SELECT max_daily_leaves FROM quota_settings WHERE department = $1', [department]);
-      const maxDailyLeaves = quotaRes.rows.length > 0 ? quotaRes.rows[0].max_daily_leaves : 2;
-
-      const requestedDates = getDatesInRange(startDate, actualEndDate);
-
-      for (const date of requestedDates) {
-        const countRes = await query(
-          `SELECT COUNT(DISTINCT lr.employee_id) as active_count
-           FROM leave_requests lr
-           JOIN employees e ON lr.employee_id = e.id
-           WHERE e.department = $1
-             AND lr.status IN ('APPROVED', 'PENDING')
-             AND lr.leave_type != 'Sick'
-             AND $2 BETWEEN lr.start_date AND lr.end_date
-             AND UPPER(lr.employee_id) != $3`,
-          [department, date, cleanEmpId]
+      // 3. Check employee individual remaining balance (Vacation & Personal)
+      if (normalizedType !== 'Sick' && empRecord) {
+        const currentYear = new Date().getFullYear();
+        const usedRes = await client.query(
+          `SELECT COALESCE(SUM(days_count), 0) as used
+           FROM leave_requests
+           WHERE UPPER(employee_id) = $1
+             AND leave_type = $2
+             AND status IN ('APPROVED', 'PENDING')
+             AND EXTRACT(YEAR FROM start_date) = $3`,
+          [cleanEmpId, normalizedType, currentYear]
         );
-
-        const currentOnLeave = parseInt(countRes.rows[0].active_count, 10);
-
-        if (currentOnLeave >= maxDailyLeaves) {
+        const used = parseFloat(usedRes.rows[0].used || 0);
+        const totalAllowed = normalizedType === 'Vacation' ? empRecord.vacation_quota : empRecord.personal_quota;
+        if (used + daysCount > totalAllowed) {
+          await client.query('ROLLBACK');
           return res.status(400).json({
-            error: `⚠️ โควตาลางานของแผนก ${department} เต็มแล้วในวันที่ ${date} (จำกัดไม่เกิน ${maxDailyLeaves} คน/วัน) ยกเว้นกรณีลาป่วยเท่านั้น`,
-            blockedDate: date,
-            maxDailyLeaves,
-            currentOnLeave
+            error: `โควตาวันลาของคุณไม่เพียงพอ (เหลือ ${Math.max(0, Math.round((totalAllowed - used) * 100) / 100)} วัน, ต้องการขอ ${daysCount} วัน)`
           });
         }
       }
+
+      // 4. Daily Department Quota Check with ROW-LEVEL LOCK
+      // "SELECT ... FOR UPDATE" blocks any concurrent transaction in the same department
+      // until this transaction commits, eliminating race conditions completely!
+      if (normalizedType !== 'Sick') {
+        const quotaRes = await client.query(
+          'SELECT max_daily_leaves FROM quota_settings WHERE department = $1 FOR UPDATE',
+          [department]
+        );
+        const maxDailyLeaves = quotaRes.rows.length > 0 ? quotaRes.rows[0].max_daily_leaves : 2;
+
+        const requestedDates = getDatesInRange(startDate, actualEndDate);
+
+        for (const date of requestedDates) {
+          const countRes = await client.query(
+            `SELECT COUNT(DISTINCT lr.employee_id) as active_count
+             FROM leave_requests lr
+             JOIN employees e ON lr.employee_id = e.id
+             WHERE e.department = $1
+               AND lr.status IN ('APPROVED', 'PENDING')
+               AND lr.leave_type != 'Sick'
+               AND $2 BETWEEN lr.start_date AND lr.end_date
+               AND UPPER(lr.employee_id) != $3`,
+            [department, date, cleanEmpId]
+          );
+
+          const currentOnLeave = parseInt(countRes.rows[0].active_count, 10);
+
+          if (currentOnLeave >= maxDailyLeaves) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({
+              error: `⚠️ โควตาลางานของแผนก ${department} เต็มแล้วในวันที่ ${date} (จำกัดไม่เกิน ${maxDailyLeaves} คน/วัน) ยกเว้นกรณีลาป่วยเท่านั้น`,
+              blockedDate: date,
+              maxDailyLeaves,
+              currentOnLeave
+            });
+          }
+        }
+      }
+
+      // 5. Insert Leave Request
+      const insertRes = await client.query(
+        `INSERT INTO leave_requests (
+           employee_id, leave_type, start_date, end_date, days_count,
+           duration_type, start_time, end_time, hours_count, reason, status
+         )
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'PENDING')
+         RETURNING *`,
+        [
+          cleanEmpId,
+          normalizedType,
+          startDate,
+          actualEndDate,
+          daysCount,
+          isHourly ? 'HOURLY' : 'FULL_DAY',
+          cleanStartTime,
+          cleanEndTime,
+          cleanHoursCount,
+          reason || ''
+        ]
+      );
+
+      // Commit the transaction atomically
+      await client.query('COMMIT');
+
+      res.status(201).json({
+        success: true,
+        message: isHourly 
+          ? `ส่งคำขอลางานรายชั่วโมง (${cleanStartTime} - ${cleanEndTime} น. • ${cleanHoursCount} ชม.) เรียบร้อยแล้ว`
+          : 'ส่งคำขอลางานเรียบร้อยแล้ว (Leave request submitted successfully)',
+        request: insertRes.rows[0]
+      });
+    } catch (txError) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw txError;
+    } finally {
+      client.release();
     }
-
-    // 4. Insert Leave Request
-    const insertRes = await query(
-      `INSERT INTO leave_requests (
-         employee_id, leave_type, start_date, end_date, days_count,
-         duration_type, start_time, end_time, hours_count, reason, status
-       )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'PENDING')
-       RETURNING *`,
-      [
-        cleanEmpId,
-        normalizedType,
-        startDate,
-        actualEndDate,
-        daysCount,
-        isHourly ? 'HOURLY' : 'FULL_DAY',
-        cleanStartTime,
-        cleanEndTime,
-        cleanHoursCount,
-        reason || ''
-      ]
-    );
-
-    res.status(201).json({
-      success: true,
-      message: isHourly 
-        ? `ส่งคำขอลางานรายชั่วโมง (${cleanStartTime} - ${cleanEndTime} น. • ${cleanHoursCount} ชม.) เรียบร้อยแล้ว`
-        : 'ส่งคำขอลางานเรียบร้อยแล้ว (Leave request submitted successfully)',
-      request: insertRes.rows[0]
-    });
   } catch (error) {
     console.error('Leave request error:', error);
     res.status(500).json({ error: 'เกิดข้อผิดพลาดในการบันทึกคำขอลางาน: ' + error.message });
@@ -485,8 +579,92 @@ app.post('/api/leave-requests', async (req, res) => {
 });
 
 // ==========================================
+// 4.1 Cancel Leave Request API (Employee Self-Service & Supervisor)
+// Allows employee to withdraw their own PENDING request
+// ==========================================
+app.delete('/api/leave-requests/:id', async (req, res) => {
+  try {
+    const requestId = req.params.id;
+    const employeeId = (req.body && req.body.employeeId) || req.query.employeeId;
+
+    if (!pool) {
+      return res.json({
+        success: true,
+        message: 'ยกเลิกคำขอลางานเรียบร้อยแล้ว (Demo mode)',
+        id: requestId
+      });
+    }
+
+    const client = await getClient();
+    try {
+      await client.query('BEGIN');
+
+      const reqRes = await client.query(
+        'SELECT * FROM leave_requests WHERE id = $1 FOR UPDATE',
+        [requestId]
+      );
+
+      if (reqRes.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'ไม่พบคำขอลางานนี้' });
+      }
+
+      const leaveReq = reqRes.rows[0];
+
+      // Authorization check: employee must be owner or supervisor
+      if (!employeeId) {
+        await client.query('ROLLBACK');
+        return res.status(401).json({ error: 'กรุณาระบุรหัสพนักงานผู้ขอยกเลิกคำขอ' });
+      }
+
+      const cleanEmpId = employeeId.trim().toUpperCase();
+      const isOwner = leaveReq.employee_id.toUpperCase() === cleanEmpId;
+      const isSupervisor = cleanEmpId.startsWith('SUP');
+      if (!isOwner && !isSupervisor) {
+        await client.query('ROLLBACK');
+        return res.status(403).json({ error: 'คุณไม่มีสิทธิ์ยกเลิกคำขอนี้' });
+      }
+
+      if (leaveReq.status !== 'PENDING') {
+        await client.query('ROLLBACK');
+        return res.status(400).json({
+          error: `ไม่สามารถยกเลิกได้ เนื่องจากคำขอนี้ได้รับการพิจารณาเป็น "${leaveReq.status}" แล้ว`
+        });
+      }
+
+      const updateRes = await client.query(
+        `UPDATE leave_requests
+         SET status = 'CANCELLED',
+             reviewed_at = CURRENT_TIMESTAMP,
+             rejection_reason = 'ยกเลิกโดยผู้ยื่นคำขอ'
+         WHERE id = $1
+         RETURNING *`,
+        [requestId]
+      );
+
+      await client.query('COMMIT');
+
+      res.json({
+        success: true,
+        message: 'ยกเลิกคำขอลางานเรียบร้อยแล้ว โควตาถูกคืนเข้าระบบทันที',
+        request: updateRes.rows[0]
+      });
+    } catch (txErr) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw txErr;
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    console.error('Cancel leave request error:', error);
+    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการยกเลิกคำขอ: ' + error.message });
+  }
+});
+
+// ==========================================
 // 5. Leave Requests List API
-// - status=PENDING (For Supervisor dashboard)
+// - status=PENDING (For Supervisor pending queue)
+// - status=HISTORY (For Supervisor resolved history)
 // - employee_id=EMP-001 (For Employee history)
 // ==========================================
 app.get('/api/leave-requests', async (req, res) => {
@@ -507,6 +685,7 @@ app.get('/api/leave-requests', async (req, res) => {
           days_count: 1,
           reason: 'พาครอบครัวไปทำธุระ',
           status: 'PENDING',
+          rejection_reason: null,
           created_at: new Date().toISOString()
         }
       ];
@@ -531,6 +710,7 @@ app.get('/api/leave-requests', async (req, res) => {
         lr.status,
         lr.reviewed_by,
         lr.reviewed_at,
+        lr.rejection_reason,
         lr.created_at
       FROM leave_requests lr
       LEFT JOIN employees e ON lr.employee_id = e.id
@@ -539,8 +719,13 @@ app.get('/api/leave-requests', async (req, res) => {
     const params = [];
 
     if (status) {
-      params.push(status.toUpperCase());
-      sql += ` AND UPPER(lr.status) = $${params.length}`;
+      const s = status.toUpperCase();
+      if (s === 'HISTORY') {
+        sql += " AND UPPER(lr.status) IN ('APPROVED', 'REJECTED', 'CANCELLED')";
+      } else {
+        params.push(s);
+        sql += ` AND UPPER(lr.status) = $${params.length}`;
+      }
     }
 
     if (employee_id) {
@@ -590,26 +775,49 @@ app.patch('/api/leave-requests/:id/status', async (req, res) => {
       });
     }
 
-    const updateRes = await query(
-      `UPDATE leave_requests
-       SET status = $1,
-           reviewed_by = $2,
-           reviewed_at = CURRENT_TIMESTAMP,
-           rejection_reason = $3
-       WHERE id = $4
-       RETURNING *`,
-      [cleanStatus, supervisorId, rejectionReason || null, requestId]
-    );
+    const client = await getClient();
+    try {
+      await client.query('BEGIN');
 
-    if (updateRes.rows.length === 0) {
-      return res.status(404).json({ error: 'ไม่พบคำขอลางานนี้' });
+      // Check current status with lock to avoid race conditions between approvals
+      const currentRes = await client.query('SELECT status FROM leave_requests WHERE id = $1 FOR UPDATE', [requestId]);
+      if (currentRes.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'ไม่พบคำขอลางานนี้' });
+      }
+
+      const currentStatus = currentRes.rows[0].status;
+      if (currentStatus !== 'PENDING') {
+        await client.query('ROLLBACK');
+        return res.status(400).json({
+          error: `คำขอนี้ได้รับการพิจารณาไปแล้ว (สถานะปัจจุบัน: ${currentStatus}) ไม่สามารถแก้ไขซ้ำได้`
+        });
+      }
+
+      const updateRes = await client.query(
+        `UPDATE leave_requests
+         SET status = $1,
+             reviewed_by = $2,
+             reviewed_at = CURRENT_TIMESTAMP,
+             rejection_reason = $3
+         WHERE id = $4
+         RETURNING *`,
+        [cleanStatus, supervisorId, rejectionReason || null, requestId]
+      );
+
+      await client.query('COMMIT');
+
+      res.json({
+        success: true,
+        message: `ดำเนินการ ${cleanStatus === 'APPROVED' ? 'อนุมัติ' : 'ไม่อนุมัติ'} คำขอเรียบร้อยแล้ว`,
+        request: updateRes.rows[0]
+      });
+    } catch (txErr) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw txErr;
+    } finally {
+      client.release();
     }
-
-    res.json({
-      success: true,
-      message: `ดำเนินการ ${cleanStatus === 'APPROVED' ? 'อนุมัติ' : 'ไม่อนุมัติ'} คำขอเรียบร้อยแล้ว`,
-      request: updateRes.rows[0]
-    });
   } catch (error) {
     console.error('Review leave request error:', error);
     res.status(500).json({ error: 'เกิดข้อผิดพลาดในการอัปเดตสถานะคำขอ: ' + error.message });
