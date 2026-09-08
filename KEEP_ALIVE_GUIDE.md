@@ -32,8 +32,9 @@
 3. กรอกข้อมูลดังนี้:
    - **Monitor Type:** เลือก `HTTP(s)`
    - **Friendly Name:** ตั้งชื่อ เช่น `Leave App Keep-Alive`
-   - **URL (or IP):** ใส่ลิงก์เว็บของคุณตามด้วย `/api/ping` เช่น:  
-     `https://leave-management-app.onrender.com/api/ping`
+   - **URL (or IP):** ใส่ลิงก์เว็บของคุณตามด้วย `/ping` เช่น:  
+     `https://leave-management-app.onrender.com/ping`  
+     *(หรือ URL เว็บจริงของคุณบน Render เติมท้ายด้วย `/ping`)*
    - **Monitoring Interval:** เลื่อนแถบเป็น **Every 10 minutes** (หรือ 14 minutes)
    - **Monitor Timeout:** 30 seconds
 4. กดปุ่ม **"Create Monitor"** ที่ด้านล่าง
