@@ -58,6 +58,14 @@ function getDatesInRange(startDateStr, endDateStr) {
   return dates;
 }
 
+function normalizeShift(shift) {
+  if (!shift) return 'Day';
+  const s = shift.toString().trim().toLowerCase();
+  if (s === 'night' || s.includes('กลางคืน')) return 'Night';
+  if (s === 'morning' || s.includes('เช้า')) return 'Morning';
+  return 'Day';
+}
+
 // ==========================================
 // 1. Health & DB Status Check API
 // ==========================================
@@ -131,8 +139,8 @@ app.post('/api/login', async (req, res) => {
     const validDemoUsers = {
       'EMP-001': { name: 'สมชาย ใจดี', department: 'Assembly', shift: 'Day', role: 'EMPLOYEE', pin: '1234' },
       'EMP-002': { name: 'สมหญิง รักงาน', department: 'Assembly', shift: 'Day', role: 'EMPLOYEE', pin: '1234' },
-      'SUP-001': { name: 'สมศักดิ์ คุมงาน (หัวหน้า)', department: 'Assembly', shift: 'Day', role: 'SUPERVISOR', pin: '1234' },
-      'ADMIN-001': { name: 'ผู้ดูแลระบบ (Admin)', department: 'Management', shift: 'Day', role: 'ADMIN', pin: '1234' }
+      'SUP-001': { name: 'สมศักดิ์ คุมงาน (หัวหน้า)', department: 'Assembly', shift: 'Morning', role: 'SUPERVISOR', pin: '1234' },
+      'ADMIN-001': { name: 'ผู้ดูแลระบบ (Admin)', department: 'Management', shift: 'Morning', role: 'ADMIN', pin: '1234' }
     };
 
     const demoUser = validDemoUsers[cleanEmpId];
@@ -990,7 +998,7 @@ app.post('/api/employees', async (req, res) => {
     const cleanEmpId = (id || '').trim().toUpperCase();
     const cleanName = (name || '').trim();
     const cleanDept = (department || '').trim();
-    const cleanShift = (shift && shift.toString().trim().toLowerCase() === 'night') ? 'Night' : 'Day';
+    const cleanShift = normalizeShift(shift);
     const cleanRole = (role || 'EMPLOYEE').trim().toUpperCase();
     const cleanPin = (pin ? pin.toString().trim() : cleanEmpId); // Default PIN is employee ID
 
@@ -1161,7 +1169,7 @@ app.put('/api/employees/:id', async (req, res) => {
     const currentEmp = empCheck.rows[0];
     const newName = name !== undefined ? name.trim() : currentEmp.name;
     const newDept = department !== undefined ? department.trim() : currentEmp.department;
-    const newShift = shift !== undefined ? ((shift.toString().trim().toLowerCase() === 'night') ? 'Night' : 'Day') : (currentEmp.shift || 'Day');
+    const newShift = shift !== undefined ? normalizeShift(shift) : (currentEmp.shift || 'Day');
     const newRole = role !== undefined ? role.trim().toUpperCase() : currentEmp.role;
     const newPin = (pin !== undefined && pin.toString().trim() !== '') ? pin.toString().trim() : currentEmp.pin;
     const newVac = Number.isInteger(Number(vacation_quota)) ? Number(vacation_quota) : currentEmp.vacation_quota;

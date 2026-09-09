@@ -130,6 +130,24 @@ async function runTests() {
   assert.strictEqual(editRes.data.employee.shift, 'Day', 'Updated employee must have shift=Day');
   console.log(`✅ [PASS] PUT /api/employees/:id successfully switches employee shift to Day`);
 
+  // 3.1 Test Admin create supervisor with Morning shift (เช้าตลอด)
+  const testSupId = `SUP-${Date.now().toString().slice(-4)}`;
+  const addSupRes = await post(`${BASE_URL}/api/employees`, {
+    adminId: 'ADMIN-001',
+    id: testSupId,
+    name: 'สมเกียรติ เช้าตลอด (หัวหน้างาน)',
+    department: 'Crimping 1',
+    shift: 'Morning',
+    role: 'SUPERVISOR',
+    pin: '1234',
+    vacation_quota: 10,
+    personal_quota: 6,
+    sick_quota: 30
+  });
+  assert.strictEqual(addSupRes.status, 201, 'Should create supervisor with Morning shift');
+  assert.strictEqual(addSupRes.data.employee.shift, 'Morning', 'Created supervisor must have shift=Morning');
+  console.log(`✅ [PASS] POST /api/employees creates supervisor [${testSupId}] with shift=Morning (เช้าตลอด)`);
+
   // 4. Test GET /api/employees lists shift
   const listRes = await get(`${BASE_URL}/api/employees?department=Crimping 1`);
   assert.strictEqual(listRes.status, 200, 'Should list employees');

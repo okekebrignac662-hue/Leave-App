@@ -682,6 +682,7 @@
                         <select id="new-emp-shift" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition font-medium text-gray-800">
                             <option value="Day" selected>☀️ กะกลางวัน (Day Shift)</option>
                             <option value="Night">🌙 กะกลางคืน (Night Shift)</option>
+                            <option value="Morning">🌅 เช้าตลอด - หัวหน้างาน (Morning Shift)</option>
                         </select>
                     </div>
 
@@ -801,6 +802,7 @@
                         <select id="edit-emp-shift" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition font-medium text-gray-800">
                             <option value="Day">☀️ กะกลางวัน (Day Shift)</option>
                             <option value="Night">🌙 กะกลางคืน (Night Shift)</option>
+                            <option value="Morning">🌅 เช้าตลอด - หัวหน้างาน (Morning Shift)</option>
                         </select>
                     </div>
 
@@ -1422,9 +1424,7 @@
 
                 // Navbar Profile Display
                 const initialLetter = (currentUser.name || currentUser.id).charAt(0);
-                const shiftLabel = (currentUser.shift && currentUser.shift.toLowerCase() === 'night') 
-                    ? '🌙 กะกลางคืน (Night)' 
-                    : '☀️ กะกลางวัน (Day)';
+                const shiftLabel = formatShiftLabel(currentUser.shift);
                 document.getElementById('user-avatar-badge').innerText = initialLetter;
                 document.getElementById('user-name-display').innerText = currentUser.name;
                 document.getElementById('user-role-display').innerText = currentUser.isAdmin
@@ -1669,9 +1669,7 @@
 
                     const typeIcon = req.leave_type === 'Sick' ? '🏥' : (req.leave_type === 'Personal' ? '💼' : '🏖️');
                     const isHourly = req.duration_type === 'HOURLY';
-                    const shiftChip = (req.shift && req.shift.toLowerCase() === 'night')
-                        ? `<span class="text-[10px] text-indigo-700 bg-indigo-50 border border-indigo-200/80 px-2 py-0.5 rounded-md font-semibold">🌙 กะกลางคืน</span>`
-                        : `<span class="text-[10px] text-amber-700 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-md font-semibold">☀️ กะกลางวัน</span>`;
+                    const shiftChip = formatShiftBadge(req.shift, true);
                     const durationChip = isHourly
                         ? `<span class="text-xs text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-lg font-bold">⏰ ${req.hours_count} ชม. (${req.days_count} วัน)</span>`
                         : `<span class="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg font-medium">${req.days_count} วัน</span>`;
@@ -1787,9 +1785,7 @@
                     const typeIcon = req.leave_type === 'Sick' ? '🏥' : (req.leave_type === 'Personal' ? '💼' : '🏖️');
                     const initialLetter = (req.employee_name || req.employee_id).charAt(0);
                     const isHourly = req.duration_type === 'HOURLY';
-                    const shiftBadge = (req.shift && req.shift.toLowerCase() === 'night')
-                        ? `<span class="inline-flex items-center space-x-1 bg-indigo-100 text-indigo-800 text-[11px] font-bold px-2 py-0.5 rounded-md border border-indigo-200 shadow-2xs">🌙 กะกลางคืน (Night)</span>`
-                        : `<span class="inline-flex items-center space-x-1 bg-amber-100 text-amber-800 text-[11px] font-bold px-2 py-0.5 rounded-md border border-amber-200 shadow-2xs">☀️ กะกลางวัน (Day)</span>`;
+                    const shiftBadge = formatShiftBadge(req.shift);
 
                     const durationChip = isHourly
                         ? `<span class="font-bold text-indigo-700 bg-white px-2.5 py-0.5 rounded-lg border border-indigo-200/60 shadow-2xs">⏰ ${req.hours_count} ชม. (${req.days_count} วัน)</span>`
@@ -1884,9 +1880,7 @@
                     }
 
                     const isHourly = req.duration_type === 'HOURLY';
-                    const shiftBadge = (req.shift && req.shift.toLowerCase() === 'night')
-                        ? `<span class="inline-flex items-center space-x-1 bg-indigo-100 text-indigo-800 text-[10px] font-bold px-2 py-0.5 rounded-md border border-indigo-200">🌙 กะกลางคืน</span>`
-                        : `<span class="inline-flex items-center space-x-1 bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-md border border-amber-200">☀️ กะกลางวัน</span>`;
+                    const shiftBadge = formatShiftBadge(req.shift, true);
 
                     const durationChip = isHourly
                         ? `<span class="font-bold text-indigo-700 bg-white px-2 py-0.5 rounded-lg border border-indigo-200/60 shadow-2xs">⏰ ${req.hours_count} ชม.</span>`
@@ -2044,9 +2038,7 @@
             }
 
             tbody.innerHTML = filtered.map(emp => {
-                const shiftBadge = (emp.shift && emp.shift.toLowerCase() === 'night')
-                    ? '<span class="bg-indigo-50 text-indigo-700 font-bold px-2.5 py-0.5 rounded-lg text-xs border border-indigo-200/80">🌙 กะกลางคืน</span>'
-                    : '<span class="bg-amber-50 text-amber-800 font-bold px-2.5 py-0.5 rounded-lg text-xs border border-amber-200/80">☀️ กะกลางวัน</span>';
+                const shiftBadge = formatShiftBadge(emp.shift);
 
                 const roleBadge = emp.role === 'ADMIN'
                     ? '<span class="bg-indigo-100 text-indigo-700 font-bold px-2.5 py-0.5 rounded-full text-[11px]">🛡️ ADMIN</span>'
@@ -2202,6 +2194,31 @@
             return 'ลาพักร้อน (Vacation)';
         }
 
+        // Helper: Shift display labels & badges
+        function formatShiftLabel(shift) {
+            const s = (shift || '').toString().trim().toLowerCase();
+            if (s === 'night' || s.includes('กลางคืน')) return '🌙 กะกลางคืน (Night)';
+            if (s === 'morning' || s.includes('เช้า')) return '🌅 เช้าตลอด (หัวหน้างาน)';
+            return '☀️ กะกลางวัน (Day)';
+        }
+
+        function formatShiftBadge(shift, compact = false) {
+            const s = (shift || '').toString().trim().toLowerCase();
+            if (s === 'night' || s.includes('กลางคืน')) {
+                return compact 
+                    ? `<span class="inline-flex items-center space-x-1 bg-indigo-50 text-indigo-700 border border-indigo-200/80 font-bold px-2 py-0.5 rounded-md text-[10px] shadow-2xs">🌙 กะกลางคืน</span>`
+                    : `<span class="inline-flex items-center space-x-1 bg-indigo-50 text-indigo-700 border border-indigo-200/80 font-bold px-2.5 py-0.5 rounded-lg text-xs shadow-2xs">🌙 กะกลางคืน (Night)</span>`;
+            }
+            if (s === 'morning' || s.includes('เช้า')) {
+                return compact
+                    ? `<span class="inline-flex items-center space-x-1 bg-emerald-50 text-emerald-800 border border-emerald-200/80 font-bold px-2 py-0.5 rounded-md text-[10px] shadow-2xs">🌅 เช้าตลอด (หน.)</span>`
+                    : `<span class="inline-flex items-center space-x-1 bg-emerald-50 text-emerald-800 border border-emerald-200/80 font-bold px-2.5 py-0.5 rounded-lg text-xs shadow-2xs">🌅 เช้าตลอด (หัวหน้างาน)</span>`;
+            }
+            return compact
+                ? `<span class="inline-flex items-center space-x-1 bg-amber-50 text-amber-800 border border-amber-200/80 font-bold px-2 py-0.5 rounded-md text-[10px] shadow-2xs">☀️ กะกลางวัน</span>`
+                : `<span class="inline-flex items-center space-x-1 bg-amber-50 text-amber-800 border border-amber-200/80 font-bold px-2.5 py-0.5 rounded-lg text-xs shadow-2xs">☀️ กะกลางวัน (Day)</span>`;
+        }
+
         // ==========================================
         // ADMIN: Add Employee Functions
         // ==========================================
@@ -2290,10 +2307,13 @@
 
         function handleRoleSelectChange(val) {
             const vacInput = document.getElementById('new-emp-vac-quota');
+            const shiftSelect = document.getElementById('new-emp-shift');
             if (val === 'SUPERVISOR' || val === 'ADMIN') {
-                if (vacInput.value === '6') vacInput.value = '10';
+                if (vacInput && vacInput.value === '6') vacInput.value = '10';
+                if (shiftSelect && shiftSelect.value === 'Day') shiftSelect.value = 'Morning';
             } else {
-                if (vacInput.value === '10') vacInput.value = '6';
+                if (vacInput && vacInput.value === '10') vacInput.value = '6';
+                if (shiftSelect && shiftSelect.value === 'Morning') shiftSelect.value = 'Day';
             }
         }
 
@@ -2385,7 +2405,13 @@
             document.getElementById('edit-emp-id').value = emp.id;
             document.getElementById('edit-emp-name').value = emp.name || '';
             document.getElementById('edit-emp-role').value = emp.role || 'EMPLOYEE';
-            document.getElementById('edit-emp-shift').value = emp.shift || 'Day';
+            
+            const s = (emp.shift || '').toString().trim().toLowerCase();
+            let shiftVal = 'Day';
+            if (s === 'night' || s.includes('กลางคืน')) shiftVal = 'Night';
+            else if (s === 'morning' || s.includes('เช้า')) shiftVal = 'Morning';
+            document.getElementById('edit-emp-shift').value = shiftVal;
+
             document.getElementById('edit-emp-pin').value = '';
             document.getElementById('edit-emp-vac-quota').value = emp.vacation_quota !== undefined ? emp.vacation_quota : 6;
             document.getElementById('edit-emp-per-quota').value = emp.personal_quota !== undefined ? emp.personal_quota : 6;
