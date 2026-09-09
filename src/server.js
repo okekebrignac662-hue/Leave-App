@@ -736,11 +736,13 @@ app.get('/api/leave-requests', async (req, res) => {
         lr.reason,
         lr.status,
         lr.reviewed_by,
+        COALESCE(rev.name, lr.reviewed_by) AS reviewer_name,
         lr.reviewed_at,
         lr.rejection_reason,
         lr.created_at
       FROM leave_requests lr
       JOIN employees e ON lr.employee_id = e.id
+      LEFT JOIN employees rev ON UPPER(lr.reviewed_by) = UPPER(rev.id)
       WHERE 1=1
     `;
     const params = [];

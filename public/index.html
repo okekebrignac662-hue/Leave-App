@@ -1346,7 +1346,7 @@
                             </div>
                             ${req.reason ? `<div class="text-gray-500 italic bg-white p-2.5 rounded-xl border border-gray-100 text-xs">💬 "${escapeHtml(req.reason)}"</div>` : ''}
                             ${rejectionNotice}
-                            ${req.reviewed_by ? `<div class="text-[11px] text-gray-400 text-right">พิจารณาโดย: ${escapeHtml(req.reviewed_by)}</div>` : ''}
+                            ${(req.reviewer_name || req.reviewed_by) ? `<div class="text-[11px] text-gray-400 text-right">พิจารณาโดย: <span class="font-medium text-gray-600">${escapeHtml(req.reviewer_name || req.reviewed_by)}</span></div>` : ''}
                         </div>
                     `;
                 }).join('');
@@ -1546,7 +1546,7 @@
                             <div class="text-xs text-gray-700 space-y-1.5 bg-gray-50/80 border border-gray-100 p-3 rounded-2xl">
                                 <div class="flex items-center justify-between">
                                     ${dateDisplay}
-                                    ${req.reviewed_by ? `<span class="text-[11px] text-gray-400">พิจารณาโดย: ${escapeHtml(req.reviewed_by)}</span>` : ''}
+                                    ${(req.reviewer_name || req.reviewed_by) ? `<span class="text-[11px] text-gray-400">พิจารณาโดย: <span class="font-medium text-gray-600">${escapeHtml(req.reviewer_name || req.reviewed_by)}</span></span>` : ''}
                                 </div>
                                 ${req.reason ? `<div class="text-gray-600 pt-0.5"><b>เหตุผลขอลา:</b> "${escapeHtml(req.reason)}"</div>` : ''}
                             </div>
