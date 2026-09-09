@@ -485,6 +485,7 @@
                                         <th class="p-3.5 pl-5">รหัสพนักงาน</th>
                                         <th class="p-3.5">ชื่อ - นามสกุล</th>
                                         <th class="p-3.5">แผนก</th>
+                                        <th class="p-3.5 text-center">กะ (Shift)</th>
                                         <th class="p-3.5 text-center">บทบาท (Role)</th>
                                         <th class="p-3.5 text-center">โควตาเริ่มต้น (พักร้อน / กิจ / ป่วย)</th>
                                         <th class="p-3.5 text-center pr-5">จัดการ</th>
@@ -492,7 +493,7 @@
                                 </thead>
                                 <tbody id="admin-employees-tbody" class="divide-y divide-gray-100">
                                     <tr>
-                                        <td colspan="6" class="text-center py-8 text-gray-400">กำลังโหลดรายชื่อพนักงาน...</td>
+                                        <td colspan="7" class="text-center py-8 text-gray-400">กำลังโหลดรายชื่อพนักงาน...</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -672,15 +673,28 @@
                     </div>
                 </div>
 
-                <!-- Initial PIN Password -->
-                <div>
-                    <div class="flex items-center justify-between mb-1">
-                        <label class="block text-xs font-semibold text-gray-700">
-                            <span>รหัสผ่านเริ่มต้น (PIN)</span>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <!-- Shift Dropdown -->
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">
+                            <span>กะการทำงาน (Shift)</span> <span class="text-rose-500">*</span>
                         </label>
-                        <span class="text-[10px] text-gray-400">เว้นว่างไว้จะใช้รหัสพนักงานเป็นรหัสผ่าน</span>
+                        <select id="new-emp-shift" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition font-medium text-gray-800">
+                            <option value="Day" selected>☀️ กะกลางวัน (Day Shift)</option>
+                            <option value="Night">🌙 กะกลางคืน (Night Shift)</option>
+                        </select>
                     </div>
-                    <input type="text" id="new-emp-pin" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition placeholder:text-gray-400" placeholder="ค่าเริ่มต้น: รหัสพนักงาน">
+
+                    <!-- Initial PIN Password -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-xs font-semibold text-gray-700">
+                                <span>รหัสผ่านเริ่มต้น (PIN)</span>
+                            </label>
+                            <span class="text-[10px] text-gray-400">เว้นว่างไว้จะใช้รหัสพนักงาน</span>
+                        </div>
+                        <input type="text" id="new-emp-pin" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition placeholder:text-gray-400" placeholder="ค่าเริ่มต้น: รหัสพนักงาน">
+                    </div>
                 </div>
 
                 <!-- Initial Leave Quotas -->
@@ -713,6 +727,8 @@
                 </div>
             </form>
         </div>
+    </div>
+
     <!-- Edit Employee Modal (Admin Only) -->
     <div id="edit-employee-modal" class="hidden-view fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-gray-100 transform transition-all animate-in fade-in zoom-in duration-200">
@@ -724,7 +740,7 @@
                     </div>
                     <div>
                         <h3 class="text-base font-bold text-gray-900">แก้ไขข้อมูลพนักงาน</h3>
-                        <p class="text-[11px] text-gray-500">ปรับปรุงข้อมูล แผนก บทบาท และโควตาวันลา</p>
+                        <p class="text-[11px] text-gray-500">ปรับปรุงข้อมูล แผนก กะการทำงาน บทบาท และโควตาวันลา</p>
                     </div>
                 </div>
                 <button type="button" onclick="closeEditEmployeeModal()" class="text-gray-400 hover:text-gray-600 text-base p-1.5 rounded-xl hover:bg-gray-100 transition">✕</button>
@@ -776,15 +792,28 @@
                     </div>
                 </div>
 
-                <!-- PIN Password -->
-                <div>
-                    <div class="flex items-center justify-between mb-1">
-                        <label class="block text-xs font-semibold text-gray-700">
-                            <span>เปลี่ยนรหัสผ่าน (PIN)</span>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <!-- Shift Dropdown -->
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">
+                            <span>กะการทำงาน (Shift)</span> <span class="text-rose-500">*</span>
                         </label>
-                        <span class="text-[10px] text-gray-400">เว้นว่างไว้หากไม่ต้องการเปลี่ยนรหัสผ่าน</span>
+                        <select id="edit-emp-shift" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition font-medium text-gray-800">
+                            <option value="Day">☀️ กะกลางวัน (Day Shift)</option>
+                            <option value="Night">🌙 กะกลางคืน (Night Shift)</option>
+                        </select>
                     </div>
-                    <input type="text" id="edit-emp-pin" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition placeholder:text-gray-400" placeholder="คงรหัสเดิมไว้">
+
+                    <!-- PIN Password -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-xs font-semibold text-gray-700">
+                                <span>เปลี่ยนรหัสผ่าน (PIN)</span>
+                            </label>
+                            <span class="text-[10px] text-gray-400">เว้นว่างไว้หากไม่เปลี่ยน</span>
+                        </div>
+                        <input type="text" id="edit-emp-pin" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition placeholder:text-gray-400" placeholder="คงรหัสเดิมไว้">
+                    </div>
                 </div>
 
                 <!-- Leave Quotas -->
@@ -1393,13 +1422,16 @@
 
                 // Navbar Profile Display
                 const initialLetter = (currentUser.name || currentUser.id).charAt(0);
+                const shiftLabel = (currentUser.shift && currentUser.shift.toLowerCase() === 'night') 
+                    ? '🌙 กะกลางคืน (Night)' 
+                    : '☀️ กะกลางวัน (Day)';
                 document.getElementById('user-avatar-badge').innerText = initialLetter;
                 document.getElementById('user-name-display').innerText = currentUser.name;
                 document.getElementById('user-role-display').innerText = currentUser.isAdmin
-                    ? `🛡️ ผู้ดูแลระบบ (Admin) • แผนก ${currentUser.department}`
+                    ? `🛡️ ผู้ดูแลระบบ (Admin) • แผนก ${currentUser.department} • ${shiftLabel}`
                     : (currentUser.isSupervisor 
-                        ? `👑 หัวหน้างาน • แผนก ${currentUser.department}` 
-                        : `พนักงาน • แผนก ${currentUser.department}`);
+                        ? `👑 หัวหน้างาน • แผนก ${currentUser.department} • ${shiftLabel}` 
+                        : `พนักงาน • แผนก ${currentUser.department} • ${shiftLabel}`);
 
                 // Admin Controls Visibility
                 const adminBtn = document.getElementById('btn-admin-add-emp');
@@ -1637,6 +1669,9 @@
 
                     const typeIcon = req.leave_type === 'Sick' ? '🏥' : (req.leave_type === 'Personal' ? '💼' : '🏖️');
                     const isHourly = req.duration_type === 'HOURLY';
+                    const shiftChip = (req.shift && req.shift.toLowerCase() === 'night')
+                        ? `<span class="text-[10px] text-indigo-700 bg-indigo-50 border border-indigo-200/80 px-2 py-0.5 rounded-md font-semibold">🌙 กะกลางคืน</span>`
+                        : `<span class="text-[10px] text-amber-700 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-md font-semibold">☀️ กะกลางวัน</span>`;
                     const durationChip = isHourly
                         ? `<span class="text-xs text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-lg font-bold">⏰ ${req.hours_count} ชม. (${req.days_count} วัน)</span>`
                         : `<span class="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg font-medium">${req.days_count} วัน</span>`;
@@ -1652,9 +1687,10 @@
                     return `
                         <div class="border border-gray-100 rounded-2xl p-4 text-xs space-y-2 bg-gradient-to-r from-gray-50/60 to-white hover:border-blue-200 transition">
                             <div class="flex justify-between items-center">
-                                <div class="flex items-center space-x-1.5 font-bold text-gray-800 text-sm">
+                                <div class="flex items-center space-x-1.5 font-bold text-gray-800 text-sm flex-wrap gap-1">
                                     <span>${typeIcon}</span>
                                     <span>${translateLeaveType(req.leave_type)}</span>
+                                    ${shiftChip}
                                     ${durationChip}
                                 </div>
                                 <div class="flex items-center space-x-2">
@@ -1751,6 +1787,10 @@
                     const typeIcon = req.leave_type === 'Sick' ? '🏥' : (req.leave_type === 'Personal' ? '💼' : '🏖️');
                     const initialLetter = (req.employee_name || req.employee_id).charAt(0);
                     const isHourly = req.duration_type === 'HOURLY';
+                    const shiftBadge = (req.shift && req.shift.toLowerCase() === 'night')
+                        ? `<span class="inline-flex items-center space-x-1 bg-indigo-100 text-indigo-800 text-[11px] font-bold px-2 py-0.5 rounded-md border border-indigo-200 shadow-2xs">🌙 กะกลางคืน (Night)</span>`
+                        : `<span class="inline-flex items-center space-x-1 bg-amber-100 text-amber-800 text-[11px] font-bold px-2 py-0.5 rounded-md border border-amber-200 shadow-2xs">☀️ กะกลางวัน (Day)</span>`;
+
                     const durationChip = isHourly
                         ? `<span class="font-bold text-indigo-700 bg-white px-2.5 py-0.5 rounded-lg border border-indigo-200/60 shadow-2xs">⏰ ${req.hours_count} ชม. (${req.days_count} วัน)</span>`
                         : `<span class="font-bold text-blue-700 bg-white px-2.5 py-0.5 rounded-lg border border-gray-200/60 shadow-2xs">${req.days_count} วัน</span>`;
@@ -1767,8 +1807,11 @@
                                         ${initialLetter}
                                     </div>
                                     <div>
-                                        <h3 class="font-bold text-gray-900 text-base leading-tight">${escapeHtml(req.employee_name)}</h3>
-                                        <p class="text-xs text-gray-500 mt-0.5">${escapeHtml(req.department)} • <span class="font-mono">${escapeHtml(req.employee_id)}</span></p>
+                                        <div class="flex items-center space-x-2 flex-wrap">
+                                            <h3 class="font-bold text-gray-900 text-base leading-tight">${escapeHtml(req.employee_name)}</h3>
+                                            ${shiftBadge}
+                                        </div>
+                                        <p class="text-xs text-gray-500 mt-1">${escapeHtml(req.department)} • <span class="font-mono">${escapeHtml(req.employee_id)}</span></p>
                                     </div>
                                 </div>
                                 <span class="${typeColor} text-xs px-3 py-1 rounded-full font-semibold flex items-center space-x-1">
@@ -1841,6 +1884,10 @@
                     }
 
                     const isHourly = req.duration_type === 'HOURLY';
+                    const shiftBadge = (req.shift && req.shift.toLowerCase() === 'night')
+                        ? `<span class="inline-flex items-center space-x-1 bg-indigo-100 text-indigo-800 text-[10px] font-bold px-2 py-0.5 rounded-md border border-indigo-200">🌙 กะกลางคืน</span>`
+                        : `<span class="inline-flex items-center space-x-1 bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-md border border-amber-200">☀️ กะกลางวัน</span>`;
+
                     const durationChip = isHourly
                         ? `<span class="font-bold text-indigo-700 bg-white px-2 py-0.5 rounded-lg border border-indigo-200/60 shadow-2xs">⏰ ${req.hours_count} ชม.</span>`
                         : `<span class="font-bold text-blue-700 bg-white px-2 py-0.5 rounded-lg border border-gray-200/60 shadow-2xs">${req.days_count} วัน</span>`;
@@ -1857,8 +1904,11 @@
                         <div class="bg-white p-5 rounded-3xl shadow-xs border border-gray-100 hover:shadow-md transition">
                             <div class="flex justify-between items-start mb-2.5">
                                 <div>
-                                    <h4 class="font-bold text-gray-900 text-sm">${escapeHtml(req.employee_name)} <span class="font-normal text-xs text-gray-500 font-mono">(${escapeHtml(req.employee_id)})</span></h4>
-                                    <p class="text-[11px] text-gray-500 mt-0.5">${translateLeaveType(req.leave_type)} • ${escapeHtml(req.department)}</p>
+                                    <div class="flex items-center space-x-2 flex-wrap">
+                                        <h4 class="font-bold text-gray-900 text-sm">${escapeHtml(req.employee_name)} <span class="font-normal text-xs text-gray-500 font-mono">(${escapeHtml(req.employee_id)})</span></h4>
+                                        ${shiftBadge}
+                                    </div>
+                                    <p class="text-[11px] text-gray-500 mt-1">${translateLeaveType(req.leave_type)} • ${escapeHtml(req.department)}</p>
                                 </div>
                                 <div class="flex items-center space-x-2">
                                     ${durationChip}
@@ -1989,11 +2039,15 @@
             });
 
             if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-400">ไม่พบรายชื่อพนักงานที่ตรงกับเงื่อนไข</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">ไม่พบรายชื่อพนักงานที่ตรงกับเงื่อนไข</td></tr>';
                 return;
             }
 
             tbody.innerHTML = filtered.map(emp => {
+                const shiftBadge = (emp.shift && emp.shift.toLowerCase() === 'night')
+                    ? '<span class="bg-indigo-50 text-indigo-700 font-bold px-2.5 py-0.5 rounded-lg text-xs border border-indigo-200/80">🌙 กะกลางคืน</span>'
+                    : '<span class="bg-amber-50 text-amber-800 font-bold px-2.5 py-0.5 rounded-lg text-xs border border-amber-200/80">☀️ กะกลางวัน</span>';
+
                 const roleBadge = emp.role === 'ADMIN'
                     ? '<span class="bg-indigo-100 text-indigo-700 font-bold px-2.5 py-0.5 rounded-full text-[11px]">🛡️ ADMIN</span>'
                     : (emp.role === 'SUPERVISOR'
@@ -2005,6 +2059,7 @@
                         <td class="p-3.5 pl-5 font-mono font-bold text-gray-900">${escapeHtml(emp.id)}</td>
                         <td class="p-3.5 font-medium text-gray-800">${escapeHtml(emp.name)}</td>
                         <td class="p-3.5"><span class="bg-blue-50 text-blue-700 font-semibold px-2.5 py-0.5 rounded-lg text-xs border border-blue-100">${escapeHtml(emp.department)}</span></td>
+                        <td class="p-3.5 text-center">${shiftBadge}</td>
                         <td class="p-3.5 text-center">${roleBadge}</td>
                         <td class="p-3.5 text-center font-mono text-gray-600">
                             <span class="text-emerald-600 font-bold">${emp.vacation_quota}</span> / 
@@ -2161,6 +2216,7 @@
             document.getElementById('new-emp-name').value = '';
             document.getElementById('new-emp-pin').value = '';
             document.getElementById('new-emp-role').value = 'EMPLOYEE';
+            document.getElementById('new-emp-shift').value = 'Day';
             document.getElementById('new-emp-vac-quota').value = '6';
             document.getElementById('new-emp-per-quota').value = '6';
             document.getElementById('new-emp-sic-quota').value = '30';
@@ -2253,6 +2309,7 @@
             const customDept = document.getElementById('new-emp-dept-custom').value.trim();
             const department = deptSelect === '__CUSTOM__' ? customDept : deptSelect;
             const role = document.getElementById('new-emp-role').value;
+            const shift = document.getElementById('new-emp-shift').value;
             const pin = document.getElementById('new-emp-pin').value.trim() || id;
             const vacation_quota = parseInt(document.getElementById('new-emp-vac-quota').value, 10);
             const personal_quota = parseInt(document.getElementById('new-emp-per-quota').value, 10);
@@ -2281,6 +2338,7 @@
                         id,
                         name,
                         department,
+                        shift,
                         role,
                         pin,
                         vacation_quota,
@@ -2327,6 +2385,7 @@
             document.getElementById('edit-emp-id').value = emp.id;
             document.getElementById('edit-emp-name').value = emp.name || '';
             document.getElementById('edit-emp-role').value = emp.role || 'EMPLOYEE';
+            document.getElementById('edit-emp-shift').value = emp.shift || 'Day';
             document.getElementById('edit-emp-pin').value = '';
             document.getElementById('edit-emp-vac-quota').value = emp.vacation_quota !== undefined ? emp.vacation_quota : 6;
             document.getElementById('edit-emp-per-quota').value = emp.personal_quota !== undefined ? emp.personal_quota : 6;
@@ -2399,6 +2458,7 @@
             const customDept = document.getElementById('edit-emp-dept-custom').value.trim();
             const department = deptSelect === '__CUSTOM__' ? customDept : deptSelect;
             const role = document.getElementById('edit-emp-role').value;
+            const shift = document.getElementById('edit-emp-shift').value;
             const pin = document.getElementById('edit-emp-pin').value.trim();
             const vacation_quota = parseInt(document.getElementById('edit-emp-vac-quota').value, 10);
             const personal_quota = parseInt(document.getElementById('edit-emp-per-quota').value, 10);
@@ -2421,6 +2481,7 @@
                         adminId: currentUser.id,
                         name,
                         department,
+                        shift,
                         role,
                         pin: pin || undefined,
                         vacation_quota,

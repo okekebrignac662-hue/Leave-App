@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS employees (
     id VARCHAR(20) PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     department VARCHAR(50) NOT NULL,
+    shift VARCHAR(20) NOT NULL DEFAULT 'Day', -- 'Day' or 'Night'
     pin VARCHAR(50) NOT NULL,
     role VARCHAR(20) NOT NULL DEFAULT 'EMPLOYEE', -- 'EMPLOYEE', 'SUPERVISOR', or 'ADMIN'
     vacation_quota INT NOT NULL DEFAULT 6,
@@ -16,12 +17,14 @@ CREATE TABLE IF NOT EXISTS employees (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 2. Create Quota Settings Table (Department Daily Leave Limit)
+-- 2. Create Quota Settings Table (Department & Shift Daily Leave Limit)
 CREATE TABLE IF NOT EXISTS quota_settings (
     id SERIAL PRIMARY KEY,
-    department VARCHAR(50) NOT NULL UNIQUE,
+    department VARCHAR(50) NOT NULL,
+    shift VARCHAR(20) NOT NULL DEFAULT 'Day', -- 'Day' or 'Night'
     max_daily_leaves INT NOT NULL DEFAULT 2,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT quota_settings_department_shift_key UNIQUE (department, shift)
 );
 
 -- 3. Create Leave Requests Table

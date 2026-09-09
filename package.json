@@ -8,7 +8,7 @@
     "dev": "node --watch src/server.js",
     "init-db": "node src/initDb.js",
     "import-employees": "node src/importEmployees.js",
-    "test": "node test/quota-logic.test.js && node test/concurrency.test.js && node test/api.test.js && node test/system-audit.test.js && node test/department-isolation.test.js && node test/admin-employee.test.js"
+    "test": "node test/quota-logic.test.js && node test/concurrency.test.js && node test/api.test.js && node test/system-audit.test.js && node test/department-isolation.test.js && node test/admin-employee.test.js && node test/shift-quota.test.js"
   },
   "keywords": ["leave", "management", "express", "postgresql", "supabase", "render"],
   "author": "",
