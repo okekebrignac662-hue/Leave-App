@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS employees (
     name VARCHAR(100) NOT NULL,
     department VARCHAR(50) NOT NULL,
     pin VARCHAR(50) NOT NULL,
-    role VARCHAR(20) NOT NULL DEFAULT 'EMPLOYEE', -- 'EMPLOYEE' or 'SUPERVISOR'
+    role VARCHAR(20) NOT NULL DEFAULT 'EMPLOYEE', -- 'EMPLOYEE', 'SUPERVISOR', or 'ADMIN'
     vacation_quota INT NOT NULL DEFAULT 6,
     personal_quota INT NOT NULL DEFAULT 6,
     sick_quota INT NOT NULL DEFAULT 30,
@@ -59,7 +59,8 @@ VALUES
     ('EMP-002', 'สมหญิง รักงาน', 'Assembly', '1234', 'EMPLOYEE', 6, 6, 30),
     ('EMP-003', 'อนันต์ ตั้งใจ', 'QC', '1234', 'EMPLOYEE', 6, 6, 30),
     ('SUP-001', 'สมศักดิ์ คุมงาน (หัวหน้า)', 'Assembly', '1234', 'SUPERVISOR', 10, 6, 30),
-    ('SUP-002', 'วิชัย ดูแลดี (หัวหน้า QC)', 'QC', '1234', 'SUPERVISOR', 10, 6, 30)
+    ('SUP-002', 'วิชัย ดูแลดี (หัวหน้า QC)', 'QC', '1234', 'SUPERVISOR', 10, 6, 30),
+    ('ADMIN-001', 'ผู้ดูแลระบบ (Admin)', 'Management', '1234', 'ADMIN', 10, 6, 30)
 ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
     department = EXCLUDED.department,

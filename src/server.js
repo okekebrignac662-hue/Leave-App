@@ -95,6 +95,7 @@ app.post('/api/login', async (req, res) => {
     const cleanEmpId = empId.trim().toUpperCase();
     const cleanPin = pin.trim();
     const isSupPrefix = cleanEmpId.startsWith('SUP');
+    const isAdminPrefix = cleanEmpId.startsWith('ADMIN');
 
     // If database is connected, query employee details
     if (pool) {
@@ -109,15 +110,18 @@ app.post('/api/login', async (req, res) => {
         return res.status(401).json({ error: 'รหัสผ่าน (PIN) ไม่ถูกต้อง (Incorrect PIN)' });
       }
 
-      const isSupervisor = isSupPrefix || emp.role === 'SUPERVISOR';
+      const isAdmin = isAdminPrefix || emp.role === 'ADMIN';
+      const isSupervisor = isSupPrefix || emp.role === 'SUPERVISOR' || isAdmin;
+      const userRole = isAdmin ? 'ADMIN' : (isSupervisor ? 'SUPERVISOR' : 'EMPLOYEE');
       return res.json({
         success: true,
         user: {
           id: emp.id,
           name: emp.name,
           department: emp.department,
-          role: isSupervisor ? 'SUPERVISOR' : 'EMPLOYEE',
-          isSupervisor
+          role: userRole,
+          isSupervisor,
+          isAdmin
         }
       });
     }
@@ -126,7 +130,8 @@ app.post('/api/login', async (req, res) => {
     const validDemoUsers = {
       'EMP-001': { name: 'สมชาย ใจดี', department: 'Assembly', role: 'EMPLOYEE', pin: '1234' },
       'EMP-002': { name: 'สมหญิง รักงาน', department: 'Assembly', role: 'EMPLOYEE', pin: '1234' },
-      'SUP-001': { name: 'สมศักดิ์ คุมงาน (หัวหน้า)', department: 'Assembly', role: 'SUPERVISOR', pin: '1234' }
+      'SUP-001': { name: 'สมศักดิ์ คุมงาน (หัวหน้า)', department: 'Assembly', role: 'SUPERVISOR', pin: '1234' },
+      'ADMIN-001': { name: 'ผู้ดูแลระบบ (Admin)', department: 'Management', role: 'ADMIN', pin: '1234' }
     };
 
     const demoUser = validDemoUsers[cleanEmpId];
@@ -137,15 +142,18 @@ app.post('/api/login', async (req, res) => {
       return res.status(401).json({ error: 'รหัสผ่าน (PIN) ไม่ถูกต้อง (Incorrect PIN)' });
     }
 
-    const isSupervisor = isSupPrefix || demoUser.role === 'SUPERVISOR';
+    const isAdmin = isAdminPrefix || demoUser.role === 'ADMIN';
+    const isSupervisor = isSupPrefix || demoUser.role === 'SUPERVISOR' || isAdmin;
+    const userRole = isAdmin ? 'ADMIN' : (isSupervisor ? 'SUPERVISOR' : 'EMPLOYEE');
     return res.json({
       success: true,
       user: {
         id: cleanEmpId,
         name: demoUser.name,
         department: demoUser.department,
-        role: isSupervisor ? 'SUPERVISOR' : 'EMPLOYEE',
-        isSupervisor
+        role: userRole,
+        isSupervisor,
+        isAdmin
       }
     });
   } catch (error) {
@@ -796,16 +804,16 @@ app.patch('/api/leave-requests/:id/status', async (req, res) => {
     const cleanStatus = status.toUpperCase();
     const supervisorId = (reviewedBy || 'SUP-001').trim().toUpperCase();
 
-    // Verify supervisor authorization (starts with SUP or role is SUPERVISOR in DB)
-    let isAuthorizedSupervisor = supervisorId.startsWith('SUP');
+    // Verify supervisor/admin authorization (starts with SUP/ADMIN or role is SUPERVISOR/ADMIN in DB)
+    let isAuthorizedSupervisor = supervisorId.startsWith('SUP') || supervisorId.startsWith('ADMIN');
     if (!isAuthorizedSupervisor && pool) {
       const supCheck = await query('SELECT role FROM employees WHERE UPPER(id) = $1', [supervisorId]);
-      if (supCheck.rows.length > 0 && supCheck.rows[0].role === 'SUPERVISOR') {
+      if (supCheck.rows.length > 0 && (supCheck.rows[0].role === 'SUPERVISOR' || supCheck.rows[0].role === 'ADMIN')) {
         isAuthorizedSupervisor = true;
       }
     }
     if (!isAuthorizedSupervisor) {
-      return res.status(403).json({ error: 'เฉพาะหัวหน้างาน (Supervisor) เท่านั้นที่สามารถอนุมัติหรือปฏิเสธคำขอได้' });
+      return res.status(403).json({ error: 'เฉพาะหัวหน้างาน (Supervisor) หรือผู้ดูแลระบบเท่านั้นที่สามารถอนุมัติหรือปฏิเสธคำขอได้' });
     }
 
     if (!pool) {
@@ -865,7 +873,293 @@ app.patch('/api/leave-requests/:id/status', async (req, res) => {
   }
 });
 
+// ==========================================
+// 8. Departments API
+// Returns distinct departments list for dropdowns
+// ==========================================
+app.get('/api/departments', async (req, res) => {
+  try {
+    if (pool) {
+      const qsRes = await query('SELECT department, max_daily_leaves FROM quota_settings ORDER BY department ASC');
+      const empRes = await query('SELECT DISTINCT department FROM employees WHERE department IS NOT NULL');
+      
+      const deptMap = new Map();
+      qsRes.rows.forEach(r => {
+        deptMap.set(r.department.trim(), { name: r.department.trim(), maxDailyLeaves: r.max_daily_leaves });
+      });
+      empRes.rows.forEach(r => {
+        const name = r.department.trim();
+        if (!deptMap.has(name)) {
+          deptMap.set(name, { name, maxDailyLeaves: 2 });
+        }
+      });
+
+      const departments = Array.from(deptMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+      return res.json({ success: true, departments });
+    }
+
+    // Demo fallback
+    res.json({
+      success: true,
+      departments: [
+        { name: 'Assembly', maxDailyLeaves: 2 },
+        { name: 'Crimping 1', maxDailyLeaves: 5 },
+        { name: 'QC', maxDailyLeaves: 1 }
+      ]
+    });
+  } catch (error) {
+    console.error('Fetch departments error:', error);
+    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการดึงรายชื่อแผนก' });
+  }
+});
+
+// ==========================================
+// 9. Admin Employee Management API
+// Add new employee to the database (ADMIN exclusive)
+// ==========================================
+app.post('/api/employees', async (req, res) => {
+  try {
+    const { 
+      adminId, 
+      id, 
+      name, 
+      department, 
+      role = 'EMPLOYEE', 
+      pin, 
+      vacation_quota, 
+      personal_quota, 
+      sick_quota 
+    } = req.body;
+
+    // Check admin authorization
+    const cleanAdminId = (adminId || '').trim().toUpperCase();
+    if (!cleanAdminId) {
+      return res.status(403).json({ error: 'กรุณาระบุรหัสผู้ดูแลระบบ (Admin ID required)' });
+    }
+
+    let isAuthorizedAdmin = cleanAdminId.startsWith('ADMIN');
+    if (!isAuthorizedAdmin && pool) {
+      const adminCheck = await query('SELECT role FROM employees WHERE UPPER(id) = $1', [cleanAdminId]);
+      if (adminCheck.rows.length > 0 && adminCheck.rows[0].role === 'ADMIN') {
+        isAuthorizedAdmin = true;
+      }
+    }
+
+    if (!isAuthorizedAdmin) {
+      return res.status(403).json({ error: 'เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่สามารถเพิ่มพนักงานใหม่ได้' });
+    }
+
+    // Validation
+    const cleanEmpId = (id || '').trim().toUpperCase();
+    const cleanName = (name || '').trim();
+    const cleanDept = (department || '').trim();
+    const cleanRole = (role || 'EMPLOYEE').trim().toUpperCase();
+    const cleanPin = (pin ? pin.toString().trim() : cleanEmpId); // Default PIN is employee ID
+
+    if (!cleanEmpId || !cleanName || !cleanDept) {
+      return res.status(400).json({ error: 'กรุณากรอกรหัสพนักงาน ชื่อ-นามสกุล และแผนกให้ครบถ้วน' });
+    }
+
+    if (!['EMPLOYEE', 'SUPERVISOR', 'ADMIN'].includes(cleanRole)) {
+      return res.status(400).json({ error: 'บทบาทต้องเป็น EMPLOYEE, SUPERVISOR หรือ ADMIN' });
+    }
+
+    const vacQuota = Number.isInteger(Number(vacation_quota)) && Number(vacation_quota) >= 0 
+      ? Number(vacation_quota) 
+      : (cleanRole === 'SUPERVISOR' || cleanRole === 'ADMIN' ? 10 : 6);
+    const perQuota = Number.isInteger(Number(personal_quota)) && Number(personal_quota) >= 0 
+      ? Number(personal_quota) 
+      : 6;
+    const sicQuota = Number.isInteger(Number(sick_quota)) && Number(sick_quota) >= 0 
+      ? Number(sick_quota) 
+      : 30;
+
+    if (!pool) {
+      return res.status(201).json({
+        success: true,
+        message: `เพิ่มข้อมูลพนักงาน [${cleanEmpId}] ${cleanName} เรียบร้อยแล้ว (Demo mode)`,
+        employee: {
+          id: cleanEmpId,
+          name: cleanName,
+          department: cleanDept,
+          role: cleanRole,
+          pin: cleanPin,
+          vacation_quota: vacQuota,
+          personal_quota: perQuota,
+          sick_quota: sicQuota
+        }
+      });
+    }
+
+    // Check duplicate ID
+    const dupCheck = await query('SELECT id FROM employees WHERE UPPER(id) = $1', [cleanEmpId]);
+    if (dupCheck.rows.length > 0) {
+      return res.status(409).json({ error: `รหัสพนักงาน ${cleanEmpId} มีอยู่ในระบบแล้ว` });
+    }
+
+    // Insert employee
+    const insertRes = await query(`
+      INSERT INTO employees (id, name, department, pin, role, vacation_quota, personal_quota, sick_quota)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING id, name, department, role, vacation_quota, personal_quota, sick_quota, created_at
+    `, [cleanEmpId, cleanName, cleanDept, cleanPin, cleanRole, vacQuota, perQuota, sicQuota]);
+
+    // Ensure department exists in quota_settings
+    await query(`
+      INSERT INTO quota_settings (department, max_daily_leaves)
+      VALUES ($1, 2)
+      ON CONFLICT (department) DO NOTHING
+    `, [cleanDept]);
+
+    res.status(201).json({
+      success: true,
+      message: `เพิ่มพนักงาน [${cleanEmpId}] ${cleanName} สำเร็จแล้ว`,
+      employee: insertRes.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Error adding employee:', error);
+    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการเพิ่มพนักงาน: ' + error.message });
+  }
+});
+
+// ==========================================
+// 10. Get Employees List API (For Admin Directory)
+// ==========================================
+app.get('/api/employees', async (req, res) => {
+  try {
+    const { department, role, search } = req.query;
+    if (pool) {
+      let sql = 'SELECT id, name, department, role, vacation_quota, personal_quota, sick_quota, created_at FROM employees WHERE 1=1';
+      const params = [];
+      if (department && department !== 'ALL') {
+        params.push(department.trim());
+        sql += ` AND UPPER(department) = UPPER($${params.length})`;
+      }
+      if (role && role !== 'ALL') {
+        params.push(role.trim().toUpperCase());
+        sql += ` AND UPPER(role) = UPPER($${params.length})`;
+      }
+      if (search) {
+        params.push(`%${search.trim().toLowerCase()}%`);
+        sql += ` AND (LOWER(id) LIKE $${params.length} OR LOWER(name) LIKE $${params.length})`;
+      }
+      sql += ' ORDER BY department ASC, role DESC, id ASC';
+      const result = await query(sql, params);
+      return res.json({ success: true, count: result.rows.length, employees: result.rows });
+    }
+
+    // Demo fallback
+    res.json({
+      success: true,
+      count: 4,
+      employees: [
+        { id: 'ADMIN-001', name: 'ผู้ดูแลระบบ (Admin)', department: 'Management', role: 'ADMIN' },
+        { id: 'SUP-001', name: 'สมศักดิ์ คุมงาน (หัวหน้า)', department: 'Assembly', role: 'SUPERVISOR' },
+        { id: 'EMP-001', name: 'สมชาย สายลุย', department: 'Crimping 1', role: 'EMPLOYEE' },
+        { id: 'EMP-002', name: 'สมหญิง จริงใจ', department: 'Crimping 1', role: 'EMPLOYEE' }
+      ]
+    });
+  } catch (error) {
+    console.error('Error fetching employees:', error);
+    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการดึงข้อมูลพนักงาน: ' + error.message });
+  }
+});
+
+// ==========================================
+// 11. Edit Employee API (ADMIN exclusive)
+// ==========================================
+app.put('/api/employees/:id', async (req, res) => {
+  try {
+    const targetId = (req.params.id || '').trim().toUpperCase();
+    const { 
+      adminId, 
+      name, 
+      department, 
+      role, 
+      pin, 
+      vacation_quota, 
+      personal_quota, 
+      sick_quota 
+    } = req.body;
+
+    // Check admin authorization
+    const cleanAdminId = (adminId || '').trim().toUpperCase();
+    if (!cleanAdminId) {
+      return res.status(403).json({ error: 'กรุณาระบุรหัสผู้ดูแลระบบ (Admin ID required)' });
+    }
+
+    let isAuthorizedAdmin = cleanAdminId.startsWith('ADMIN');
+    if (!isAuthorizedAdmin && pool) {
+      const adminCheck = await query('SELECT role FROM employees WHERE UPPER(id) = $1', [cleanAdminId]);
+      if (adminCheck.rows.length > 0 && adminCheck.rows[0].role === 'ADMIN') {
+        isAuthorizedAdmin = true;
+      }
+    }
+
+    if (!isAuthorizedAdmin) {
+      return res.status(403).json({ error: 'เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่สามารถแก้ไขข้อมูลพนักงานได้' });
+    }
+
+    if (!pool) {
+      return res.json({
+        success: true,
+        message: `แก้ไขข้อมูลพนักงาน [${targetId}] สำเร็จแล้ว (Demo mode)`
+      });
+    }
+
+    // Check if employee exists
+    const empCheck = await query('SELECT * FROM employees WHERE UPPER(id) = $1', [targetId]);
+    if (empCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'ไม่พบข้อมูลพนักงานรหัสนี้ในระบบ' });
+    }
+
+    const currentEmp = empCheck.rows[0];
+    const newName = name !== undefined ? name.trim() : currentEmp.name;
+    const newDept = department !== undefined ? department.trim() : currentEmp.department;
+    const newRole = role !== undefined ? role.trim().toUpperCase() : currentEmp.role;
+    const newPin = (pin !== undefined && pin.toString().trim() !== '') ? pin.toString().trim() : currentEmp.pin;
+    const newVac = Number.isInteger(Number(vacation_quota)) ? Number(vacation_quota) : currentEmp.vacation_quota;
+    const newPer = Number.isInteger(Number(personal_quota)) ? Number(personal_quota) : currentEmp.personal_quota;
+    const newSic = Number.isInteger(Number(sick_quota)) ? Number(sick_quota) : currentEmp.sick_quota;
+
+    const updateRes = await query(`
+      UPDATE employees
+      SET name = $1,
+          department = $2,
+          role = $3,
+          pin = $4,
+          vacation_quota = $5,
+          personal_quota = $6,
+          sick_quota = $7
+      WHERE UPPER(id) = $8
+      RETURNING id, name, department, role, vacation_quota, personal_quota, sick_quota
+    `, [newName, newDept, newRole, newPin, newVac, newPer, newSic, targetId]);
+
+    // Ensure department exists in quota_settings
+    if (newDept) {
+      await query(`
+        INSERT INTO quota_settings (department, max_daily_leaves)
+        VALUES ($1, 2)
+        ON CONFLICT (department) DO NOTHING
+      `, [newDept]);
+    }
+
+    res.json({
+      success: true,
+      message: `แก้ไขข้อมูลพนักงาน [${targetId}] ${newName} สำเร็จแล้ว`,
+      employee: updateRes.rows[0]
+    });
+  } catch (error) {
+    console.error('Error updating employee:', error);
+    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการแก้ไขข้อมูลพนักงาน: ' + error.message });
+  }
+});
+
+
 // Start Server
 app.listen(PORT, () => {
   console.log(`🚀 Leave Management Server is running on http://localhost:${PORT}`);
 });
+
+module.exports = app;

@@ -10,8 +10,16 @@
         body { font-family: 'Prompt', sans-serif; background-color: #f3f4f6; }
         .hidden-view { display: none !important; }
     </style>
+    <script>
+        if (window.location.protocol === 'file:') {
+            window.location.href = 'http://localhost:3000';
+        }
+    </script>
 </head>
 <body class="text-gray-800">
+    <div style="background: linear-gradient(to right, #312e81, #4338ca); color: white; padding: 14px; text-align: center; font-size: 14px; font-weight: bold; border-bottom: 2px solid #818cf8;">
+        🚀 กรุณาเปิดใช้งานระบบจริงที่: <a href="http://localhost:3000" style="color: #fef08a; text-decoration: underline; margin-left: 8px;">http://localhost:3000</a> (เพื่อใช้งานระบบฐานข้อมูลจริง, แผนก Crimping 1 และ Admin)
+    </div>
 
     <nav id="navbar" class="bg-blue-900 text-white p-4 shadow-md flex justify-between items-center hidden-view">
         <h1 class="text-lg font-semibold">Online Leave App</h1>

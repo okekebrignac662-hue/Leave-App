@@ -25,13 +25,13 @@ async function importEmployees() {
   try {
     await client.query('BEGIN');
 
-    // 1. Ensure department 'AUTO' exists in quota_settings
+    // 1. Ensure department 'Crimping 1' exists in quota_settings
     await client.query(`
       INSERT INTO quota_settings (department, max_daily_leaves)
-      VALUES ('AUTO', 5)
+      VALUES ('Crimping 1', 5)
       ON CONFLICT (department) DO UPDATE SET max_daily_leaves = 5
     `);
-    console.log('✅ Quota settings for department AUTO configured (max_daily_leaves = 5).');
+    console.log('✅ Quota settings for department Crimping 1 configured (max_daily_leaves = 5).');
 
     let count = 0;
     let supCount = 0;
@@ -45,7 +45,7 @@ async function importEmployees() {
         const isSupervisor = position.includes('หัวหน้า');
         const role = isSupervisor ? 'SUPERVISOR' : 'EMPLOYEE';
         const pin = id; // PIN is same as Employee ID
-        const department = 'AUTO';
+        const department = 'Crimping 1';
         const vacationQuota = isSupervisor ? 10 : 6;
         const personalQuota = 6;
         const sickQuota = 30;

@@ -53,32 +53,32 @@ async function runDepartmentIsolationTest() {
   console.log('Submit Assembly Request result:', reqAssembly.status);
   assert.strictEqual(reqAssembly.status, 201);
 
-  // 2. Submit a leave request for 051057 (Department: AUTO)
-  const reqAuto = await request({
+  // 2. Submit a leave request for 051057 (Department: Crimping 1)
+  const reqCrimping = await request({
     host, port, path: '/api/leave-requests', method: 'POST'
   }, {
     employeeId: '051057',
     leaveType: 'Vacation',
     startDate: '2026-11-25',
     endDate: '2026-11-25',
-    reason: 'AUTO dept test vacation'
+    reason: 'Crimping 1 dept test vacation'
   });
-  console.log('Submit AUTO Request result:', reqAuto.status);
-  assert.strictEqual(reqAuto.status, 201);
+  console.log('Submit Crimping 1 Request result:', reqCrimping.status);
+  assert.strictEqual(reqCrimping.status, 201);
 
-  // 3. Test: Supervisor of 'AUTO' queries pending requests with department=AUTO
-  const autoSupRes = await request({
-    host, port, path: '/api/leave-requests?status=PENDING&department=AUTO', method: 'GET'
+  // 3. Test: Supervisor of 'Crimping 1' queries pending requests with department=Crimping 1
+  const crimpingSupRes = await request({
+    host, port, path: `/api/leave-requests?status=PENDING&department=${encodeURIComponent('Crimping 1')}`, method: 'GET'
   });
-  assert.strictEqual(autoSupRes.status, 200);
-  assert(Array.isArray(autoSupRes.body.requests));
-  const autoRequests = autoSupRes.body.requests;
+  assert.strictEqual(crimpingSupRes.status, 200);
+  assert(Array.isArray(crimpingSupRes.body.requests));
+  const crimpingRequests = crimpingSupRes.body.requests;
 
-  // All returned requests must be from AUTO
-  autoRequests.forEach(r => {
-    assert.strictEqual(r.department.toUpperCase(), 'AUTO', `Expected department AUTO but got ${r.department} for employee ${r.employee_id}`);
+  // All returned requests must be from Crimping 1
+  crimpingRequests.forEach(r => {
+    assert.strictEqual(r.department.toUpperCase(), 'CRIMPING 1', `Expected department Crimping 1 but got ${r.department} for employee ${r.employee_id}`);
   });
-  console.log('✅ [PASS] Supervisor in AUTO only sees AUTO department requests');
+  console.log('✅ [PASS] Supervisor in Crimping 1 only sees Crimping 1 department requests');
 
   // 4. Test: Supervisor of 'Assembly' queries pending requests with department=Assembly
   const assemblySupRes = await request({
@@ -93,13 +93,13 @@ async function runDepartmentIsolationTest() {
   });
   console.log('✅ [PASS] Supervisor in Assembly only sees Assembly department requests');
 
-  // 5. Test: Supervisor queries with supervisor_id=038012 (DB lookup for AUTO supervisor)
+  // 5. Test: Supervisor queries with supervisor_id=038012 (DB lookup for Crimping 1 supervisor)
   const supIdRes = await request({
     host, port, path: '/api/leave-requests?status=PENDING&supervisor_id=038012', method: 'GET'
   });
   assert.strictEqual(supIdRes.status, 200);
   supIdRes.body.requests.forEach(r => {
-    assert.strictEqual(r.department.toUpperCase(), 'AUTO');
+    assert.strictEqual(r.department.toUpperCase(), 'CRIMPING 1');
   });
   console.log('✅ [PASS] Query with supervisor_id resolves supervisor department and isolates correctly');
 

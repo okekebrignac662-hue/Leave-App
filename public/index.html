@@ -47,6 +47,13 @@
                 </div>
             </div>
             <div class="flex items-center space-x-3">
+                <!-- Admin Add Employee Action Button -->
+                <button id="btn-admin-add-emp" type="button" onclick="openAddEmployeeModal()" class="hidden-view bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-3 py-1.5 rounded-xl transition text-xs font-semibold shadow-md flex items-center space-x-1.5 transform active:scale-95">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                    </svg>
+                    <span>➕ เพิ่มพนักงาน</span>
+                </button>
                 <div class="flex items-center space-x-2.5 bg-slate-800/80 border border-slate-700/60 px-3 py-1.5 rounded-xl text-xs">
                     <div id="user-avatar-badge" class="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-inner">
                         -
@@ -387,6 +394,28 @@
 
             <!-- 3. SUPERVISOR VIEW -->
             <div id="supervisor-view" class="hidden-view space-y-6">
+                <!-- Admin Management Banner (Visible only for ADMIN) -->
+                <div id="admin-banner-card" class="hidden-view bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-4 sm:p-5 rounded-3xl shadow-md border border-indigo-500/30 flex flex-col sm:flex-row items-center justify-between gap-3.5">
+                    <div class="flex items-center space-x-3 w-full sm:w-auto">
+                        <div class="w-10 h-10 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-xl shrink-0">
+                            🛡️
+                        </div>
+                        <div>
+                            <div class="flex items-center space-x-2">
+                                <h3 class="text-sm font-bold text-white">ระบบจัดการพนักงาน (Admin Portal)</h3>
+                                <span class="bg-indigo-500/30 text-indigo-200 border border-indigo-400/30 text-[10px] px-2 py-0.5 rounded-full font-mono">ADMIN ONLY</span>
+                            </div>
+                            <p class="text-[11px] text-slate-300 mt-0.5">เพิ่มข้อมูลพนักงานใหม่ กำหนดแผนก และโควตาวันลาเข้าสู่ระบบ</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="openAddEmployeeModal()" class="w-full sm:w-auto bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-md transition flex items-center justify-center space-x-1.5 shrink-0 transform active:scale-95">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                        </svg>
+                        <span>➕ เพิ่มพนักงานใหม่เข้าสู่ระบบ</span>
+                    </button>
+                </div>
+
                 <!-- Executive Summary Cards -->
                 <div class="grid grid-cols-3 gap-3">
                     <div class="bg-white p-4 rounded-2xl shadow-xs border border-amber-100">
@@ -403,9 +432,14 @@
                     </div>
                 </div>
 
-                <!-- Supervisor Tab Switcher: Pending vs History -->
+                <!-- Supervisor & Admin Tab Switcher -->
                 <div class="bg-white p-3 sm:p-4 rounded-2xl shadow-xs border border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div class="flex space-x-2 bg-gray-100/80 p-1 rounded-xl">
+                    <div class="flex flex-wrap gap-1.5 bg-gray-100/80 p-1 rounded-xl">
+                        <!-- Admin Only Tab -->
+                        <button id="tab-admin-employees" type="button" onclick="switchSupervisorTab('employees')" class="hidden-view px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 text-gray-600 hover:text-gray-900">
+                            <span>👥 จัดการรายชื่อพนักงาน</span>
+                            <span id="admin-badge-emp-count" class="ml-1 bg-indigo-600 text-white px-1.5 py-0.2 rounded-full text-[10px] font-bold">0</span>
+                        </button>
                         <button id="tab-sup-pending" type="button" onclick="switchSupervisorTab('pending')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 bg-white text-blue-700 shadow-xs">
                             <span>⏳ รออนุมัติ (Pending)</span>
                             <span id="sup-badge-pending" class="ml-1 bg-amber-500 text-white px-1.5 py-0.2 rounded-full text-[10px] font-bold">0</span>
@@ -417,6 +451,53 @@
                     <button type="button" onclick="refreshSupervisorData()" class="bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 px-3.5 py-1.5 rounded-xl text-xs font-medium transition flex items-center justify-center space-x-1 shadow-2xs self-end sm:self-auto">
                         <span>🔄 รีเฟรช</span>
                     </button>
+                </div>
+
+                <!-- Admin Employees Directory Container (Admin Only) -->
+                <div id="admin-employees-container" class="hidden-view space-y-4">
+                    <div class="bg-white p-4 rounded-3xl shadow-xs border border-gray-100 space-y-3">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div class="relative flex-1">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">🔍</span>
+                                <input type="text" id="admin-search-input" oninput="filterEmployeeTable()" placeholder="ค้นหาชื่อ หรือ รหัสพนักงาน..." class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-3.5 py-2 text-xs focus:bg-white focus:border-indigo-600 focus:outline-none transition">
+                            </div>
+                            <button type="button" onclick="openAddEmployeeModal()" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-md transition flex items-center justify-center space-x-1.5 shrink-0 transform active:scale-95">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                                </svg>
+                                <span>➕ เพิ่มพนักงานใหม่</span>
+                            </button>
+                        </div>
+
+                        <!-- Department Filter Chips -->
+                        <div class="flex items-center space-x-1.5 overflow-x-auto pb-1 text-xs pt-1 border-t border-gray-100" id="admin-dept-filter-chips">
+                            <span class="text-[11px] text-gray-400 font-medium mr-1 shrink-0">แผนก:</span>
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Employees List Table -->
+                    <div class="bg-white rounded-3xl shadow-xs border border-gray-100 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-gray-50/80 text-gray-600 border-b border-gray-100 font-semibold">
+                                    <tr>
+                                        <th class="p-3.5 pl-5">รหัสพนักงาน</th>
+                                        <th class="p-3.5">ชื่อ - นามสกุล</th>
+                                        <th class="p-3.5">แผนก</th>
+                                        <th class="p-3.5 text-center">บทบาท (Role)</th>
+                                        <th class="p-3.5 text-center">โควตาเริ่มต้น (พักร้อน / กิจ / ป่วย)</th>
+                                        <th class="p-3.5 text-center pr-5">จัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-employees-tbody" class="divide-y divide-gray-100">
+                                    <tr>
+                                        <td colspan="6" class="text-center py-8 text-gray-400">กำลังโหลดรายชื่อพนักงาน...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
 
                 <div id="supervisor-pending-container" class="space-y-3">
@@ -520,6 +601,221 @@
                 <button type="button" onclick="closeRejectModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2.5 rounded-xl font-semibold text-xs transition">ยกเลิก</button>
                 <button type="button" id="btn-confirm-reject" onclick="confirmRejectAction()" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white py-2.5 rounded-xl font-semibold text-xs shadow-md shadow-rose-500/25 transition">ยืนยันไม่อนุมัติ</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Add Employee Modal (Admin Only) -->
+    <div id="add-employee-modal" class="hidden-view fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-gray-100 transform transition-all animate-in fade-in zoom-in duration-200">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between pb-3.5 border-b border-gray-100">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl shadow-2xs">
+                        👤
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-gray-900">เพิ่มพนักงานใหม่เข้าสู่ระบบ</h3>
+                        <p class="text-[11px] text-gray-500">บันทึกข้อมูลพนักงาน กำหนดแผนก และโควตาวันลา</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeAddEmployeeModal()" class="text-gray-400 hover:text-gray-600 text-base p-1.5 rounded-xl hover:bg-gray-100 transition">✕</button>
+            </div>
+
+            <!-- Modal Form -->
+            <form id="add-emp-form" onsubmit="event.preventDefault(); submitNewEmployee();" class="space-y-4 pt-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <!-- Employee ID -->
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">
+                            <span>รหัสพนักงาน (ID)</span> <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="text" id="new-emp-id" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition uppercase placeholder:text-gray-400" placeholder="เช่น EMP-004 หรือ 051058">
+                    </div>
+
+                    <!-- Full Name -->
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">
+                            <span>ชื่อ - นามสกุล</span> <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="text" id="new-emp-name" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition placeholder:text-gray-400" placeholder="เช่น นายสมใจ รักงาน">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <!-- Department Dropdown -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-xs font-semibold text-gray-700">
+                                <span>แผนก (Department)</span> <span class="text-rose-500">*</span>
+                            </label>
+                            <span class="text-[10px] text-indigo-600 font-semibold">Dropdown</span>
+                        </div>
+                        <select id="new-emp-dept" onchange="handleDeptSelectChange(this.value)" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition font-medium text-gray-800">
+                            <option value="" disabled selected>-- กำลังโหลดรายชื่อแผนก --</option>
+                        </select>
+                        <!-- Custom new department input (hidden by default) -->
+                        <div id="custom-dept-container" class="hidden mt-2">
+                            <input type="text" id="new-emp-dept-custom" class="w-full bg-indigo-50/50 border border-indigo-200 rounded-xl px-3 py-1.5 text-xs focus:bg-white focus:border-indigo-600 focus:outline-none transition placeholder:text-gray-400" placeholder="พิมพ์ชื่อแผนกใหม่ที่ต้องการ...">
+                        </div>
+                    </div>
+
+                    <!-- Role Dropdown -->
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">
+                            <span>บทบาท (Role)</span> <span class="text-rose-500">*</span>
+                        </label>
+                        <select id="new-emp-role" onchange="handleRoleSelectChange(this.value)" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition font-medium text-gray-800">
+                            <option value="EMPLOYEE">พนักงานทั่วไป (EMPLOYEE)</option>
+                            <option value="SUPERVISOR">หัวหน้างาน (SUPERVISOR)</option>
+                            <option value="ADMIN">ผู้ดูแลระบบ (ADMIN)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Initial PIN Password -->
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block text-xs font-semibold text-gray-700">
+                            <span>รหัสผ่านเริ่มต้น (PIN)</span>
+                        </label>
+                        <span class="text-[10px] text-gray-400">เว้นว่างไว้จะใช้รหัสพนักงานเป็นรหัสผ่าน</span>
+                    </div>
+                    <input type="text" id="new-emp-pin" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition placeholder:text-gray-400" placeholder="ค่าเริ่มต้น: รหัสพนักงาน">
+                </div>
+
+                <!-- Initial Leave Quotas -->
+                <div class="border-t border-gray-100 pt-3">
+                    <label class="block text-xs font-semibold text-gray-700 mb-2">
+                        <span>โควตาวันลาเริ่มต้น (วัน/ปี):</span>
+                    </label>
+                    <div class="grid grid-cols-3 gap-2.5">
+                        <div class="bg-emerald-50/60 p-2.5 rounded-xl border border-emerald-100">
+                            <label class="block text-[11px] font-semibold text-emerald-800 mb-1 text-center">🏖️ พักร้อน</label>
+                            <input type="number" id="new-emp-vac-quota" value="6" min="0" max="90" required class="w-full bg-white border border-emerald-200 rounded-lg px-2 py-1 text-xs text-center font-bold text-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div class="bg-amber-50/60 p-2.5 rounded-xl border border-amber-100">
+                            <label class="block text-[11px] font-semibold text-amber-800 mb-1 text-center">💼 ลากิจ</label>
+                            <input type="number" id="new-emp-per-quota" value="6" min="0" max="90" required class="w-full bg-white border border-amber-200 rounded-lg px-2 py-1 text-xs text-center font-bold text-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                        <div class="bg-blue-50/60 p-2.5 rounded-xl border border-blue-100">
+                            <label class="block text-[11px] font-semibold text-blue-800 mb-1 text-center">🏥 ลาป่วย</label>
+                            <input type="number" id="new-emp-sic-quota" value="30" min="0" max="90" required class="w-full bg-white border border-blue-200 rounded-lg px-2 py-1 text-xs text-center font-bold text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex space-x-2 pt-2">
+                    <button type="button" onclick="closeAddEmployeeModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2.5 rounded-xl font-semibold text-xs transition">ยกเลิก</button>
+                    <button type="submit" id="btn-submit-new-emp" class="flex-1 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white py-2.5 rounded-xl font-semibold text-xs transition shadow-md flex items-center justify-center space-x-1.5">
+                        <span>บันทึกพนักงานใหม่</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    <!-- Edit Employee Modal (Admin Only) -->
+    <div id="edit-employee-modal" class="hidden-view fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-gray-100 transform transition-all animate-in fade-in zoom-in duration-200">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between pb-3.5 border-b border-gray-100">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl shadow-2xs">
+                        ✏️
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-gray-900">แก้ไขข้อมูลพนักงาน</h3>
+                        <p class="text-[11px] text-gray-500">ปรับปรุงข้อมูล แผนก บทบาท และโควตาวันลา</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeEditEmployeeModal()" class="text-gray-400 hover:text-gray-600 text-base p-1.5 rounded-xl hover:bg-gray-100 transition">✕</button>
+            </div>
+
+            <!-- Modal Form -->
+            <form id="edit-emp-form" onsubmit="event.preventDefault(); submitEditEmployee();" class="space-y-4 pt-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <!-- Employee ID (Disabled) -->
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">
+                            <span>รหัสพนักงาน (ID)</span>
+                        </label>
+                        <input type="text" id="edit-emp-id" readonly class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs text-gray-600 font-mono font-bold cursor-not-allowed uppercase">
+                    </div>
+
+                    <!-- Full Name -->
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">
+                            <span>ชื่อ - นามสกุล</span> <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="text" id="edit-emp-name" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <!-- Department Dropdown -->
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">
+                            <span>แผนก (Department)</span> <span class="text-rose-500">*</span>
+                        </label>
+                        <select id="edit-emp-dept" onchange="handleEditDeptChange(this.value)" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition font-medium text-gray-800">
+                        </select>
+                        <div id="edit-custom-dept-container" class="hidden mt-2">
+                            <input type="text" id="edit-emp-dept-custom" class="w-full bg-indigo-50/50 border border-indigo-200 rounded-xl px-3 py-1.5 text-xs focus:bg-white focus:border-indigo-600 focus:outline-none transition placeholder:text-gray-400" placeholder="พิมพ์ชื่อแผนกใหม่...">
+                        </div>
+                    </div>
+
+                    <!-- Role Dropdown -->
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">
+                            <span>บทบาท (Role)</span> <span class="text-rose-500">*</span>
+                        </label>
+                        <select id="edit-emp-role" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition font-medium text-gray-800">
+                            <option value="EMPLOYEE">พนักงานทั่วไป (EMPLOYEE)</option>
+                            <option value="SUPERVISOR">หัวหน้างาน (SUPERVISOR)</option>
+                            <option value="ADMIN">ผู้ดูแลระบบ (ADMIN)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- PIN Password -->
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block text-xs font-semibold text-gray-700">
+                            <span>เปลี่ยนรหัสผ่าน (PIN)</span>
+                        </label>
+                        <span class="text-[10px] text-gray-400">เว้นว่างไว้หากไม่ต้องการเปลี่ยนรหัสผ่าน</span>
+                    </div>
+                    <input type="text" id="edit-emp-pin" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition placeholder:text-gray-400" placeholder="คงรหัสเดิมไว้">
+                </div>
+
+                <!-- Leave Quotas -->
+                <div class="border-t border-gray-100 pt-3">
+                    <label class="block text-xs font-semibold text-gray-700 mb-2">
+                        <span>โควตาวันลา (วัน/ปี):</span>
+                    </label>
+                    <div class="grid grid-cols-3 gap-2.5">
+                        <div class="bg-emerald-50/60 p-2.5 rounded-xl border border-emerald-100">
+                            <label class="block text-[11px] font-semibold text-emerald-800 mb-1 text-center">🏖️ พักร้อน</label>
+                            <input type="number" id="edit-emp-vac-quota" min="0" max="90" required class="w-full bg-white border border-emerald-200 rounded-lg px-2 py-1 text-xs text-center font-bold text-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div class="bg-amber-50/60 p-2.5 rounded-xl border border-amber-100">
+                            <label class="block text-[11px] font-semibold text-amber-800 mb-1 text-center">💼 ลากิจ</label>
+                            <input type="number" id="edit-emp-per-quota" min="0" max="90" required class="w-full bg-white border border-amber-200 rounded-lg px-2 py-1 text-xs text-center font-bold text-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                        <div class="bg-blue-50/60 p-2.5 rounded-xl border border-blue-100">
+                            <label class="block text-[11px] font-semibold text-blue-800 mb-1 text-center">🏥 ลาป่วย</label>
+                            <input type="number" id="edit-emp-sic-quota" min="0" max="90" required class="w-full bg-white border border-blue-200 rounded-lg px-2 py-1 text-xs text-center font-bold text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex space-x-2 pt-2">
+                    <button type="button" onclick="closeEditEmployeeModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2.5 rounded-xl font-semibold text-xs transition">ยกเลิก</button>
+                    <button type="submit" id="btn-submit-edit-emp" class="flex-1 bg-gradient-to-r from-amber-600 to-indigo-600 hover:from-amber-700 hover:to-indigo-700 text-white py-2.5 rounded-xl font-semibold text-xs transition shadow-md flex items-center justify-center space-x-1.5">
+                        <span>บันทึกการแก้ไข</span>
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -1099,15 +1395,35 @@
                 const initialLetter = (currentUser.name || currentUser.id).charAt(0);
                 document.getElementById('user-avatar-badge').innerText = initialLetter;
                 document.getElementById('user-name-display').innerText = currentUser.name;
-                document.getElementById('user-role-display').innerText = currentUser.isSupervisor 
-                    ? `👑 หัวหน้างาน • แผนก ${currentUser.department}` 
-                    : `พนักงาน • แผนก ${currentUser.department}`;
+                document.getElementById('user-role-display').innerText = currentUser.isAdmin
+                    ? `🛡️ ผู้ดูแลระบบ (Admin) • แผนก ${currentUser.department}`
+                    : (currentUser.isSupervisor 
+                        ? `👑 หัวหน้างาน • แผนก ${currentUser.department}` 
+                        : `พนักงาน • แผนก ${currentUser.department}`);
+
+                // Admin Controls Visibility
+                const adminBtn = document.getElementById('btn-admin-add-emp');
+                const adminBanner = document.getElementById('admin-banner-card');
+                const adminTab = document.getElementById('tab-admin-employees');
+                if (currentUser.isAdmin) {
+                    if (adminBtn) adminBtn.classList.remove('hidden-view');
+                    if (adminBanner) adminBanner.classList.remove('hidden-view');
+                    if (adminTab) adminTab.classList.remove('hidden-view');
+                } else {
+                    if (adminBtn) adminBtn.classList.add('hidden-view');
+                    if (adminBanner) adminBanner.classList.add('hidden-view');
+                    if (adminTab) adminTab.classList.add('hidden-view');
+                }
 
                 if (currentUser.isSupervisor) {
                     document.getElementById('supervisor-view').classList.remove('hidden-view');
                     document.getElementById('employee-view').classList.add('hidden-view');
                     document.getElementById('sup-stat-dept').innerText = currentUser.department;
-                    loadPendingRequests();
+                    if (currentUser.isAdmin) {
+                        switchSupervisorTab('employees');
+                    } else {
+                        switchSupervisorTab('pending');
+                    }
                     loadDepartmentCalendar();
                 } else {
                     document.getElementById('employee-view').classList.remove('hidden-view');
@@ -1146,6 +1462,12 @@
             document.getElementById('supervisor-view').classList.add('hidden-view');
             document.getElementById('login-view').classList.remove('hidden-view');
             
+            const adminBtn = document.getElementById('btn-admin-add-emp');
+            const adminBanner = document.getElementById('admin-banner-card');
+            if (adminBtn) adminBtn.classList.add('hidden-view');
+            if (adminBanner) adminBanner.classList.add('hidden-view');
+            closeAddEmployeeModal();
+
             const savedId = localStorage.getItem('leave_app_remembered_emp_id');
             document.getElementById('emp-id').value = savedId || '';
             document.getElementById('emp-pin').value = '';
@@ -1561,29 +1883,148 @@
             }
         }
 
-        // Switch Supervisor Tabs (Pending vs History)
+        // Switch Supervisor / Admin Tabs (Employees vs Pending vs History)
         function switchSupervisorTab(tab) {
+            const btnEmployees = document.getElementById('tab-admin-employees');
             const btnPending = document.getElementById('tab-sup-pending');
             const btnHistory = document.getElementById('tab-sup-history');
+            
+            const containerEmployees = document.getElementById('admin-employees-container');
             const containerPending = document.getElementById('supervisor-pending-container');
             const containerHistory = document.getElementById('supervisor-history-container');
 
-            if (tab === 'pending') {
-                btnPending.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 bg-white text-blue-700 shadow-xs';
-                btnHistory.className = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold text-gray-600 hover:text-gray-900 transition flex items-center space-x-1.5';
-                containerPending.classList.remove('hidden-view');
-                containerHistory.classList.add('hidden-view');
+            // Reset tab styles
+            const inactiveClass = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold text-gray-600 hover:text-gray-900 transition flex items-center space-x-1.5';
+            const activeClass = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 bg-white text-blue-700 shadow-xs';
+            
+            if (btnEmployees) btnEmployees.className = (tab === 'employees' ? activeClass : inactiveClass) + (currentUser && currentUser.isAdmin ? '' : ' hidden-view');
+            if (btnPending) btnPending.className = tab === 'pending' ? activeClass : inactiveClass;
+            if (btnHistory) btnHistory.className = tab === 'history' ? activeClass : inactiveClass;
+
+            if (containerEmployees) containerEmployees.classList.toggle('hidden-view', tab !== 'employees');
+            if (containerPending) containerPending.classList.toggle('hidden-view', tab !== 'pending');
+            if (containerHistory) containerHistory.classList.toggle('hidden-view', tab !== 'history');
+
+            if (tab === 'employees') {
+                loadAdminEmployeesList();
+            } else if (tab === 'pending') {
                 loadPendingRequests();
-            } else {
-                btnHistory.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 bg-white text-blue-700 shadow-xs';
-                btnPending.className = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold text-gray-600 hover:text-gray-900 transition flex items-center space-x-1.5';
-                containerHistory.classList.remove('hidden-view');
-                containerPending.classList.add('hidden-view');
+            } else if (tab === 'history') {
                 loadSupervisorHistory();
             }
         }
 
+        let allAdminEmployees = [];
+        let currentDeptFilter = 'ALL';
+
+        async function loadAdminEmployeesList() {
+            const tbody = document.getElementById('admin-employees-tbody');
+            if (!tbody) return;
+            
+            try {
+                const res = await safeFetch('/api/employees');
+                const data = await res.json();
+                if (data.success && Array.isArray(data.employees)) {
+                    allAdminEmployees = data.employees;
+                    const badge = document.getElementById('admin-badge-emp-count');
+                    if (badge) badge.innerText = allAdminEmployees.length;
+                    
+                    renderDeptFilterChips();
+                    renderEmployeesTable();
+                }
+            } catch (err) {
+                console.error('Failed to load employees for admin:', err);
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-6 text-red-500">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>';
+            }
+        }
+
+        function renderDeptFilterChips() {
+            const container = document.getElementById('admin-dept-filter-chips');
+            if (!container) return;
+            
+            const deptCounts = { 'ALL': allAdminEmployees.length };
+            allAdminEmployees.forEach(e => {
+                const d = e.department || 'Other';
+                deptCounts[d] = (deptCounts[d] || 0) + 1;
+            });
+
+            let html = '<span class="text-[11px] text-gray-400 font-medium mr-1 shrink-0">แผนก:</span>';
+            const depts = Object.keys(deptCounts);
+            depts.forEach(dept => {
+                const isActive = currentDeptFilter === dept;
+                const activeClass = isActive 
+                    ? 'bg-indigo-600 text-white font-bold shadow-xs' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200';
+                const label = dept === 'ALL' ? `ทั้งหมด (${deptCounts[dept]})` : `${dept} (${deptCounts[dept]})`;
+                html += `<button type="button" onclick="setDeptFilter('${escapeHtml(dept)}')" class="px-2.5 py-1 rounded-lg text-xs transition shrink-0 ${activeClass}">${escapeHtml(label)}</button>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function setDeptFilter(dept) {
+            currentDeptFilter = dept;
+            renderDeptFilterChips();
+            renderEmployeesTable();
+        }
+
+        function filterEmployeeTable() {
+            renderEmployeesTable();
+        }
+
+        function renderEmployeesTable() {
+            const tbody = document.getElementById('admin-employees-tbody');
+            if (!tbody) return;
+
+            const search = (document.getElementById('admin-search-input')?.value || '').trim().toLowerCase();
+
+            let filtered = allAdminEmployees.filter(emp => {
+                if (currentDeptFilter !== 'ALL' && emp.department !== currentDeptFilter) return false;
+                if (search) {
+                    const idMatch = (emp.id || '').toLowerCase().includes(search);
+                    const nameMatch = (emp.name || '').toLowerCase().includes(search);
+                    const deptMatch = (emp.department || '').toLowerCase().includes(search);
+                    if (!idMatch && !nameMatch && !deptMatch) return false;
+                }
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-400">ไม่พบรายชื่อพนักงานที่ตรงกับเงื่อนไข</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(emp => {
+                const roleBadge = emp.role === 'ADMIN'
+                    ? '<span class="bg-indigo-100 text-indigo-700 font-bold px-2.5 py-0.5 rounded-full text-[11px]">🛡️ ADMIN</span>'
+                    : (emp.role === 'SUPERVISOR'
+                        ? '<span class="bg-amber-100 text-amber-800 font-semibold px-2.5 py-0.5 rounded-full text-[11px]">👑 หัวหน้างาน</span>'
+                        : '<span class="bg-gray-100 text-gray-700 px-2.5 py-0.5 rounded-full text-[11px]">พนักงาน</span>');
+
+                return `
+                    <tr class="hover:bg-indigo-50/30 transition">
+                        <td class="p-3.5 pl-5 font-mono font-bold text-gray-900">${escapeHtml(emp.id)}</td>
+                        <td class="p-3.5 font-medium text-gray-800">${escapeHtml(emp.name)}</td>
+                        <td class="p-3.5"><span class="bg-blue-50 text-blue-700 font-semibold px-2.5 py-0.5 rounded-lg text-xs border border-blue-100">${escapeHtml(emp.department)}</span></td>
+                        <td class="p-3.5 text-center">${roleBadge}</td>
+                        <td class="p-3.5 text-center font-mono text-gray-600">
+                            <span class="text-emerald-600 font-bold">${emp.vacation_quota}</span> / 
+                            <span class="text-amber-600 font-bold">${emp.personal_quota}</span> / 
+                            <span class="text-blue-600 font-bold">${emp.sick_quota}</span> วัน
+                        </td>
+                        <td class="p-3.5 text-center pr-5">
+                            <button type="button" onclick="openEditEmployeeModal('${escapeHtml(emp.id)}')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 px-2.5 py-1 rounded-lg text-xs font-semibold transition shadow-2xs flex items-center justify-center space-x-1 mx-auto transform active:scale-95">
+                                <span>✏️ แก้ไข</span>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
         function refreshSupervisorData() {
+            if (currentUser && currentUser.isAdmin) {
+                loadAdminEmployeesList();
+            }
             loadPendingRequests();
             loadSupervisorHistory();
             loadDepartmentCalendar();
@@ -1704,6 +2145,307 @@
             if (type === 'Sick') return 'ลาป่วย (Sick Leave)';
             if (type === 'Personal') return 'ลากิจ (Personal Leave)';
             return 'ลาพักร้อน (Vacation)';
+        }
+
+        // ==========================================
+        // ADMIN: Add Employee Functions
+        // ==========================================
+        async function openAddEmployeeModal() {
+            if (!currentUser || !currentUser.isAdmin) {
+                showToast('เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่สามารถใช้งานส่วนนี้ได้', 'error');
+                return;
+            }
+
+            // Reset form fields
+            document.getElementById('new-emp-id').value = '';
+            document.getElementById('new-emp-name').value = '';
+            document.getElementById('new-emp-pin').value = '';
+            document.getElementById('new-emp-role').value = 'EMPLOYEE';
+            document.getElementById('new-emp-vac-quota').value = '6';
+            document.getElementById('new-emp-per-quota').value = '6';
+            document.getElementById('new-emp-sic-quota').value = '30';
+            document.getElementById('new-emp-dept-custom').value = '';
+            document.getElementById('custom-dept-container').classList.add('hidden');
+
+            // Show modal
+            document.getElementById('add-employee-modal').classList.remove('hidden-view');
+            
+            // Load departments dropdown
+            await loadDepartmentsDropdown();
+            document.getElementById('new-emp-id').focus();
+        }
+
+        function closeAddEmployeeModal() {
+            const modal = document.getElementById('add-employee-modal');
+            if (modal) modal.classList.add('hidden-view');
+        }
+
+        async function loadDepartmentsDropdown(selectedDept = '') {
+            const selectEl = document.getElementById('new-emp-dept');
+            if (!selectEl) return;
+            selectEl.innerHTML = '<option value="" disabled selected>⏳ กำลังโหลดรายชื่อแผนก...</option>';
+
+            try {
+                const res = await safeFetch('/api/departments');
+                const data = await res.json();
+                
+                if (data.success && Array.isArray(data.departments)) {
+                    let html = '<option value="" disabled selected>-- เลือกแผนก (Department) --</option>';
+                    data.departments.forEach(d => {
+                        const isSelected = selectedDept && selectedDept.toLowerCase() === d.name.toLowerCase() ? 'selected' : '';
+                        html += `<option value="${escapeHtml(d.name)}" ${isSelected}>${escapeHtml(d.name)}</option>`;
+                    });
+                    html += '<option value="__CUSTOM__">➕ เพิ่มแผนกใหม่...</option>';
+                    selectEl.innerHTML = html;
+
+                    // If user belongs to a specific department and no department is preselected, preselect user's department
+                    if (!selectedDept && currentUser && currentUser.department && currentUser.department !== 'Management' && currentUser.department !== 'HR / IT') {
+                        for (let opt of selectEl.options) {
+                            if (opt.value.toLowerCase() === currentUser.department.toLowerCase()) {
+                                opt.selected = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to load departments:', err);
+                selectEl.innerHTML = `
+                    <option value="Crimping 1">Crimping 1</option>
+                    <option value="Assembly">Assembly</option>
+                    <option value="QC">QC</option>
+                    <option value="__CUSTOM__">➕ เพิ่มแผนกใหม่...</option>
+                `;
+            }
+        }
+
+        function handleDeptSelectChange(val) {
+            const customContainer = document.getElementById('custom-dept-container');
+            const customInput = document.getElementById('new-emp-dept-custom');
+            if (val === '__CUSTOM__') {
+                customContainer.classList.remove('hidden');
+                customInput.focus();
+                customInput.required = true;
+            } else {
+                customContainer.classList.add('hidden');
+                customInput.required = false;
+            }
+        }
+
+        function handleRoleSelectChange(val) {
+            const vacInput = document.getElementById('new-emp-vac-quota');
+            if (val === 'SUPERVISOR' || val === 'ADMIN') {
+                if (vacInput.value === '6') vacInput.value = '10';
+            } else {
+                if (vacInput.value === '10') vacInput.value = '6';
+            }
+        }
+
+        async function submitNewEmployee() {
+            if (!currentUser || !currentUser.isAdmin) {
+                showToast('เฉพาะผู้ดูแลระบบเท่านั้นที่สามารถเพิ่มพนักงานได้', 'error');
+                return;
+            }
+
+            const id = document.getElementById('new-emp-id').value.trim().toUpperCase();
+            const name = document.getElementById('new-emp-name').value.trim();
+            const deptSelect = document.getElementById('new-emp-dept').value;
+            const customDept = document.getElementById('new-emp-dept-custom').value.trim();
+            const department = deptSelect === '__CUSTOM__' ? customDept : deptSelect;
+            const role = document.getElementById('new-emp-role').value;
+            const pin = document.getElementById('new-emp-pin').value.trim() || id;
+            const vacation_quota = parseInt(document.getElementById('new-emp-vac-quota').value, 10);
+            const personal_quota = parseInt(document.getElementById('new-emp-per-quota').value, 10);
+            const sick_quota = parseInt(document.getElementById('new-emp-sic-quota').value, 10);
+
+            if (!id || !name) {
+                showToast('กรุณากรอกรหัสพนักงานและชื่อ-นามสกุล', 'error');
+                return;
+            }
+
+            if (!department) {
+                showToast('กรุณาเลือกหรือระบุแผนกของพนักงาน', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('btn-submit-new-emp');
+            btn.disabled = true;
+            btn.innerHTML = '<span>⏳ กำลังบันทึก...</span>';
+
+            try {
+                const res = await safeFetch('/api/employees', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        adminId: currentUser.id,
+                        id,
+                        name,
+                        department,
+                        role,
+                        pin,
+                        vacation_quota,
+                        personal_quota,
+                        sick_quota
+                    })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    showToast(data.error || 'ไม่สามารถเพิ่มพนักงานได้', 'error');
+                    return;
+                }
+
+                showToast(`✅ ${data.message || 'เพิ่มพนักงานใหม่เรียบร้อยแล้ว'}`, 'success');
+                closeAddEmployeeModal();
+                loadAdminEmployeesList();
+
+            } catch (err) {
+                console.error('Submit new employee error:', err);
+                showToast('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span>บันทึกพนักงานใหม่</span>';
+            }
+        }
+
+        // ==========================================
+        // ADMIN: Edit Employee Functions
+        // ==========================================
+        async function openEditEmployeeModal(empId) {
+            if (!currentUser || !currentUser.isAdmin) {
+                showToast('เฉพาะผู้ดูแลระบบเท่านั้นที่สามารถแก้ไขข้อมูลพนักงานได้', 'error');
+                return;
+            }
+
+            const emp = allAdminEmployees.find(e => e.id === empId);
+            if (!emp) {
+                showToast('ไม่พบข้อมูลพนักงาน', 'error');
+                return;
+            }
+
+            document.getElementById('edit-emp-id').value = emp.id;
+            document.getElementById('edit-emp-name').value = emp.name || '';
+            document.getElementById('edit-emp-role').value = emp.role || 'EMPLOYEE';
+            document.getElementById('edit-emp-pin').value = '';
+            document.getElementById('edit-emp-vac-quota').value = emp.vacation_quota !== undefined ? emp.vacation_quota : 6;
+            document.getElementById('edit-emp-per-quota').value = emp.personal_quota !== undefined ? emp.personal_quota : 6;
+            document.getElementById('edit-emp-sic-quota').value = emp.sick_quota !== undefined ? emp.sick_quota : 30;
+            document.getElementById('edit-emp-dept-custom').value = '';
+            document.getElementById('edit-custom-dept-container').classList.add('hidden');
+
+            // Load departments dropdown with current dept pre-selected
+            await loadEditDepartmentsDropdown(emp.department);
+
+            document.getElementById('edit-employee-modal').classList.remove('hidden-view');
+            document.getElementById('edit-emp-name').focus();
+        }
+
+        function closeEditEmployeeModal() {
+            const modal = document.getElementById('edit-employee-modal');
+            if (modal) modal.classList.add('hidden-view');
+        }
+
+        async function loadEditDepartmentsDropdown(selectedDept) {
+            const selectEl = document.getElementById('edit-emp-dept');
+            if (!selectEl) return;
+            selectEl.innerHTML = '<option value="" disabled selected>⏳ กำลังโหลดแผนก...</option>';
+
+            try {
+                const res = await safeFetch('/api/departments');
+                const data = await res.json();
+                if (data.success && Array.isArray(data.departments)) {
+                    let html = '';
+                    let found = false;
+                    data.departments.forEach(d => {
+                        const isSel = selectedDept && selectedDept.toLowerCase() === d.name.toLowerCase();
+                        if (isSel) found = true;
+                        html += `<option value="${escapeHtml(d.name)}" ${isSel ? 'selected' : ''}>${escapeHtml(d.name)}</option>`;
+                    });
+                    if (!found && selectedDept) {
+                        html = `<option value="${escapeHtml(selectedDept)}" selected>${escapeHtml(selectedDept)}</option>` + html;
+                    }
+                    html += '<option value="__CUSTOM__">➕ เพิ่มแผนกใหม่...</option>';
+                    selectEl.innerHTML = html;
+                }
+            } catch (err) {
+                console.error('Failed to load departments for edit:', err);
+                selectEl.innerHTML = `<option value="${escapeHtml(selectedDept)}" selected>${escapeHtml(selectedDept)}</option>`;
+            }
+        }
+
+        function handleEditDeptChange(val) {
+            const customContainer = document.getElementById('edit-custom-dept-container');
+            const customInput = document.getElementById('edit-emp-dept-custom');
+            if (val === '__CUSTOM__') {
+                customContainer.classList.remove('hidden');
+                customInput.focus();
+                customInput.required = true;
+            } else {
+                customContainer.classList.add('hidden');
+                customInput.required = false;
+            }
+        }
+
+        async function submitEditEmployee() {
+            if (!currentUser || !currentUser.isAdmin) {
+                showToast('เฉพาะผู้ดูแลระบบเท่านั้นที่สามารถแก้ไขข้อมูลพนักงานได้', 'error');
+                return;
+            }
+
+            const id = document.getElementById('edit-emp-id').value.trim();
+            const name = document.getElementById('edit-emp-name').value.trim();
+            const deptSelect = document.getElementById('edit-emp-dept').value;
+            const customDept = document.getElementById('edit-emp-dept-custom').value.trim();
+            const department = deptSelect === '__CUSTOM__' ? customDept : deptSelect;
+            const role = document.getElementById('edit-emp-role').value;
+            const pin = document.getElementById('edit-emp-pin').value.trim();
+            const vacation_quota = parseInt(document.getElementById('edit-emp-vac-quota').value, 10);
+            const personal_quota = parseInt(document.getElementById('edit-emp-per-quota').value, 10);
+            const sick_quota = parseInt(document.getElementById('edit-emp-sic-quota').value, 10);
+
+            if (!name || !department) {
+                showToast('กรุณากรอกชื่อ-นามสกุล และเลือกแผนก', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('btn-submit-edit-emp');
+            btn.disabled = true;
+            btn.innerHTML = '<span>⏳ กำลังบันทึก...</span>';
+
+            try {
+                const res = await safeFetch(`/api/employees/${encodeURIComponent(id)}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        adminId: currentUser.id,
+                        name,
+                        department,
+                        role,
+                        pin: pin || undefined,
+                        vacation_quota,
+                        personal_quota,
+                        sick_quota
+                    })
+                });
+
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    showToast(data.error || 'ไม่สามารถแก้ไขข้อมูลได้', 'error');
+                    return;
+                }
+
+                showToast(`✅ ${data.message || 'แก้ไขข้อมูลสำเร็จแล้ว'}`, 'success');
+                closeEditEmployeeModal();
+                loadAdminEmployeesList();
+
+            } catch (err) {
+                console.error('Submit edit employee error:', err);
+                showToast('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span>บันทึกการแก้ไข</span>';
+            }
         }
     </script>
 </body>
