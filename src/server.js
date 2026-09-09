@@ -846,7 +846,11 @@ app.patch('/api/leave-requests/:id/status', async (req, res) => {
     }
 
     const cleanStatus = status.toUpperCase();
-    const supervisorId = (reviewedBy || 'SUP-001').trim().toUpperCase();
+    const supervisorId = (reviewedBy || req.body.supervisorId || req.body.supervisor_id || '').trim().toUpperCase();
+
+    if (!supervisorId) {
+      return res.status(401).json({ error: 'ต้องระบุรหัสหัวหน้างาน (Supervisor ID) เพื่อดำเนินการ' });
+    }
 
     // Verify supervisor/admin authorization (starts with SUP/ADMIN or role is SUPERVISOR/ADMIN in DB)
     let isAuthorizedSupervisor = supervisorId.startsWith('SUP') || supervisorId.startsWith('ADMIN');
