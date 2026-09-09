@@ -2,7 +2,10 @@ const assert = require('assert');
 const http = require('http');
 require('dotenv').config();
 
-const BASE_URL = 'http://localhost:3000';
+process.env.PORT = 3777;
+const app = require('../src/server');
+
+const BASE_URL = 'http://localhost:3777';
 
 function post(url, body) {
   return new Promise((resolve, reject) => {

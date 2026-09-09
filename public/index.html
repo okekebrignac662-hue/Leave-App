@@ -241,10 +241,15 @@
                                 <span class="text-lg">🗓️</span>
                                 <span>ปฏิทินวันลาของแผนก (Department Leave Calendar)</span>
                             </h2>
-                            <p class="text-xs text-gray-500 mt-0.5">
-                                แผนก <span id="cal-dept-name" class="cal-dept-name font-semibold text-blue-900">Assembly</span> 
-                                • โควตาสูงสุด <span id="cal-max-quota" class="cal-max-quota font-semibold text-emerald-700">2 คน/วัน</span>
-                            </p>
+                            <div class="flex flex-wrap items-center gap-1.5 text-xs text-gray-500 mt-1">
+                                <span>แผนก: <b id="cal-dept-name" class="cal-dept-name text-blue-900">Assembly</b></span>
+                                <span class="text-gray-300">•</span>
+                                <span class="font-medium text-gray-700">โควตาแยกตามกะ:</span>
+                                <div id="cal-shift-quotas-badge" class="cal-shift-quotas-badge inline-flex flex-wrap items-center gap-1.5 font-bold">
+                                    <span class="px-2 py-0.5 rounded-lg border text-[11px] bg-blue-50 text-blue-800 border-blue-200">กะ A: 3 คน/วัน</span>
+                                    <span class="px-2 py-0.5 rounded-lg border text-[11px] bg-purple-50 text-purple-800 border-purple-200">กะ B: 3 คน/วัน</span>
+                                </div>
+                            </div>
                         </div>
                         <!-- Month Navigation -->
                         <div class="flex items-center space-x-2 self-start sm:self-auto">
@@ -427,8 +432,11 @@
                         <span id="sup-stat-dept" class="text-base font-bold text-blue-900 mt-1 block truncate">Assembly</span>
                     </div>
                     <div class="bg-white p-4 rounded-2xl shadow-xs border border-emerald-100">
-                        <span class="text-[11px] font-semibold text-gray-500 block">โควตาลารายวัน</span>
-                        <span id="sup-stat-quota" class="text-base font-bold text-emerald-700 mt-1 block">สูงสุด 2 คน/วัน</span>
+                        <span class="text-[11px] font-semibold text-gray-500 block">โควตาลารายวัน (แยกตามกะ)</span>
+                        <div id="sup-stat-quota" class="mt-1 flex flex-wrap gap-1.5 text-xs font-bold">
+                            <span class="px-2 py-0.5 rounded-lg bg-blue-50 text-blue-800 border border-blue-200">กะ A: 3 คน</span>
+                            <span class="px-2 py-0.5 rounded-lg bg-purple-50 text-purple-800 border border-purple-200">กะ B: 3 คน</span>
+                        </div>
                     </div>
                 </div>
 
@@ -502,14 +510,32 @@
                 </div>
 
                 <div id="supervisor-pending-container" class="space-y-3">
-                    <p id="pending-subtitle" class="text-xs text-gray-500 font-medium px-1">กำลังโหลดรายการรออนุมัติ...</p>
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
+                        <p id="pending-subtitle" class="text-xs text-gray-500 font-medium">กำลังโหลดรายการรออนุมัติ...</p>
+                        <!-- Shift Filter Tabs -->
+                        <div class="flex items-center space-x-1.5 bg-gray-100/80 p-1 rounded-xl text-xs shrink-0">
+                            <span class="text-[11px] text-gray-400 font-bold px-1.5">กะ:</span>
+                            <button type="button" onclick="filterSupervisorByShift('ALL')" id="filter-shift-all" class="px-2.5 py-1 rounded-lg font-bold bg-white text-blue-700 shadow-2xs transition">ทั้งหมด</button>
+                            <button type="button" onclick="filterSupervisorByShift('A')" id="filter-shift-a" class="px-2.5 py-1 rounded-lg font-semibold text-gray-600 hover:text-gray-900 transition">🅰️ กะ A</button>
+                            <button type="button" onclick="filterSupervisorByShift('B')" id="filter-shift-b" class="px-2.5 py-1 rounded-lg font-semibold text-gray-600 hover:text-gray-900 transition">🅱️ กะ B</button>
+                        </div>
+                    </div>
                     <div id="supervisor-pending-list" class="space-y-4">
                         <!-- Dynamic pending leave cards inserted here -->
                     </div>
                 </div>
 
                 <div id="supervisor-history-container" class="hidden-view space-y-3">
-                    <p id="history-subtitle" class="text-xs text-gray-500 font-medium px-1">ประวัติคำขอที่ได้รับการอนุมัติ / ปฏิเสธทั้งหมด</p>
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
+                        <p id="history-subtitle" class="text-xs text-gray-500 font-medium">ประวัติคำขอที่ได้รับการอนุมัติ / ปฏิเสธทั้งหมด</p>
+                        <!-- Shift Filter Tabs -->
+                        <div class="flex items-center space-x-1.5 bg-gray-100/80 p-1 rounded-xl text-xs shrink-0">
+                            <span class="text-[11px] text-gray-400 font-bold px-1.5">กะ:</span>
+                            <button type="button" onclick="filterSupervisorHistoryByShift('ALL')" id="hist-filter-shift-all" class="px-2.5 py-1 rounded-lg font-bold bg-white text-blue-700 shadow-2xs transition">ทั้งหมด</button>
+                            <button type="button" onclick="filterSupervisorHistoryByShift('A')" id="hist-filter-shift-a" class="px-2.5 py-1 rounded-lg font-semibold text-gray-600 hover:text-gray-900 transition">🅰️ กะ A</button>
+                            <button type="button" onclick="filterSupervisorHistoryByShift('B')" id="hist-filter-shift-b" class="px-2.5 py-1 rounded-lg font-semibold text-gray-600 hover:text-gray-900 transition">🅱️ กะ B</button>
+                        </div>
+                    </div>
                     <div id="supervisor-history-list" class="space-y-4">
                         <!-- Dynamic history leave cards inserted here -->
                     </div>
@@ -523,10 +549,15 @@
                                 <span class="text-lg">🗓️</span>
                                 <span>ปฏิทินภาพรวมการลาของแผนก (Department Leave Calendar)</span>
                             </h2>
-                            <p class="text-xs text-gray-500 mt-0.5">
-                                แผนก <span class="cal-dept-name font-semibold text-blue-900">Assembly</span> 
-                                • โควตาสูงสุด <span class="cal-max-quota font-semibold text-emerald-700">2 คน/วัน</span>
-                            </p>
+                            <div class="flex flex-wrap items-center gap-1.5 text-xs text-gray-500 mt-1">
+                                <span>แผนก: <b class="cal-dept-name text-blue-900">Assembly</b></span>
+                                <span class="text-gray-300">•</span>
+                                <span class="font-medium text-gray-700">โควตาแยกตามกะ:</span>
+                                <div class="cal-shift-quotas-badge inline-flex flex-wrap items-center gap-1.5 font-bold">
+                                    <span class="px-2 py-0.5 rounded-lg border text-[11px] bg-blue-50 text-blue-800 border-blue-200">กะ A: 3 คน/วัน</span>
+                                    <span class="px-2 py-0.5 rounded-lg border text-[11px] bg-purple-50 text-purple-800 border-purple-200">กะ B: 3 คน/วัน</span>
+                                </div>
+                            </div>
                         </div>
                         <!-- Month Navigation -->
                         <div class="flex items-center space-x-2 self-start sm:self-auto">
@@ -1062,13 +1093,22 @@
                 const data = await res.json();
                 departmentCalendarData = data;
 
-                const maxQuota = data.maxDailyLeaves || 2;
-                document.querySelectorAll('.cal-max-quota').forEach(el => {
-                    el.innerText = `${maxQuota} คน/วัน`;
+                const qByShift = data.quotasByShift || { 'A': 3, 'B': 3, 'Morning': 2 };
+
+                // Build Shift Quota Pill Badges
+                const shiftQuotaBadgesHtml = Object.keys(qByShift).map(s => {
+                    const isB = s === 'B';
+                    const isM = s === 'Morning';
+                    const colorClass = isB ? 'bg-purple-50 text-purple-800 border-purple-200' : (isM ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-blue-50 text-blue-800 border-blue-200');
+                    const label = isB ? 'กะ B' : (isM ? 'เช้าตลอด' : 'กะ A');
+                    return `<span class="px-2 py-0.5 rounded-lg border text-[11px] ${colorClass}">${label}: ${qByShift[s]} คน/วัน</span>`;
+                }).join(' ');
+
+                document.querySelectorAll('.cal-shift-quotas-badge').forEach(el => {
+                    el.innerHTML = shiftQuotaBadgesHtml;
                 });
-                
                 if (document.getElementById('sup-stat-quota')) {
-                    document.getElementById('sup-stat-quota').innerText = `สูงสุด ${maxQuota} คน/วัน`;
+                    document.getElementById('sup-stat-quota').innerHTML = shiftQuotaBadgesHtml;
                 }
 
                 const firstDayIndex = new Date(year, monthIdx, 1).getDay(); // 0 = Sun
@@ -1081,28 +1121,47 @@
                     // Pad empty cells before first day
                     for (let i = 0; i < firstDayIndex; i++) {
                         const emptyCell = document.createElement('div');
-                        emptyCell.className = 'h-11 rounded-xl bg-gray-50/40 border border-transparent';
+                        emptyCell.className = 'min-h-[58px] rounded-xl bg-gray-50/40 border border-transparent';
                         grid.appendChild(emptyCell);
                     }
 
                     for (let day = 1; day <= totalDaysInMonth; day++) {
                         const dateStr = `${year}-${String(monthIdx + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                         const usage = data.dailyUsage && data.dailyUsage[dateStr];
-                        const count = usage ? usage.count : 0;
-                        const isFull = usage ? usage.isFull : false;
-                        const hasLeaves = count > 0;
+                        const shiftsData = (usage && usage.shifts) ? usage.shifts : {};
 
+                        const countA = (shiftsData['A'] && shiftsData['A'].count) || 0;
+                        const maxA = (shiftsData['A'] && shiftsData['A'].maxQuota) || qByShift['A'] || 3;
+                        const isFullA = shiftsData['A'] ? shiftsData['A'].isFull : (countA >= maxA);
+
+                        const countB = (shiftsData['B'] && shiftsData['B'].count) || 0;
+                        const maxB = (shiftsData['B'] && shiftsData['B'].maxQuota) || qByShift['B'] || 3;
+                        const isFullB = shiftsData['B'] ? shiftsData['B'].isFull : (countB >= maxB);
+
+                        const hasLeaves = countA > 0 || countB > 0;
                         let bgClass = 'bg-gray-50/60 hover:bg-blue-50 border-gray-100 text-gray-700';
                         let badgeHtml = '';
 
-                        if (isFull) {
-                            bgClass = 'bg-rose-50/90 border-rose-200 text-rose-900 font-bold hover:bg-rose-100';
-                            badgeHtml = `<span class="text-[9px] px-1 py-0.2 rounded-md bg-rose-500 text-white leading-none font-bold">เต็ม ${count}/${maxQuota}</span>`;
-                        } else if (hasLeaves) {
-                            bgClass = 'bg-amber-50/90 border-amber-200 text-amber-900 font-semibold hover:bg-amber-100';
-                            badgeHtml = `<span class="text-[9px] px-1 py-0.2 rounded-md bg-amber-500 text-white leading-none font-bold">${count}/${maxQuota} คน</span>`;
+                        if (!hasLeaves) {
+                            badgeHtml = `<span class="text-[9px] text-emerald-600 font-semibold">ว่าง (0)</span>`;
                         } else {
-                            badgeHtml = `<span class="text-[9px] text-emerald-600 font-medium">ว่าง (0)</span>`;
+                            const badgeAClass = isFullA ? 'bg-rose-500 text-white font-bold' : (countA > 0 ? 'bg-blue-600 text-white font-bold' : 'bg-gray-100 text-gray-600 font-medium');
+                            const badgeBClass = isFullB ? 'bg-rose-500 text-white font-bold' : (countB > 0 ? 'bg-purple-600 text-white font-bold' : 'bg-gray-100 text-gray-600 font-medium');
+
+                            if (isFullA && isFullB) {
+                                bgClass = 'bg-rose-50/90 border-rose-200 text-rose-900 font-bold hover:bg-rose-100';
+                            } else if (isFullA || isFullB) {
+                                bgClass = 'bg-amber-50/90 border-amber-300 text-amber-950 font-bold hover:bg-amber-100';
+                            } else {
+                                bgClass = 'bg-blue-50/60 border-blue-200 text-blue-900 font-medium hover:bg-blue-100';
+                            }
+
+                            badgeHtml = `
+                                <div class="flex flex-col items-center gap-0.5 w-full">
+                                    <span class="text-[8px] px-1 py-0.2 rounded ${badgeAClass} leading-tight w-full text-center truncate">A: ${countA}/${maxA}</span>
+                                    <span class="text-[8px] px-1 py-0.2 rounded ${badgeBClass} leading-tight w-full text-center truncate">B: ${countB}/${maxB}</span>
+                                </div>
+                            `;
                         }
 
                         if (dateStr === todayStr) {
@@ -1110,13 +1169,13 @@
                         }
 
                         const cell = document.createElement('div');
-                        cell.className = `${bgClass} h-12 p-1 rounded-xl border flex flex-col justify-between items-center cursor-pointer transition transform hover:scale-102 select-none`;
+                        cell.className = `${bgClass} min-h-[58px] p-1 rounded-xl border flex flex-col justify-between items-center cursor-pointer transition transform hover:scale-102 select-none`;
                         cell.innerHTML = `
-                            <span class="text-xs ${dateStr === todayStr ? 'font-black text-blue-600' : ''}">${day}</span>
+                            <span class="text-xs ${dateStr === todayStr ? 'font-black text-blue-600' : 'font-semibold'}">${day}</span>
                             ${badgeHtml}
                         `;
 
-                        cell.onclick = () => selectCalendarDate(dateStr, usage, maxQuota);
+                        cell.onclick = () => selectCalendarDate(dateStr, usage, qByShift);
                         grid.appendChild(cell);
                     }
                 });
@@ -1132,7 +1191,7 @@
             }
         }
 
-        function selectCalendarDate(dateStr, usage, maxQuota) {
+        function selectCalendarDate(dateStr, usage, qByShift) {
             // Set form start & end date to this date (for employee view)
             const startInput = document.getElementById('req-start-date');
             const endInput = document.getElementById('req-end-date');
@@ -1148,33 +1207,129 @@
                 document.getElementById('sup-cal-selected-info')
             ].filter(Boolean);
 
-            const count = usage ? usage.count : 0;
-            const employeesList = usage && usage.employees && usage.employees.length > 0
-                ? usage.employees.map(e => {
-                    const statusTag = e.status === 'APPROVED' ? '<span class="text-emerald-600 font-bold">อนุมัติแล้ว</span>' : '<span class="text-amber-600 font-medium">รออนุมัติ</span>';
-                    const timeDetail = e.durationType === 'HOURLY' && e.startTime && e.endTime
-                        ? ` <span class="bg-blue-100/90 text-blue-900 px-1.5 py-0.5 rounded font-bold text-[10px]">⏰ ${e.startTime} - ${e.endTime} น. (${e.hoursCount} ชม.)</span>`
-                        : '';
-                    return `<b class="text-gray-900">${e.name}</b> (${translateLeaveType(e.type)}${timeDetail} - ${statusTag})`;
-                  }).join(', ')
-                : 'ยังไม่มีใครขอลางาน';
+            const quotas = qByShift || (departmentCalendarData ? departmentCalendarData.quotasByShift : null) || { 'A': 3, 'B': 3, 'Morning': 2 };
+            const shiftsData = (usage && usage.shifts) ? usage.shifts : {};
 
-            let statusLabel = `<span class="text-emerald-700 font-bold">🟢 โควตาว่าง (ลาได้ครบ ${maxQuota} ที่)</span>`;
-            if (usage && usage.isFull) {
-                statusLabel = `<span class="text-rose-700 font-bold">🔴 เต็มโควตาแล้ว (${count}/${maxQuota} คน) (ลาพักร้อน/ลากิจไม่ได้ ยกเว้นลาป่วย)</span>`;
-            } else if (count > 0) {
-                statusLabel = `<span class="text-amber-700 font-bold">🟡 มีคนลาแล้ว ${count}/${maxQuota} คน (เหลืออีก ${maxQuota - count} ที่)</span>`;
-            }
+            const maxA = (shiftsData['A'] && shiftsData['A'].maxQuota) || quotas['A'] || 3;
+            const usedA = (shiftsData['A'] && shiftsData['A'].count) || 0;
+            const isFullA = shiftsData['A'] ? shiftsData['A'].isFull : (usedA >= maxA);
+
+            const maxB = (shiftsData['B'] && shiftsData['B'].maxQuota) || quotas['B'] || 3;
+            const usedB = (shiftsData['B'] && shiftsData['B'].count) || 0;
+            const isFullB = shiftsData['B'] ? shiftsData['B'].isFull : (usedB >= maxB);
+
+            const buildShiftQuotaItem = (label, icon, used, max, isFull, color) => {
+                let statusBadge = '';
+                let containerClass = '';
+                if (isFull) {
+                    statusBadge = '<span class="px-2 py-0.5 rounded-full bg-rose-600 text-white font-extrabold text-[10px]">🔴 เต็มโควตา (Full)</span>';
+                    containerClass = 'bg-rose-50/90 border-rose-200 text-rose-950 ring-1 ring-rose-300';
+                } else if (used > 0) {
+                    statusBadge = `<span class="px-2 py-0.5 rounded-full bg-amber-500 text-white font-bold text-[10px]">🟡 เหลืออีก ${max - used} ที่</span>`;
+                    containerClass = 'bg-amber-50/80 border-amber-200 text-amber-950';
+                } else {
+                    statusBadge = `<span class="px-2 py-0.5 rounded-full bg-emerald-600 text-white font-bold text-[10px]">🟢 ว่างครบ ${max} ที่</span>`;
+                    containerClass = 'bg-emerald-50/80 border-emerald-200 text-emerald-950';
+                }
+
+                return `
+                    <div class="p-3 rounded-2xl border ${containerClass} shadow-2xs">
+                        <div class="flex items-center justify-between gap-1 mb-1.5">
+                            <span class="font-bold text-xs flex items-center space-x-1.5">
+                                <span class="text-sm">${icon}</span>
+                                <span>${label}:</span>
+                            </span>
+                            <span class="text-sm font-extrabold font-mono tracking-tight">${used} / ${max}</span>
+                        </div>
+                        <div class="flex items-center justify-between text-[11px] pt-1.5 border-t border-black/5">
+                            <span class="text-gray-500 text-[10px] font-medium">สถานะ:</span>
+                            ${statusBadge}
+                        </div>
+                    </div>
+                `;
+            };
+
+            const quotaCardA = buildShiftQuotaItem('Shift A (กะ A)', '🅰️', usedA, maxA, isFullA, 'blue');
+            const quotaCardB = buildShiftQuotaItem('Shift B (กะ B)', '🅱️', usedB, maxB, isFullB, 'purple');
+
+            const allEmployees = (usage && usage.employees) ? usage.employees : [];
+            const empA = allEmployees.filter(e => e.shift === 'A');
+            const empB = allEmployees.filter(e => e.shift === 'B');
+
+            const renderEmpList = (list, shiftName) => {
+                if (!list || list.length === 0) {
+                    return '<div class="text-[11px] text-gray-400 italic py-1">ไม่มีผู้ขอลางานในกะนี้</div>';
+                }
+                return list.map(e => {
+                    const statusTag = e.status === 'APPROVED'
+                        ? '<span class="text-emerald-700 font-bold bg-emerald-100/80 px-2 py-0.5 rounded text-[10px]">อนุมัติแล้ว</span>'
+                        : '<span class="text-amber-700 font-semibold bg-amber-100/80 px-2 py-0.5 rounded text-[10px]">รออนุมัติ</span>';
+                    const timeDetail = e.durationType === 'HOURLY' && e.startTime && e.endTime
+                        ? ` <span class="bg-blue-100 text-blue-900 px-1.5 py-0.2 rounded font-bold text-[10px]">⏰ ${e.startTime} - ${e.endTime} น.</span>`
+                        : '';
+                    return `
+                        <div class="flex items-center justify-between py-1 border-b border-gray-100 last:border-0 text-[11px]">
+                            <div>
+                                <b class="text-gray-900">${escapeHtml(e.name)}</b>
+                                <span class="text-gray-500 ml-1">(${translateLeaveType(e.type)}${timeDetail})</span>
+                            </div>
+                            ${statusTag}
+                        </div>
+                    `;
+                }).join('');
+            };
 
             infoBoxes.forEach(box => {
                 box.classList.remove('hidden');
                 box.innerHTML = `
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 border-b border-blue-200/60 pb-1.5 mb-1.5">
-                        <span class="font-bold text-blue-950">📅 ข้อมูลวันที่เลือก: ${dateStr}</span>
-                        <span>${statusLabel}</span>
-                    </div>
-                    <div class="text-[11px] text-blue-900">
-                        👥 <b>ผู้ที่ลาในวันนี้:</b> ${employeesList}
+                    <div class="space-y-3">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 border-b border-blue-200/60 pb-2">
+                            <span class="font-bold text-blue-950 text-xs sm:text-sm flex items-center space-x-1.5">
+                                <span>📅</span>
+                                <span>ข้อมูลวันที่เลือก: ${dateStr}</span>
+                            </span>
+                            <span class="text-[11px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-lg self-start sm:self-auto">
+                                สถานะโควตาแยกตามกะ (Shift Quota Status)
+                            </span>
+                        </div>
+
+                        <!-- Shift Quota Counters -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            ${quotaCardA}
+                            ${quotaCardB}
+                        </div>
+
+                        <!-- Employees On Leave Grouped by Shift -->
+                        <div class="bg-white p-3.5 rounded-2xl border border-blue-100 space-y-2.5">
+                            <div class="text-xs font-bold text-gray-800 flex items-center justify-between border-b border-gray-100 pb-1.5">
+                                <span>👥 ผู้ที่ขอลางานในวันที่ ${dateStr} (แยกตามกะ):</span>
+                                <span class="text-[11px] text-gray-500 font-normal">รวมทั้งหมด ${allEmployees.length} คน</span>
+                            </div>
+
+                            <div class="space-y-2 pt-0.5">
+                                <div class="bg-blue-50/50 p-2.5 rounded-xl border border-blue-100/80">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <span class="text-xs font-bold text-blue-900 flex items-center space-x-1">
+                                            <span>🅰️</span>
+                                            <span>กะ A (Shift A):</span>
+                                        </span>
+                                        <span class="text-[11px] font-bold text-blue-800">${usedA} / ${maxA} คน</span>
+                                    </div>
+                                    <div class="space-y-0.5">${renderEmpList(empA, 'กะ A')}</div>
+                                </div>
+
+                                <div class="bg-purple-50/50 p-2.5 rounded-xl border border-purple-100/80">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <span class="text-xs font-bold text-purple-900 flex items-center space-x-1">
+                                            <span>🅱️</span>
+                                            <span>กะ B (Shift B):</span>
+                                        </span>
+                                        <span class="text-[11px] font-bold text-purple-800">${usedB} / ${maxB} คน</span>
+                                    </div>
+                                    <div class="space-y-0.5">${renderEmpList(empB, 'กะ B')}</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 `;
             });
@@ -1264,31 +1419,39 @@
                 chip.classList.remove('hidden');
                 daysText.innerText = `${hours} ชั่วโมง (${dayEquiv} วัน)`;
 
-                // Quota check on this date
+                // Quota check on this date (separated by employee's shift)
                 if (departmentCalendarData && departmentCalendarData.dailyUsage) {
-                    const maxQuota = departmentCalendarData.maxDailyLeaves || 2;
+                    const userShift = (currentUser && currentUser.shift) ? currentUser.shift.trim().toUpperCase() : 'A';
+                    const normShift = (userShift === 'B' || userShift.includes('B')) ? 'B' : (userShift === 'MORNING' ? 'Morning' : 'A');
+                    const shiftQuotas = departmentCalendarData.quotasByShift || { 'A': 3, 'B': 3, 'Morning': 2 };
+                    const userMaxQuota = shiftQuotas[normShift] || departmentCalendarData.maxDailyLeaves || 3;
+
                     const leaveType = document.getElementById('req-leave-type').value;
                     const isSick = leaveType === 'Sick';
                     const usage = departmentCalendarData.dailyUsage[startVal];
+                    const shiftsData = (usage && usage.shifts) ? usage.shifts : {};
+                    const sInfo = shiftsData[normShift] || { count: 0, maxQuota: userMaxQuota, isFull: false };
+                    const shiftCount = sInfo.count;
+                    const shiftMax = sInfo.maxQuota || userMaxQuota;
 
-                    if (usage && usage.isFull) {
+                    if (sInfo.isFull) {
                         if (isSick) {
                             chip.className = 'bg-blue-50 border border-blue-200 p-3 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between text-xs text-blue-900 gap-1.5';
                             statusBadge.className = 'text-[11px] px-2.5 py-0.5 rounded-full font-medium bg-blue-100 text-blue-800';
-                            statusBadge.innerText = `ℹ️ วันที่ ${startVal} โควตาเต็ม แต่ลาป่วยส่งได้`;
+                            statusBadge.innerText = `ℹ️ วันที่ ${startVal} โควตากะ ${normShift} เต็ม แต่ลาป่วยส่งได้`;
                         } else {
                             chip.className = 'bg-rose-50 border border-rose-200 p-3 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between text-xs text-rose-900 gap-1.5';
                             statusBadge.className = 'text-[11px] px-2.5 py-0.5 rounded-full font-bold bg-rose-200 text-rose-800';
-                            statusBadge.innerText = `⚠️ วันที่ ${startVal} โควตาเต็ม (${usage.count}/${maxQuota} คน)`;
+                            statusBadge.innerText = `⚠️ วันที่ ${startVal} โควตากะ ${normShift} เต็ม (${shiftCount}/${shiftMax} คน)`;
                         }
-                    } else if (usage && usage.count > 0) {
+                    } else if (shiftCount > 0) {
                         chip.className = 'bg-amber-50 border border-amber-200 p-3 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between text-xs text-amber-900 gap-1.5';
                         statusBadge.className = 'text-[11px] px-2.5 py-0.5 rounded-full font-semibold bg-amber-100 text-amber-800';
-                        statusBadge.innerText = `💡 วันที่ ${startVal} มีคนลาแล้ว ${usage.count}/${maxQuota} คน (เหลืออีก ${maxQuota - usage.count} ที่)`;
+                        statusBadge.innerText = `💡 วันที่ ${startVal} กะ ${normShift} มีคนลาแล้ว ${shiftCount}/${shiftMax} คน (เหลืออีก ${shiftMax - shiftCount} ที่)`;
                     } else {
                         chip.className = 'bg-emerald-50 border border-emerald-200 p-3 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between text-xs text-emerald-900 gap-1.5';
                         statusBadge.className = 'text-[11px] px-2.5 py-0.5 rounded-full font-medium bg-emerald-100 text-emerald-800';
-                        statusBadge.innerText = `✓ ลารายชั่วโมงได้ โควตายังว่าง`;
+                        statusBadge.innerText = `✓ ลารายชั่วโมงได้ โควตากะ ${normShift} ยังว่าง (${shiftMax} ที่)`;
                     }
                 } else {
                     chip.className = 'bg-blue-50/90 border border-blue-200/70 p-3 rounded-2xl flex items-center justify-between text-xs text-blue-900';
@@ -1319,9 +1482,13 @@
             chip.classList.remove('hidden');
             daysText.innerText = `${diffDays} วัน`;
 
-            // Real-time Quota Checking against department calendar
+            // Real-time Quota Checking against employee's shift in department calendar
             if (departmentCalendarData && departmentCalendarData.dailyUsage) {
-                const maxQuota = departmentCalendarData.maxDailyLeaves || 2;
+                const userShift = (currentUser && currentUser.shift) ? currentUser.shift.trim().toUpperCase() : 'A';
+                const normShift = (userShift === 'B' || userShift.includes('B')) ? 'B' : (userShift === 'MORNING' ? 'Morning' : 'A');
+                const shiftQuotas = departmentCalendarData.quotasByShift || { 'A': 3, 'B': 3, 'Morning': 2 };
+                const userMaxQuota = shiftQuotas[normShift] || departmentCalendarData.maxDailyLeaves || 3;
+
                 const leaveType = document.getElementById('req-leave-type').value;
                 const isSick = leaveType === 'Sick';
 
@@ -1333,11 +1500,14 @@
                 while (curr <= end) {
                     const dStr = `${curr.getFullYear()}-${String(curr.getMonth() + 1).padStart(2, '0')}-${String(curr.getDate()).padStart(2, '0')}`;
                     const usage = departmentCalendarData.dailyUsage[dStr];
-                    if (usage && usage.isFull) {
-                        fullDateFound = { date: dStr, count: usage.count };
+                    const shiftsData = (usage && usage.shifts) ? usage.shifts : {};
+                    const sInfo = shiftsData[normShift] || { count: 0, maxQuota: userMaxQuota, isFull: false };
+
+                    if (sInfo.isFull) {
+                        fullDateFound = { date: dStr, count: sInfo.count, max: sInfo.maxQuota || userMaxQuota };
                         break;
-                    } else if (usage && usage.count > 0 && !usedDateFound) {
-                        usedDateFound = { date: dStr, count: usage.count };
+                    } else if (sInfo.count > 0 && !usedDateFound) {
+                        usedDateFound = { date: dStr, count: sInfo.count, max: sInfo.maxQuota || userMaxQuota };
                     }
                     curr.setDate(curr.getDate() + 1);
                 }
@@ -1346,20 +1516,20 @@
                     if (isSick) {
                         chip.className = 'bg-blue-50 border border-blue-200 p-3 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between text-xs text-blue-900 gap-1.5';
                         statusBadge.className = 'text-[11px] px-2.5 py-0.5 rounded-full font-medium bg-blue-100 text-blue-800';
-                        statusBadge.innerText = `ℹ️ วันที่ ${fullDateFound.date} โควตาเต็ม แต่ลาป่วยส่งได้`;
+                        statusBadge.innerText = `ℹ️ วันที่ ${fullDateFound.date} โควตากะ ${normShift} เต็ม แต่ลาป่วยส่งได้`;
                     } else {
                         chip.className = 'bg-rose-50 border border-rose-200 p-3 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between text-xs text-rose-900 gap-1.5';
                         statusBadge.className = 'text-[11px] px-2.5 py-0.5 rounded-full font-bold bg-rose-200 text-rose-800';
-                        statusBadge.innerText = `⚠️ วันที่ ${fullDateFound.date} โควตาเต็ม (${fullDateFound.count}/${maxQuota} คน)`;
+                        statusBadge.innerText = `⚠️ วันที่ ${fullDateFound.date} โควตากะ ${normShift} เต็ม (${fullDateFound.count}/${fullDateFound.max} คน)`;
                     }
                 } else if (usedDateFound) {
                     chip.className = 'bg-amber-50 border border-amber-200 p-3 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between text-xs text-amber-900 gap-1.5';
                     statusBadge.className = 'text-[11px] px-2.5 py-0.5 rounded-full font-semibold bg-amber-100 text-amber-800';
-                    statusBadge.innerText = `💡 วันที่ ${usedDateFound.date} มีคนลาแล้ว ${usedDateFound.count}/${maxQuota} คน (เหลืออีก ${maxQuota - usedDateFound.count} ที่)`;
+                    statusBadge.innerText = `💡 วันที่ ${usedDateFound.date} กะ ${normShift} มีคนลาแล้ว ${usedDateFound.count}/${usedDateFound.max} คน (เหลืออีก ${usedDateFound.max - usedDateFound.count} ที่)`;
                 } else {
                     chip.className = 'bg-emerald-50 border border-emerald-200 p-3 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between text-xs text-emerald-900 gap-1.5';
                     statusBadge.className = 'text-[11px] px-2.5 py-0.5 rounded-full font-medium bg-emerald-100 text-emerald-800';
-                    statusBadge.innerText = `✓ ทุกวันที่เลือกโควตายังว่างครบ (${maxQuota} ที่)`;
+                    statusBadge.innerText = `✓ ทุกวันที่เลือกโควตากะ ${normShift} ยังว่างครบ (${userMaxQuota} ที่)`;
                 }
             } else {
                 chip.className = 'bg-blue-50/90 border border-blue-200/70 p-3 rounded-2xl flex items-center justify-between text-xs text-blue-900';
@@ -1615,7 +1785,7 @@
 
                 const data = await res.json();
 
-                if (!res.ok || !data.success) {
+                if (!data.success) {
                     showToast(data.error || 'ไม่สามารถส่งคำขอได้', 'error');
                     return;
                 }
@@ -1623,7 +1793,6 @@
                 showToast(data.message || 'ส่งคำขอลางานเรียบร้อยแล้ว', 'success');
                 document.getElementById('req-reason').value = '';
                 
-                // Refresh quota, request list, and department calendar
                 loadEmployeeQuota();
                 loadMyLeaveRequests();
                 loadDepartmentCalendar();
@@ -1637,109 +1806,153 @@
             }
         }
 
-        // Load Employee Requests History (Modern Timeline Cards)
-        async function loadMyLeaveRequests() {
-            if (!currentUser) return;
-            const listEl = document.getElementById('my-requests-list');
-            try {
-                const res = await safeFetch(`/api/leave-requests?employee_id=${currentUser.id}`);
-                const data = await res.json();
+        // Global shift filter state for supervisor dashboard
+        let allPendingRequests = [];
+        let allHistoryRequests = [];
+        let currentPendingShiftFilter = 'ALL';
+        let currentHistoryShiftFilter = 'ALL';
 
-                if (!data.success || !data.requests || data.requests.length === 0) {
-                    listEl.innerHTML = '<p class="text-xs text-gray-400 text-center py-6">ยังไม่มีประวัติการขอลา</p>';
-                    document.getElementById('history-count').innerText = '0 รายการ';
-                    return;
+        function filterSupervisorByShift(shift) {
+            currentPendingShiftFilter = shift;
+            ['all', 'a', 'b'].forEach(key => {
+                const btn = document.getElementById(`filter-shift-${key}`);
+                if (btn) {
+                    const isMatch = (shift === 'ALL' && key === 'all') || (shift === 'A' && key === 'a') || (shift === 'B' && key === 'b');
+                    btn.className = isMatch 
+                        ? 'px-2.5 py-1 rounded-lg font-bold bg-white text-blue-700 shadow-2xs transition'
+                        : 'px-2.5 py-1 rounded-lg font-semibold text-gray-600 hover:text-gray-900 transition';
                 }
-
-                document.getElementById('history-count').innerText = `${data.requests.length} รายการ`;
-
-                listEl.innerHTML = data.requests.map(req => {
-                    let statusBadge = '<span class="bg-amber-50 text-amber-700 border border-amber-200/80 text-[11px] px-2.5 py-0.5 rounded-full font-semibold flex items-center space-x-1"><span>⏳</span><span>รออนุมัติ</span></span>';
-                    let cancelBtn = '';
-
-                    if (req.status === 'PENDING') {
-                        cancelBtn = `<button onclick="cancelLeaveRequest(${req.id})" class="text-[11px] text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/80 px-2 py-0.5 rounded-lg transition font-medium flex items-center space-x-1 shadow-2xs" title="ยกเลิกคำขอนี้"><span>🗑️</span><span>ยกเลิก</span></button>`;
-                    } else if (req.status === 'APPROVED') {
-                        statusBadge = '<span class="bg-emerald-50 text-emerald-700 border border-emerald-200/80 text-[11px] px-2.5 py-0.5 rounded-full font-semibold flex items-center space-x-1"><span>✓</span><span>อนุมัติแล้ว</span></span>';
-                    } else if (req.status === 'REJECTED') {
-                        statusBadge = '<span class="bg-rose-50 text-rose-700 border border-rose-200/80 text-[11px] px-2.5 py-0.5 rounded-full font-semibold flex items-center space-x-1"><span>✕</span><span>ไม่อนุมัติ</span></span>';
-                    } else if (req.status === 'CANCELLED') {
-                        statusBadge = '<span class="bg-gray-100 text-gray-500 border border-gray-200 text-[11px] px-2.5 py-0.5 rounded-full font-semibold flex items-center space-x-1"><span>🚫</span><span>ยกเลิกแล้ว</span></span>';
-                    }
-
-                    const typeIcon = req.leave_type === 'Sick' ? '🏥' : (req.leave_type === 'Personal' ? '💼' : '🏖️');
-                    const isHourly = req.duration_type === 'HOURLY';
-                    const shiftChip = formatShiftBadge(req.shift, true);
-                    const durationChip = isHourly
-                        ? `<span class="text-xs text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-lg font-bold">⏰ ${req.hours_count} ชม. (${req.days_count} วัน)</span>`
-                        : `<span class="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg font-medium">${req.days_count} วัน</span>`;
-
-                    const dateDisplay = isHourly
-                        ? `<span><b>วันที่:</b> ${req.start_date} <span class="font-bold text-indigo-700 ml-1">⏰ ${req.start_time} - ${req.end_time} น.</span></span>`
-                        : `<span><b>ช่วงวันที่:</b> ${req.start_date} ${req.start_date !== req.end_date ? 'ถึง ' + req.end_date : ''}</span>`;
-
-                    const rejectionNotice = (req.status === 'REJECTED' && req.rejection_reason)
-                        ? `<div class="text-rose-700 bg-rose-50/90 p-2.5 rounded-xl border border-rose-200/70 text-xs flex items-start space-x-1.5"><span class="flex-shrink-0">⚠️</span><span><b>เหตุผลที่ไม่อนุมัติ:</b> "${req.rejection_reason}"</span></div>`
-                        : '';
-
-                    return `
-                        <div class="border border-gray-100 rounded-2xl p-4 text-xs space-y-2 bg-gradient-to-r from-gray-50/60 to-white hover:border-blue-200 transition">
-                            <div class="flex justify-between items-center">
-                                <div class="flex items-center space-x-1.5 font-bold text-gray-800 text-sm flex-wrap gap-1">
-                                    <span>${typeIcon}</span>
-                                    <span>${translateLeaveType(req.leave_type)}</span>
-                                    ${shiftChip}
-                                    ${durationChip}
-                                </div>
-                                <div class="flex items-center space-x-2">
-                                    ${statusBadge}
-                                    ${cancelBtn}
-                                </div>
-                            </div>
-                            <div class="text-gray-600 flex items-center space-x-1.5 text-xs">
-                                <span>📅</span>
-                                ${dateDisplay}
-                            </div>
-                            ${req.reason ? `<div class="text-gray-500 italic bg-white p-2.5 rounded-xl border border-gray-100 text-xs">💬 "${escapeHtml(req.reason)}"</div>` : ''}
-                            ${rejectionNotice}
-                            ${(req.reviewer_name || req.reviewed_by) ? `<div class="text-[11px] text-gray-400 text-right">พิจารณาโดย: <span class="font-medium text-gray-600">${escapeHtml(req.reviewer_name || req.reviewed_by)}</span></div>` : ''}
-                        </div>
-                    `;
-                }).join('');
-
-            } catch (err) {
-                console.error('Fetch my requests error:', err);
-            }
+            });
+            renderPendingRequestsList();
         }
 
-        // Cancel / Withdraw Leave Request (Employee self-service)
-        async function cancelLeaveRequest(requestId) {
-            if (!currentUser) return;
-            if (!confirm('คุณต้องการยกเลิกคำขอลางานนี้ใช่หรือไม่? เมื่อยกเลิกแล้วโควตาจะถูกคืนทันที')) {
+        function filterSupervisorHistoryByShift(shift) {
+            currentHistoryShiftFilter = shift;
+            ['all', 'a', 'b'].forEach(key => {
+                const btn = document.getElementById(`hist-filter-shift-${key}`);
+                if (btn) {
+                    const isMatch = (shift === 'ALL' && key === 'all') || (shift === 'A' && key === 'a') || (shift === 'B' && key === 'b');
+                    btn.className = isMatch 
+                        ? 'px-2.5 py-1 rounded-lg font-bold bg-white text-blue-700 shadow-2xs transition'
+                        : 'px-2.5 py-1 rounded-lg font-semibold text-gray-600 hover:text-gray-900 transition';
+                }
+            });
+            renderSupervisorHistoryList();
+        }
+
+        function renderPendingRequestsList() {
+            const listEl = document.getElementById('supervisor-pending-list');
+            const subtitleEl = document.getElementById('pending-subtitle');
+            const statPendingEl = document.getElementById('sup-stat-pending');
+
+            let filtered = allPendingRequests;
+            if (currentPendingShiftFilter !== 'ALL') {
+                filtered = allPendingRequests.filter(r => {
+                    const s = (r.shift || 'A').toString().trim().toUpperCase();
+                    if (currentPendingShiftFilter === 'B') return s === 'B' || s.includes('B');
+                    return s === 'A' || (!s.includes('B') && s !== 'MORNING');
+                });
+            }
+
+            if (statPendingEl) statPendingEl.innerText = allPendingRequests.length;
+            subtitleEl.innerText = currentPendingShiftFilter === 'ALL' 
+                ? `มี ${allPendingRequests.length} รายการที่รอการตรวจสอบ`
+                : `มี ${filtered.length} รายการในกะ ${currentPendingShiftFilter} (จากทั้งหมด ${allPendingRequests.length} รายการ)`;
+
+            if (filtered.length === 0) {
+                listEl.innerHTML = `
+                    <div class="bg-white p-8 rounded-3xl shadow-xs text-center border border-gray-100">
+                        <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-2.5">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                        <p class="text-sm font-bold text-gray-800">ไม่มีคำขอค้างอยู่ ${currentPendingShiftFilter !== 'ALL' ? 'ในกะ ' + currentPendingShiftFilter : ''}</p>
+                        <p class="text-xs text-gray-400 mt-0.5">พิจารณาคำขอทั้งหมดเรียบร้อยแล้ว</p>
+                    </div>
+                `;
                 return;
             }
 
-            try {
-                const res = await safeFetch(`/api/leave-requests/${requestId}`, {
-                    method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ employeeId: currentUser.id })
-                });
-                const data = await res.json();
+            listEl.innerHTML = filtered.map(req => {
+                const typeColor = req.leave_type === 'Sick' 
+                    ? 'bg-rose-50 text-rose-700 border border-rose-200/70' 
+                    : (req.leave_type === 'Personal' ? 'bg-amber-50 text-amber-700 border border-amber-200/70' : 'bg-blue-50 text-blue-700 border border-blue-200/70');
 
-                if (!res.ok || !data.success) {
-                    showToast(data.error || 'ไม่สามารถยกเลิกคำขอได้', 'error');
-                    return;
-                }
+                const typeIcon = req.leave_type === 'Sick' ? '🏥' : (req.leave_type === 'Personal' ? '💼' : '🏖️');
+                const initialLetter = (req.employee_name || req.employee_id).charAt(0);
+                const isHourly = req.duration_type === 'HOURLY';
+                const shiftBadge = formatShiftBadge(req.shift);
 
-                showToast('ยกเลิกคำขอลางานเรียบร้อยแล้ว โควตาถูกคืนระบบแล้ว', 'info');
-                loadEmployeeQuota();
-                loadMyLeaveRequests();
-                loadDepartmentCalendar();
-            } catch (err) {
-                console.error('Cancel request error:', err);
-                showToast(err.message || 'เกิดข้อผิดพลาดในการยกเลิกคำขอ', 'error');
-            }
+                const sVal = (req.shift || 'A').toString().trim().toUpperCase();
+                const isShiftB = sVal === 'B' || sVal.includes('B');
+                const isMorning = sVal === 'MORNING' || sVal.includes('เช้า');
+                const shiftCallout = isShiftB
+                    ? `<div class="flex items-center justify-between px-3 py-1.5 rounded-xl bg-purple-50/90 border border-purple-200 text-xs text-purple-950 font-bold">
+                         <span class="flex items-center space-x-1.5"><span>🅱️</span><span>กะการทำงาน: <b>กะ B (Shift B)</b></span></span>
+                         <span class="text-[10px] font-semibold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-md">ขาดงานจากกะ B</span>
+                       </div>`
+                    : (isMorning
+                        ? `<div class="flex items-center justify-between px-3 py-1.5 rounded-xl bg-amber-50/90 border border-amber-200 text-xs text-amber-950 font-bold">
+                             <span class="flex items-center space-x-1.5"><span>🌅</span><span>กะการทำงาน: <b>เช้าตลอด (หัวหน้างาน)</b></span></span>
+                             <span class="text-[10px] font-semibold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-md">ขาดงานรอบเช้า</span>
+                           </div>`
+                        : `<div class="flex items-center justify-between px-3 py-1.5 rounded-xl bg-blue-50/90 border border-blue-200 text-xs text-blue-950 font-bold">
+                             <span class="flex items-center space-x-1.5"><span>🅰️</span><span>กะการทำงาน: <b>กะ A (Shift A)</b></span></span>
+                             <span class="text-[10px] font-semibold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-md">ขาดงานจากกะ A</span>
+                           </div>`);
+
+                const durationChip = isHourly
+                    ? `<span class="font-bold text-indigo-700 bg-white px-2.5 py-0.5 rounded-lg border border-indigo-200/60 shadow-2xs">⏰ ${req.hours_count} ชม. (${req.days_count} วัน)</span>`
+                    : `<span class="font-bold text-blue-700 bg-white px-2.5 py-0.5 rounded-lg border border-gray-200/60 shadow-2xs">${req.days_count} วัน</span>`;
+
+                const dateDisplay = isHourly
+                    ? `<span>📅 <b>วันที่ขอลา:</b> ${req.start_date} <span class="font-bold text-indigo-700 ml-1">⏰ ${req.start_time} - ${req.end_time} น.</span></span>`
+                    : `<span>📅 <b>ช่วงวันที่ขอลา:</b> ${req.start_date} ${req.start_date !== req.end_date ? 'ถึง ' + req.end_date : ''}</span>`;
+
+                return `
+                    <div id="request-card-${req.id}" class="bg-white p-5 sm:p-6 rounded-3xl shadow-xs border border-gray-100 hover:shadow-md transition duration-200">
+                        <div class="flex justify-between items-start mb-3">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold flex items-center justify-center text-sm shadow-md">
+                                    ${initialLetter}
+                                </div>
+                                <div>
+                                    <div class="flex items-center space-x-2 flex-wrap">
+                                        <h3 class="font-bold text-gray-900 text-base leading-tight">${escapeHtml(req.employee_name)}</h3>
+                                        ${shiftBadge}
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">${escapeHtml(req.department)} • <span class="font-mono">${escapeHtml(req.employee_id)}</span></p>
+                                </div>
+                            </div>
+                            <span class="${typeColor} text-xs px-3 py-1 rounded-full font-semibold flex items-center space-x-1">
+                                <span>${typeIcon}</span>
+                                <span>${translateLeaveType(req.leave_type)}</span>
+                            </span>
+                        </div>
+
+                        <div class="text-xs text-gray-700 space-y-2 mb-4 bg-gray-50/80 border border-gray-100 p-3.5 rounded-2xl">
+                            ${shiftCallout}
+                            <div class="flex items-center justify-between">
+                                ${dateDisplay}
+                                ${durationChip}
+                            </div>
+                            <div class="text-gray-600 pt-0.5">
+                                <b>เหตุผล:</b> ${req.reason ? `"${escapeHtml(req.reason)}"` : '<span class="text-gray-400 italic">ไม่ได้ระบุเหตุผล</span>'}
+                            </div>
+                        </div>
+
+                        <div class="flex space-x-3 pt-1">
+                            <button onclick="reviewRequest(${req.id}, 'APPROVED')" class="btn-review flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white py-2.5 rounded-xl font-semibold text-xs sm:text-sm shadow-md shadow-emerald-600/20 hover:shadow-lg hover:shadow-emerald-600/30 transition active:scale-95 flex items-center justify-center space-x-1.5">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                <span>Approve (อนุมัติ)</span>
+                            </button>
+                            <button onclick="openRejectModal(${req.id})" class="btn-review flex-1 bg-white hover:bg-rose-50 border border-rose-200 text-rose-600 hover:text-rose-700 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition active:scale-95 flex items-center justify-center space-x-1.5">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                <span>Reject (ไม่อนุมัติ)</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
         // Load Pending Requests for Supervisor (Executive Approvals Dashboard)
@@ -1758,6 +1971,7 @@
 
                 if (!data.success || !data.requests || data.requests.length === 0) {
                     if (statPendingEl) statPendingEl.innerText = '0';
+                    allPendingRequests = [];
                     subtitleEl.innerText = 'ไม่มีคำขอลางานค้างอยู่ (0 items pending)';
                     listEl.innerHTML = `
                         <div class="bg-white p-8 rounded-3xl shadow-xs text-center border border-gray-100">
@@ -1771,74 +1985,11 @@
                     return;
                 }
 
-                if (statPendingEl) statPendingEl.innerText = data.requests.length;
-                subtitleEl.innerText = `มี ${data.requests.length} รายการที่รอการตรวจสอบ (${data.requests.length} items pending)`;
-
+                allPendingRequests = data.requests;
                 pendingRequestsMap = {};
                 data.requests.forEach(r => { pendingRequestsMap[r.id] = r; });
 
-                listEl.innerHTML = data.requests.map(req => {
-                    const typeColor = req.leave_type === 'Sick' 
-                        ? 'bg-rose-50 text-rose-700 border border-rose-200/70' 
-                        : (req.leave_type === 'Personal' ? 'bg-amber-50 text-amber-700 border border-amber-200/70' : 'bg-blue-50 text-blue-700 border border-blue-200/70');
-
-                    const typeIcon = req.leave_type === 'Sick' ? '🏥' : (req.leave_type === 'Personal' ? '💼' : '🏖️');
-                    const initialLetter = (req.employee_name || req.employee_id).charAt(0);
-                    const isHourly = req.duration_type === 'HOURLY';
-                    const shiftBadge = formatShiftBadge(req.shift);
-
-                    const durationChip = isHourly
-                        ? `<span class="font-bold text-indigo-700 bg-white px-2.5 py-0.5 rounded-lg border border-indigo-200/60 shadow-2xs">⏰ ${req.hours_count} ชม. (${req.days_count} วัน)</span>`
-                        : `<span class="font-bold text-blue-700 bg-white px-2.5 py-0.5 rounded-lg border border-gray-200/60 shadow-2xs">${req.days_count} วัน</span>`;
-
-                    const dateDisplay = isHourly
-                        ? `<span>📅 <b>วันที่ขอลา:</b> ${req.start_date} <span class="font-bold text-indigo-700 ml-1">⏰ ${req.start_time} - ${req.end_time} น.</span></span>`
-                        : `<span>📅 <b>ช่วงวันที่ขอลา:</b> ${req.start_date} ${req.start_date !== req.end_date ? 'ถึง ' + req.end_date : ''}</span>`;
-
-                    return `
-                        <div id="request-card-${req.id}" class="bg-white p-5 sm:p-6 rounded-3xl shadow-xs border border-gray-100 hover:shadow-md transition duration-200">
-                            <div class="flex justify-between items-start mb-3">
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold flex items-center justify-center text-sm shadow-md">
-                                        ${initialLetter}
-                                    </div>
-                                    <div>
-                                        <div class="flex items-center space-x-2 flex-wrap">
-                                            <h3 class="font-bold text-gray-900 text-base leading-tight">${escapeHtml(req.employee_name)}</h3>
-                                            ${shiftBadge}
-                                        </div>
-                                        <p class="text-xs text-gray-500 mt-1">${escapeHtml(req.department)} • <span class="font-mono">${escapeHtml(req.employee_id)}</span></p>
-                                    </div>
-                                </div>
-                                <span class="${typeColor} text-xs px-3 py-1 rounded-full font-semibold flex items-center space-x-1">
-                                    <span>${typeIcon}</span>
-                                    <span>${translateLeaveType(req.leave_type)}</span>
-                                </span>
-                            </div>
-
-                            <div class="text-xs text-gray-700 space-y-1.5 mb-4 bg-gray-50/80 border border-gray-100 p-3.5 rounded-2xl">
-                                <div class="flex items-center justify-between">
-                                    ${dateDisplay}
-                                    ${durationChip}
-                                </div>
-                                <div class="text-gray-600 pt-1">
-                                    <b>เหตุผล:</b> ${req.reason ? `"${escapeHtml(req.reason)}"` : '<span class="text-gray-400 italic">ไม่ได้ระบุเหตุผล</span>'}
-                                </div>
-                            </div>
-
-                            <div class="flex space-x-3 pt-1">
-                                <button onclick="reviewRequest(${req.id}, 'APPROVED')" class="btn-review flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white py-2.5 rounded-xl font-semibold text-xs sm:text-sm shadow-md shadow-emerald-600/20 hover:shadow-lg hover:shadow-emerald-600/30 transition active:scale-95 flex items-center justify-center space-x-1.5">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                    <span>Approve (อนุมัติ)</span>
-                                </button>
-                                <button onclick="openRejectModal(${req.id})" class="btn-review flex-1 bg-white hover:bg-rose-50 border border-rose-200 text-rose-600 hover:text-rose-700 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition active:scale-95 flex items-center justify-center space-x-1.5">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                    <span>Reject (ไม่อนุมัติ)</span>
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
+                renderPendingRequestsList();
 
                 // Update tab badge
                 const badgeEl = document.getElementById('sup-badge-pending');
@@ -1848,6 +1999,103 @@
                 console.error('Fetch pending requests error:', err);
                 subtitleEl.innerText = 'เกิดข้อผิดพลาดในการโหลดข้อมูล';
             }
+        }
+
+        function renderSupervisorHistoryList() {
+            const listEl = document.getElementById('supervisor-history-list');
+            const subtitleEl = document.getElementById('history-subtitle');
+
+            let filtered = allHistoryRequests;
+            if (currentHistoryShiftFilter !== 'ALL') {
+                filtered = allHistoryRequests.filter(r => {
+                    const s = (r.shift || 'A').toString().trim().toUpperCase();
+                    if (currentHistoryShiftFilter === 'B') return s === 'B' || s.includes('B');
+                    return s === 'A' || (!s.includes('B') && s !== 'MORNING');
+                });
+            }
+
+            subtitleEl.innerText = currentHistoryShiftFilter === 'ALL'
+                ? `ประวัติคำขอที่ได้รับการอนุมัติ / ปฏิเสธทั้งหมด (${allHistoryRequests.length} รายการ)`
+                : `ประวัติคำขอในกะ ${currentHistoryShiftFilter} (${filtered.length} จาก ${allHistoryRequests.length} รายการ)`;
+
+            if (filtered.length === 0) {
+                listEl.innerHTML = `
+                    <div class="bg-white p-8 rounded-3xl shadow-xs text-center border border-gray-100">
+                        <p class="text-sm font-bold text-gray-800">ยังไม่มีประวัติการพิจารณา ${currentHistoryShiftFilter !== 'ALL' ? 'ในกะ ' + currentHistoryShiftFilter : ''}</p>
+                        <p class="text-xs text-gray-400 mt-1">คำขอที่อนุมัติหรือปฏิเสธแล้วจะแสดงที่นี่</p>
+                    </div>
+                `;
+                return;
+            }
+
+            listEl.innerHTML = filtered.map(req => {
+                let statusBadge = '<span class="bg-emerald-50 text-emerald-700 border border-emerald-200/80 text-[11px] px-2.5 py-0.5 rounded-full font-semibold flex items-center space-x-1"><span>✓</span><span>อนุมัติแล้ว</span></span>';
+                if (req.status === 'REJECTED') {
+                    statusBadge = '<span class="bg-rose-50 text-rose-700 border border-rose-200/80 text-[11px] px-2.5 py-0.5 rounded-full font-semibold flex items-center space-x-1"><span>✕</span><span>ไม่อนุมัติ</span></span>';
+                } else if (req.status === 'CANCELLED') {
+                    statusBadge = '<span class="bg-gray-100 text-gray-600 border border-gray-200 text-[11px] px-2.5 py-0.5 rounded-full font-semibold flex items-center space-x-1"><span>🚫</span><span>ยกเลิกแล้ว</span></span>';
+                }
+
+                const isHourly = req.duration_type === 'HOURLY';
+                const shiftBadge = formatShiftBadge(req.shift, true);
+
+                const sVal = (req.shift || 'A').toString().trim().toUpperCase();
+                const isShiftB = sVal === 'B' || sVal.includes('B');
+                const isMorning = sVal === 'MORNING' || sVal.includes('เช้า');
+                const shiftCallout = isShiftB
+                    ? `<div class="flex items-center justify-between px-3 py-1.5 rounded-xl bg-purple-50/90 border border-purple-200 text-xs text-purple-950 font-bold">
+                         <span class="flex items-center space-x-1.5"><span>🅱️</span><span>กะการทำงาน: <b>กะ B (Shift B)</b></span></span>
+                         <span class="text-[10px] font-semibold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-md">ขาดงานจากกะ B</span>
+                       </div>`
+                    : (isMorning
+                        ? `<div class="flex items-center justify-between px-3 py-1.5 rounded-xl bg-amber-50/90 border border-amber-200 text-xs text-amber-950 font-bold">
+                             <span class="flex items-center space-x-1.5"><span>🌅</span><span>กะการทำงาน: <b>เช้าตลอด (หัวหน้างาน)</b></span></span>
+                             <span class="text-[10px] font-semibold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-md">ขาดงานรอบเช้า</span>
+                           </div>`
+                        : `<div class="flex items-center justify-between px-3 py-1.5 rounded-xl bg-blue-50/90 border border-blue-200 text-xs text-blue-950 font-bold">
+                             <span class="flex items-center space-x-1.5"><span>🅰️</span><span>กะการทำงาน: <b>กะ A (Shift A)</b></span></span>
+                             <span class="text-[10px] font-semibold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-md">ขาดงานจากกะ A</span>
+                           </div>`);
+
+                const durationChip = isHourly
+                    ? `<span class="font-bold text-indigo-700 bg-white px-2 py-0.5 rounded-lg border border-indigo-200/60 shadow-2xs">⏰ ${req.hours_count} ชม.</span>`
+                    : `<span class="font-bold text-blue-700 bg-white px-2 py-0.5 rounded-lg border border-gray-200/60 shadow-2xs">${req.days_count} วัน</span>`;
+
+                const dateDisplay = isHourly
+                    ? `<span>📅 ${req.start_date} <span class="font-bold text-indigo-700 ml-1">⏰ ${req.start_time} - ${req.end_time} น.</span></span>`
+                    : `<span>📅 ${req.start_date} ${req.start_date !== req.end_date ? 'ถึง ' + req.end_date : ''}</span>`;
+
+                const rejectionHtml = (req.status === 'REJECTED' && req.rejection_reason)
+                    ? `<div class="text-rose-700 bg-rose-50/80 p-2.5 rounded-xl border border-rose-200/70 text-xs flex items-start space-x-1.5"><span class="flex-shrink-0">⚠️</span><span><b>เหตุผลที่ไม่อนุมัติ:</b> "${req.rejection_reason}"</span></div>`
+                    : '';
+
+                return `
+                    <div class="bg-white p-5 rounded-3xl shadow-xs border border-gray-100 hover:shadow-md transition">
+                        <div class="flex justify-between items-start mb-2.5">
+                            <div>
+                                <div class="flex items-center space-x-2 flex-wrap">
+                                    <h4 class="font-bold text-gray-900 text-sm">${escapeHtml(req.employee_name)} <span class="font-normal text-xs text-gray-500 font-mono">(${escapeHtml(req.employee_id)})</span></h4>
+                                    ${shiftBadge}
+                                </div>
+                                <p class="text-[11px] text-gray-500 mt-1">${translateLeaveType(req.leave_type)} • ${escapeHtml(req.department)}</p>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                ${durationChip}
+                                ${statusBadge}
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-700 space-y-2 bg-gray-50/80 border border-gray-100 p-3 rounded-2xl">
+                            ${shiftCallout}
+                            <div class="flex items-center justify-between">
+                                ${dateDisplay}
+                                ${(req.reviewer_name || req.reviewed_by) ? `<span class="text-[11px] text-gray-400">พิจารณาโดย: <span class="font-medium text-gray-600">${escapeHtml(req.reviewer_name || req.reviewed_by)}</span></span>` : ''}
+                            </div>
+                            ${req.reason ? `<div class="text-gray-600 pt-0.5"><b>เหตุผลขอลา:</b> "${escapeHtml(req.reason)}"</div>` : ''}
+                        </div>
+                        ${rejectionHtml}
+                    </div>
+                `;
+            }).join('');
         }
 
         // Load Resolved Leave History for Supervisor
@@ -1862,6 +2110,7 @@
                 const data = await res.json();
 
                 if (!data.success || !data.requests || data.requests.length === 0) {
+                    allHistoryRequests = [];
                     listEl.innerHTML = `
                         <div class="bg-white p-8 rounded-3xl shadow-xs text-center border border-gray-100">
                             <p class="text-sm font-bold text-gray-800">ยังไม่มีประวัติการพิจารณา</p>
@@ -1871,55 +2120,8 @@
                     return;
                 }
 
-                listEl.innerHTML = data.requests.map(req => {
-                    let statusBadge = '<span class="bg-emerald-50 text-emerald-700 border border-emerald-200/80 text-[11px] px-2.5 py-0.5 rounded-full font-semibold flex items-center space-x-1"><span>✓</span><span>อนุมัติแล้ว</span></span>';
-                    if (req.status === 'REJECTED') {
-                        statusBadge = '<span class="bg-rose-50 text-rose-700 border border-rose-200/80 text-[11px] px-2.5 py-0.5 rounded-full font-semibold flex items-center space-x-1"><span>✕</span><span>ไม่อนุมัติ</span></span>';
-                    } else if (req.status === 'CANCELLED') {
-                        statusBadge = '<span class="bg-gray-100 text-gray-600 border border-gray-200 text-[11px] px-2.5 py-0.5 rounded-full font-semibold flex items-center space-x-1"><span>🚫</span><span>ยกเลิกแล้ว</span></span>';
-                    }
-
-                    const isHourly = req.duration_type === 'HOURLY';
-                    const shiftBadge = formatShiftBadge(req.shift, true);
-
-                    const durationChip = isHourly
-                        ? `<span class="font-bold text-indigo-700 bg-white px-2 py-0.5 rounded-lg border border-indigo-200/60 shadow-2xs">⏰ ${req.hours_count} ชม.</span>`
-                        : `<span class="font-bold text-blue-700 bg-white px-2 py-0.5 rounded-lg border border-gray-200/60 shadow-2xs">${req.days_count} วัน</span>`;
-
-                    const dateDisplay = isHourly
-                        ? `<span>📅 ${req.start_date} <span class="font-bold text-indigo-700 ml-1">⏰ ${req.start_time} - ${req.end_time} น.</span></span>`
-                        : `<span>📅 ${req.start_date} ${req.start_date !== req.end_date ? 'ถึง ' + req.end_date : ''}</span>`;
-
-                    const rejectionHtml = (req.status === 'REJECTED' && req.rejection_reason)
-                        ? `<div class="text-rose-700 bg-rose-50/80 p-2.5 rounded-xl border border-rose-200/70 text-xs flex items-start space-x-1.5"><span class="flex-shrink-0">⚠️</span><span><b>เหตุผลที่ไม่อนุมัติ:</b> "${req.rejection_reason}"</span></div>`
-                        : '';
-
-                    return `
-                        <div class="bg-white p-5 rounded-3xl shadow-xs border border-gray-100 hover:shadow-md transition">
-                            <div class="flex justify-between items-start mb-2.5">
-                                <div>
-                                    <div class="flex items-center space-x-2 flex-wrap">
-                                        <h4 class="font-bold text-gray-900 text-sm">${escapeHtml(req.employee_name)} <span class="font-normal text-xs text-gray-500 font-mono">(${escapeHtml(req.employee_id)})</span></h4>
-                                        ${shiftBadge}
-                                    </div>
-                                    <p class="text-[11px] text-gray-500 mt-1">${translateLeaveType(req.leave_type)} • ${escapeHtml(req.department)}</p>
-                                </div>
-                                <div class="flex items-center space-x-2">
-                                    ${durationChip}
-                                    ${statusBadge}
-                                </div>
-                            </div>
-                            <div class="text-xs text-gray-700 space-y-1.5 bg-gray-50/80 border border-gray-100 p-3 rounded-2xl">
-                                <div class="flex items-center justify-between">
-                                    ${dateDisplay}
-                                    ${(req.reviewer_name || req.reviewed_by) ? `<span class="text-[11px] text-gray-400">พิจารณาโดย: <span class="font-medium text-gray-600">${escapeHtml(req.reviewer_name || req.reviewed_by)}</span></span>` : ''}
-                                </div>
-                                ${req.reason ? `<div class="text-gray-600 pt-0.5"><b>เหตุผลขอลา:</b> "${escapeHtml(req.reason)}"</div>` : ''}
-                            </div>
-                            ${rejectionHtml}
-                        </div>
-                    `;
-                }).join('');
+                allHistoryRequests = data.requests;
+                renderSupervisorHistoryList();
 
             } catch (err) {
                 console.error('Fetch history error:', err);
@@ -2206,17 +2408,17 @@
             const s = (shift || '').toString().trim().toUpperCase();
             if (s === 'B' || s.includes('กะ B') || s.includes('กะB') || s === 'NIGHT') {
                 return compact 
-                    ? `<span class="inline-flex items-center space-x-1 bg-purple-50 text-purple-700 border border-purple-200/80 font-bold px-2 py-0.5 rounded-md text-[10px] shadow-2xs">🅱️ กะ B</span>`
-                    : `<span class="inline-flex items-center space-x-1 bg-purple-50 text-purple-700 border border-purple-200/80 font-bold px-2.5 py-0.5 rounded-lg text-xs shadow-2xs">🅱️ กะ B (Shift B)</span>`;
+                    ? `<span class="inline-flex items-center space-x-1 bg-purple-100 text-purple-900 border border-purple-300 font-extrabold px-2 py-0.5 rounded-md text-[10px] shadow-2xs">🅱️ กะ B</span>`
+                    : `<span class="inline-flex items-center space-x-1.5 bg-purple-100 text-purple-900 border border-purple-300 font-extrabold px-3 py-1 rounded-xl text-xs shadow-xs">🅱️ กะ B (Shift B)</span>`;
             }
             if (s === 'MORNING' || s.includes('เช้า')) {
                 return compact
-                    ? `<span class="inline-flex items-center space-x-1 bg-emerald-50 text-emerald-800 border border-emerald-200/80 font-bold px-2 py-0.5 rounded-md text-[10px] shadow-2xs">🌅 เช้าตลอด (หน.)</span>`
-                    : `<span class="inline-flex items-center space-x-1 bg-emerald-50 text-emerald-800 border border-emerald-200/80 font-bold px-2.5 py-0.5 rounded-lg text-xs shadow-2xs">🌅 เช้าตลอด (หัวหน้างาน)</span>`;
+                    ? `<span class="inline-flex items-center space-x-1 bg-amber-100 text-amber-900 border border-amber-300 font-extrabold px-2 py-0.5 rounded-md text-[10px] shadow-2xs">🌅 เช้าตลอด</span>`
+                    : `<span class="inline-flex items-center space-x-1.5 bg-amber-100 text-amber-900 border border-amber-300 font-extrabold px-3 py-1 rounded-xl text-xs shadow-xs">🌅 เช้าตลอด (หัวหน้างาน)</span>`;
             }
             return compact
-                ? `<span class="inline-flex items-center space-x-1 bg-blue-50 text-blue-700 border border-blue-200/80 font-bold px-2 py-0.5 rounded-md text-[10px] shadow-2xs">🅰️ กะ A</span>`
-                : `<span class="inline-flex items-center space-x-1 bg-blue-50 text-blue-700 border border-blue-200/80 font-bold px-2.5 py-0.5 rounded-lg text-xs shadow-2xs">🅰️ กะ A (Shift A)</span>`;
+                ? `<span class="inline-flex items-center space-x-1 bg-blue-100 text-blue-900 border border-blue-300 font-extrabold px-2 py-0.5 rounded-md text-[10px] shadow-2xs">🅰️ กะ A</span>`
+                : `<span class="inline-flex items-center space-x-1.5 bg-blue-100 text-blue-900 border border-blue-300 font-extrabold px-3 py-1 rounded-xl text-xs shadow-xs">🅰️ กะ A (Shift A)</span>`;
         }
 
         // ==========================================

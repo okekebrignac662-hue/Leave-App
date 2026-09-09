@@ -255,21 +255,38 @@ app.get('/api/employees/:id/quota', async (req, res) => {
 app.get('/api/department-calendar', async (req, res) => {
   try {
     const department = req.query.department || 'Assembly';
-    const shift = (req.query.shift || '').trim(); // e.g. 'Day' or 'Night'
+    const shift = (req.query.shift || '').trim(); // e.g. 'A' or 'B'
     const month = req.query.month; // e.g. "2026-09"
 
+    let quotasByShift = { 'A': 3, 'B': 3, 'Morning': 2 };
     let maxDailyLeaves = 2;
+
     if (pool) {
-      let quotaSql = 'SELECT max_daily_leaves FROM quota_settings WHERE UPPER(department) = UPPER($1)';
-      const quotaParams = [department];
-      if (shift) {
-        quotaParams.push(shift);
-        quotaSql += ` AND UPPER(COALESCE(shift, 'A')) = UPPER($${quotaParams.length})`;
-      }
-      const quotaRes = await query(quotaSql, quotaParams);
+      const quotaSql = 'SELECT shift, max_daily_leaves FROM quota_settings WHERE UPPER(department) = UPPER($1)';
+      const quotaRes = await query(quotaSql, [department]);
       if (quotaRes.rows.length > 0) {
-        maxDailyLeaves = quotaRes.rows[0].max_daily_leaves;
+        quotaRes.rows.forEach(r => {
+          let s = (r.shift || 'A').trim();
+          if (s.toUpperCase() === 'DAY') s = 'A';
+          if (s.toUpperCase() === 'NIGHT') s = 'B';
+          quotasByShift[s] = r.max_daily_leaves;
+        });
       }
+      if (shift && quotasByShift[shift]) {
+        maxDailyLeaves = quotasByShift[shift];
+      } else if (quotasByShift['A']) {
+        maxDailyLeaves = quotasByShift['A'];
+      }
+    } else {
+      // Demo fallback
+      if (department.toLowerCase() === 'crimping 1') {
+        quotasByShift = { 'A': 3, 'B': 3, 'Morning': 2 };
+      } else if (department.toLowerCase() === 'qc') {
+        quotasByShift = { 'A': 1, 'B': 1, 'Morning': 2 };
+      } else {
+        quotasByShift = { 'A': 2, 'B': 2, 'Morning': 2 };
+      }
+      maxDailyLeaves = (shift && quotasByShift[shift]) ? quotasByShift[shift] : quotasByShift['A'];
     }
 
     let year, m;
@@ -323,15 +340,44 @@ app.get('/api/department-calendar', async (req, res) => {
         const dates = getDatesInRange(row.start_date, row.end_date);
         dates.forEach(d => {
           if (!dailyUsage[d]) {
-            dailyUsage[d] = { count: 0, employees: [] };
+            dailyUsage[d] = {
+              count: 0,
+              shifts: {},
+              employees: []
+            };
+            Object.keys(quotasByShift).forEach(s => {
+              dailyUsage[d].shifts[s] = {
+                count: 0,
+                maxQuota: quotasByShift[s] || 2,
+                isFull: false
+              };
+            });
           }
+
+          let rShift = (row.shift || 'A').trim();
+          if (rShift.toUpperCase() === 'B' || rShift.toUpperCase() === 'NIGHT') rShift = 'B';
+          else if (rShift.toUpperCase() === 'MORNING') rShift = 'Morning';
+          else if (rShift.toUpperCase() === 'A' || rShift.toUpperCase() === 'DAY') rShift = 'A';
+
+          if (!dailyUsage[d].shifts[rShift]) {
+            dailyUsage[d].shifts[rShift] = {
+              count: 0,
+              maxQuota: quotasByShift[rShift] || 2,
+              isFull: false
+            };
+          }
+
           const isSick = normalizeLeaveType(row.leave_type) === 'Sick';
           if (!isSick) {
+            dailyUsage[d].shifts[rShift].count += 1;
             dailyUsage[d].count += 1;
           }
+
           dailyUsage[d].employees.push({
+            id: row.id,
+            employeeId: row.employee_id,
             name: row.employee_name,
-            shift: row.shift || 'Day',
+            shift: rShift,
             type: normalizeLeaveType(row.leave_type),
             status: row.status,
             durationType: row.duration_type || 'FULL_DAY',
@@ -344,7 +390,19 @@ app.get('/api/department-calendar', async (req, res) => {
     }
 
     Object.keys(dailyUsage).forEach(d => {
-      dailyUsage[d].isFull = dailyUsage[d].count >= maxDailyLeaves;
+      Object.keys(dailyUsage[d].shifts).forEach(s => {
+        const sObj = dailyUsage[d].shifts[s];
+        sObj.isFull = sObj.count >= sObj.maxQuota;
+      });
+
+      if (shift) {
+        const sObj = dailyUsage[d].shifts[shift];
+        dailyUsage[d].isFull = sObj ? sObj.isFull : false;
+        dailyUsage[d].count = sObj ? sObj.count : 0;
+      } else {
+        const sValues = Object.values(dailyUsage[d].shifts);
+        dailyUsage[d].isFull = sValues.length > 0 && sValues.every(s => s.isFull);
+      }
     });
 
     res.json({
@@ -352,6 +410,7 @@ app.get('/api/department-calendar', async (req, res) => {
       department,
       shift: shift || 'All',
       maxDailyLeaves,
+      quotasByShift,
       firstDay: firstDayStr,
       lastDay: lastDayStr,
       dailyUsage
