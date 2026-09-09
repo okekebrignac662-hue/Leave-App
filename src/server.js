@@ -554,12 +554,12 @@ app.post('/api/leave-requests', async (req, res) => {
 
       // 1. Fetch employee & department
       const empRes = await client.query('SELECT * FROM employees WHERE UPPER(id) = $1', [cleanEmpId]);
-      let department = 'Assembly';
-      let empRecord = null;
-      if (empRes.rows.length > 0) {
-        empRecord = empRes.rows[0];
-        department = empRecord.department;
+      if (empRes.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: `ไม่พบรหัสพนักงาน "${cleanEmpId}" ในระบบ (Employee not found)` });
       }
+      const empRecord = empRes.rows[0];
+      const department = empRecord.department;
 
       // 2. Duplicate Request / Double-Click Guard:
       // Prevent accidental duplicate submission for overlapping dates
