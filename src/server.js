@@ -59,11 +59,11 @@ function getDatesInRange(startDateStr, endDateStr) {
 }
 
 function normalizeShift(shift) {
-  if (!shift) return 'Day';
-  const s = shift.toString().trim().toLowerCase();
-  if (s === 'night' || s.includes('กลางคืน')) return 'Night';
-  if (s === 'morning' || s.includes('เช้า')) return 'Morning';
-  return 'Day';
+  if (!shift) return 'A';
+  const s = shift.toString().trim().toUpperCase();
+  if (s === 'B' || s.includes('กะ B') || s.includes('กะB') || s === 'NIGHT') return 'B';
+  if (s === 'MORNING' || s.includes('เช้า')) return 'Morning';
+  return 'A';
 }
 
 // ==========================================
@@ -127,7 +127,7 @@ app.post('/api/login', async (req, res) => {
           id: emp.id,
           name: emp.name,
           department: emp.department,
-          shift: emp.shift || 'Day',
+          shift: emp.shift || 'A',
           role: userRole,
           isSupervisor,
           isAdmin
@@ -137,8 +137,8 @@ app.post('/api/login', async (req, res) => {
 
     // Strict Fallback if database is offline: only allow known demo IDs with PIN 1234
     const validDemoUsers = {
-      'EMP-001': { name: 'สมชาย ใจดี', department: 'Assembly', shift: 'Day', role: 'EMPLOYEE', pin: '1234' },
-      'EMP-002': { name: 'สมหญิง รักงาน', department: 'Assembly', shift: 'Day', role: 'EMPLOYEE', pin: '1234' },
+      'EMP-001': { name: 'สมชาย ใจดี', department: 'Assembly', shift: 'A', role: 'EMPLOYEE', pin: '1234' },
+      'EMP-002': { name: 'สมหญิง รักงาน', department: 'Assembly', shift: 'B', role: 'EMPLOYEE', pin: '1234' },
       'SUP-001': { name: 'สมศักดิ์ คุมงาน (หัวหน้า)', department: 'Assembly', shift: 'Morning', role: 'SUPERVISOR', pin: '1234' },
       'ADMIN-001': { name: 'ผู้ดูแลระบบ (Admin)', department: 'Management', shift: 'Morning', role: 'ADMIN', pin: '1234' }
     };
@@ -160,7 +160,7 @@ app.post('/api/login', async (req, res) => {
         id: cleanEmpId,
         name: demoUser.name,
         department: demoUser.department,
-        shift: demoUser.shift || 'Day',
+        shift: demoUser.shift || 'A',
         role: userRole,
         isSupervisor,
         isAdmin
@@ -264,7 +264,7 @@ app.get('/api/department-calendar', async (req, res) => {
       const quotaParams = [department];
       if (shift) {
         quotaParams.push(shift);
-        quotaSql += ` AND UPPER(COALESCE(shift, 'Day')) = UPPER($${quotaParams.length})`;
+        quotaSql += ` AND UPPER(COALESCE(shift, 'A')) = UPPER($${quotaParams.length})`;
       }
       const quotaRes = await query(quotaSql, quotaParams);
       if (quotaRes.rows.length > 0) {
@@ -295,7 +295,7 @@ app.get('/api/department-calendar', async (req, res) => {
           lr.id,
           lr.employee_id,
           COALESCE(e.name, lr.employee_id) as employee_name,
-          COALESCE(e.shift, 'Day') as shift,
+          COALESCE(e.shift, 'A') as shift,
           lr.leave_type,
           TO_CHAR(lr.start_date, 'YYYY-MM-DD') as start_date,
           TO_CHAR(lr.end_date, 'YYYY-MM-DD') as end_date,
@@ -314,7 +314,7 @@ app.get('/api/department-calendar', async (req, res) => {
       const leavesParams = [department, firstDayStr, lastDayStr];
       if (shift) {
         leavesParams.push(shift);
-        leavesSql += ` AND UPPER(COALESCE(e.shift, 'Day')) = UPPER($${leavesParams.length})`;
+        leavesSql += ` AND UPPER(COALESCE(e.shift, 'A')) = UPPER($${leavesParams.length})`;
       }
 
       const leavesRes = await query(leavesSql, leavesParams);
@@ -540,13 +540,13 @@ app.post('/api/leave-requests', async (req, res) => {
       // 4. Daily Department & Shift Quota Check with ROW-LEVEL LOCK
       // "SELECT ... FOR UPDATE" blocks any concurrent transaction in the same department and shift
       // until this transaction commits, eliminating race conditions completely!
-      const employeeShift = (empRecord && empRecord.shift) ? empRecord.shift : 'Day';
+      const employeeShift = (empRecord && empRecord.shift) ? empRecord.shift : 'A';
 
       if (normalizedType !== 'Sick') {
         const quotaRes = await client.query(
           `SELECT max_daily_leaves 
            FROM quota_settings 
-           WHERE UPPER(department) = UPPER($1) AND UPPER(COALESCE(shift, 'Day')) = UPPER($2) 
+           WHERE UPPER(department) = UPPER($1) AND UPPER(COALESCE(shift, 'A')) = UPPER($2) 
            FOR UPDATE`,
           [department, employeeShift]
         );
@@ -560,7 +560,7 @@ app.post('/api/leave-requests', async (req, res) => {
              FROM leave_requests lr
              JOIN employees e ON lr.employee_id = e.id
              WHERE UPPER(e.department) = UPPER($1)
-               AND UPPER(COALESCE(e.shift, 'Day')) = UPPER($2)
+               AND UPPER(COALESCE(e.shift, 'A')) = UPPER($2)
                AND lr.status IN ('APPROVED', 'PENDING')
                AND lr.leave_type != 'Sick'
                AND $3 BETWEEN lr.start_date AND lr.end_date
@@ -745,7 +745,7 @@ app.get('/api/leave-requests', async (req, res) => {
           employee_id: 'EMP-001',
           employee_name: 'สมชาย ใจดี',
           department: 'Assembly',
-          shift: 'Day',
+          shift: 'A',
           leave_type: 'Vacation',
           start_date: '2026-09-15',
           end_date: '2026-09-15',
@@ -771,7 +771,7 @@ app.get('/api/leave-requests', async (req, res) => {
         lr.employee_id,
         COALESCE(e.name, lr.employee_id) AS employee_name,
         COALESCE(e.department, 'Assembly') AS department,
-        COALESCE(e.shift, 'Day') AS shift,
+        COALESCE(e.shift, 'A') AS shift,
         lr.leave_type,
         TO_CHAR(lr.start_date, 'YYYY-MM-DD') AS start_date,
         TO_CHAR(lr.end_date, 'YYYY-MM-DD') AS end_date,
@@ -816,7 +816,7 @@ app.get('/api/leave-requests', async (req, res) => {
 
     if (shift) {
       params.push(shift.trim().toUpperCase());
-      sql += ` AND UPPER(COALESCE(e.shift, 'Day')) = $${params.length}`;
+      sql += ` AND UPPER(COALESCE(e.shift, 'A')) = $${params.length}`;
     }
 
     sql += ' ORDER BY lr.created_at DESC';
@@ -1077,7 +1077,7 @@ app.get('/api/employees', async (req, res) => {
   try {
     const { department, role, shift, search } = req.query;
     if (pool) {
-      let sql = 'SELECT id, name, department, COALESCE(shift, \'Day\') AS shift, role, vacation_quota, personal_quota, sick_quota, created_at FROM employees WHERE 1=1';
+      let sql = 'SELECT id, name, department, COALESCE(shift, \'A\') AS shift, role, vacation_quota, personal_quota, sick_quota, created_at FROM employees WHERE 1=1';
       const params = [];
       if (department && department !== 'ALL') {
         params.push(department.trim());
@@ -1089,7 +1089,7 @@ app.get('/api/employees', async (req, res) => {
       }
       if (shift && shift !== 'ALL') {
         params.push(shift.trim().toUpperCase());
-        sql += ` AND UPPER(COALESCE(shift, 'Day')) = UPPER($${params.length})`;
+        sql += ` AND UPPER(COALESCE(shift, 'A')) = UPPER($${params.length})`;
       }
       if (search) {
         params.push(`%${search.trim().toLowerCase()}%`);
@@ -1105,10 +1105,10 @@ app.get('/api/employees', async (req, res) => {
       success: true,
       count: 4,
       employees: [
-        { id: 'ADMIN-001', name: 'ผู้ดูแลระบบ (Admin)', department: 'Management', shift: 'Day', role: 'ADMIN' },
-        { id: 'SUP-001', name: 'สมศักดิ์ คุมงาน (หัวหน้า)', department: 'Assembly', shift: 'Day', role: 'SUPERVISOR' },
-        { id: 'EMP-001', name: 'สมชาย สายลุย', department: 'Crimping 1', shift: 'Day', role: 'EMPLOYEE' },
-        { id: 'EMP-002', name: 'สมหญิง จริงใจ', department: 'Crimping 1', shift: 'Night', role: 'EMPLOYEE' }
+        { id: 'ADMIN-001', name: 'ผู้ดูแลระบบ (Admin)', department: 'Management', shift: 'A', role: 'ADMIN' },
+        { id: 'SUP-001', name: 'สมศักดิ์ คุมงาน (หัวหน้า)', department: 'Assembly', shift: 'A', role: 'SUPERVISOR' },
+        { id: 'EMP-001', name: 'สมชาย สายลุย', department: 'Crimping 1', shift: 'A', role: 'EMPLOYEE' },
+        { id: 'EMP-002', name: 'สมหญิง จริงใจ', department: 'Crimping 1', shift: 'B', role: 'EMPLOYEE' }
       ]
     });
   } catch (error) {
@@ -1169,7 +1169,7 @@ app.put('/api/employees/:id', async (req, res) => {
     const currentEmp = empCheck.rows[0];
     const newName = name !== undefined ? name.trim() : currentEmp.name;
     const newDept = department !== undefined ? department.trim() : currentEmp.department;
-    const newShift = shift !== undefined ? normalizeShift(shift) : (currentEmp.shift || 'Day');
+    const newShift = shift !== undefined ? normalizeShift(shift) : (currentEmp.shift || 'A');
     const newRole = role !== undefined ? role.trim().toUpperCase() : currentEmp.role;
     const newPin = (pin !== undefined && pin.toString().trim() !== '') ? pin.toString().trim() : currentEmp.pin;
     const newVac = Number.isInteger(Number(vacation_quota)) ? Number(vacation_quota) : currentEmp.vacation_quota;

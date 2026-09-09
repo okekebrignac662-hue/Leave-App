@@ -680,8 +680,8 @@
                             <span>กะการทำงาน (Shift)</span> <span class="text-rose-500">*</span>
                         </label>
                         <select id="new-emp-shift" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition font-medium text-gray-800">
-                            <option value="Day" selected>☀️ กะกลางวัน (Day Shift)</option>
-                            <option value="Night">🌙 กะกลางคืน (Night Shift)</option>
+                            <option value="A" selected>🅰️ กะ A (Shift A)</option>
+                            <option value="B">🅱️ กะ B (Shift B)</option>
                             <option value="Morning">🌅 เช้าตลอด - หัวหน้างาน (Morning Shift)</option>
                         </select>
                     </div>
@@ -800,8 +800,8 @@
                             <span>กะการทำงาน (Shift)</span> <span class="text-rose-500">*</span>
                         </label>
                         <select id="edit-emp-shift" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition font-medium text-gray-800">
-                            <option value="Day">☀️ กะกลางวัน (Day Shift)</option>
-                            <option value="Night">🌙 กะกลางคืน (Night Shift)</option>
+                            <option value="A">🅰️ กะ A (Shift A)</option>
+                            <option value="B">🅱️ กะ B (Shift B)</option>
                             <option value="Morning">🌅 เช้าตลอด - หัวหน้างาน (Morning Shift)</option>
                         </select>
                     </div>
@@ -2196,27 +2196,27 @@
 
         // Helper: Shift display labels & badges
         function formatShiftLabel(shift) {
-            const s = (shift || '').toString().trim().toLowerCase();
-            if (s === 'night' || s.includes('กลางคืน')) return '🌙 กะกลางคืน (Night)';
-            if (s === 'morning' || s.includes('เช้า')) return '🌅 เช้าตลอด (หัวหน้างาน)';
-            return '☀️ กะกลางวัน (Day)';
+            const s = (shift || '').toString().trim().toUpperCase();
+            if (s === 'B' || s.includes('กะ B') || s.includes('กะB') || s === 'NIGHT') return '🅱️ กะ B (Shift B)';
+            if (s === 'MORNING' || s.includes('เช้า')) return '🌅 เช้าตลอด (หัวหน้างาน)';
+            return '🅰️ กะ A (Shift A)';
         }
 
         function formatShiftBadge(shift, compact = false) {
-            const s = (shift || '').toString().trim().toLowerCase();
-            if (s === 'night' || s.includes('กลางคืน')) {
+            const s = (shift || '').toString().trim().toUpperCase();
+            if (s === 'B' || s.includes('กะ B') || s.includes('กะB') || s === 'NIGHT') {
                 return compact 
-                    ? `<span class="inline-flex items-center space-x-1 bg-indigo-50 text-indigo-700 border border-indigo-200/80 font-bold px-2 py-0.5 rounded-md text-[10px] shadow-2xs">🌙 กะกลางคืน</span>`
-                    : `<span class="inline-flex items-center space-x-1 bg-indigo-50 text-indigo-700 border border-indigo-200/80 font-bold px-2.5 py-0.5 rounded-lg text-xs shadow-2xs">🌙 กะกลางคืน (Night)</span>`;
+                    ? `<span class="inline-flex items-center space-x-1 bg-purple-50 text-purple-700 border border-purple-200/80 font-bold px-2 py-0.5 rounded-md text-[10px] shadow-2xs">🅱️ กะ B</span>`
+                    : `<span class="inline-flex items-center space-x-1 bg-purple-50 text-purple-700 border border-purple-200/80 font-bold px-2.5 py-0.5 rounded-lg text-xs shadow-2xs">🅱️ กะ B (Shift B)</span>`;
             }
-            if (s === 'morning' || s.includes('เช้า')) {
+            if (s === 'MORNING' || s.includes('เช้า')) {
                 return compact
                     ? `<span class="inline-flex items-center space-x-1 bg-emerald-50 text-emerald-800 border border-emerald-200/80 font-bold px-2 py-0.5 rounded-md text-[10px] shadow-2xs">🌅 เช้าตลอด (หน.)</span>`
                     : `<span class="inline-flex items-center space-x-1 bg-emerald-50 text-emerald-800 border border-emerald-200/80 font-bold px-2.5 py-0.5 rounded-lg text-xs shadow-2xs">🌅 เช้าตลอด (หัวหน้างาน)</span>`;
             }
             return compact
-                ? `<span class="inline-flex items-center space-x-1 bg-amber-50 text-amber-800 border border-amber-200/80 font-bold px-2 py-0.5 rounded-md text-[10px] shadow-2xs">☀️ กะกลางวัน</span>`
-                : `<span class="inline-flex items-center space-x-1 bg-amber-50 text-amber-800 border border-amber-200/80 font-bold px-2.5 py-0.5 rounded-lg text-xs shadow-2xs">☀️ กะกลางวัน (Day)</span>`;
+                ? `<span class="inline-flex items-center space-x-1 bg-blue-50 text-blue-700 border border-blue-200/80 font-bold px-2 py-0.5 rounded-md text-[10px] shadow-2xs">🅰️ กะ A</span>`
+                : `<span class="inline-flex items-center space-x-1 bg-blue-50 text-blue-700 border border-blue-200/80 font-bold px-2.5 py-0.5 rounded-lg text-xs shadow-2xs">🅰️ กะ A (Shift A)</span>`;
         }
 
         // ==========================================
@@ -2233,7 +2233,7 @@
             document.getElementById('new-emp-name').value = '';
             document.getElementById('new-emp-pin').value = '';
             document.getElementById('new-emp-role').value = 'EMPLOYEE';
-            document.getElementById('new-emp-shift').value = 'Day';
+            document.getElementById('new-emp-shift').value = 'A';
             document.getElementById('new-emp-vac-quota').value = '6';
             document.getElementById('new-emp-per-quota').value = '6';
             document.getElementById('new-emp-sic-quota').value = '30';
@@ -2310,10 +2310,10 @@
             const shiftSelect = document.getElementById('new-emp-shift');
             if (val === 'SUPERVISOR' || val === 'ADMIN') {
                 if (vacInput && vacInput.value === '6') vacInput.value = '10';
-                if (shiftSelect && shiftSelect.value === 'Day') shiftSelect.value = 'Morning';
+                if (shiftSelect && (shiftSelect.value === 'A' || shiftSelect.value === 'Day')) shiftSelect.value = 'Morning';
             } else {
                 if (vacInput && vacInput.value === '10') vacInput.value = '6';
-                if (shiftSelect && shiftSelect.value === 'Morning') shiftSelect.value = 'Day';
+                if (shiftSelect && shiftSelect.value === 'Morning') shiftSelect.value = 'A';
             }
         }
 
@@ -2406,10 +2406,10 @@
             document.getElementById('edit-emp-name').value = emp.name || '';
             document.getElementById('edit-emp-role').value = emp.role || 'EMPLOYEE';
             
-            const s = (emp.shift || '').toString().trim().toLowerCase();
-            let shiftVal = 'Day';
-            if (s === 'night' || s.includes('กลางคืน')) shiftVal = 'Night';
-            else if (s === 'morning' || s.includes('เช้า')) shiftVal = 'Morning';
+            const s = (emp.shift || '').toString().trim().toUpperCase();
+            let shiftVal = 'A';
+            if (s === 'B' || s.includes('กะ B') || s.includes('กะB') || s === 'NIGHT') shiftVal = 'B';
+            else if (s === 'MORNING' || s.includes('เช้า')) shiftVal = 'Morning';
             document.getElementById('edit-emp-shift').value = shiftVal;
 
             document.getElementById('edit-emp-pin').value = '';

@@ -97,38 +97,38 @@ async function runTests() {
   assert(loginRes.data.user.shift !== undefined, 'User object must contain shift');
   console.log(`✅ [PASS] POST /api/login returns user shift: ${loginRes.data.user.shift}`);
 
-  // 2. Test Admin create employee with Night shift
-  const testNightId = `NIGHT-${Date.now().toString().slice(-4)}`;
+  // 2. Test Admin create employee with Shift B
+  const testShiftBId = `SHIFTB-${Date.now().toString().slice(-4)}`;
   const addRes = await post(`${BASE_URL}/api/employees`, {
     adminId: 'ADMIN-001',
-    id: testNightId,
-    name: 'สมชาย กะกลางคืน',
+    id: testShiftBId,
+    name: 'สมชาย กะ B',
     department: 'Crimping 1',
-    shift: 'Night',
+    shift: 'B',
     role: 'EMPLOYEE',
     pin: '1234',
     vacation_quota: 6,
     personal_quota: 6,
     sick_quota: 30
   });
-  assert.strictEqual(addRes.status, 201, 'Should create employee in Night shift');
-  assert.strictEqual(addRes.data.employee.shift, 'Night', 'Created employee must have shift=Night');
-  console.log(`✅ [PASS] POST /api/employees creates employee [${testNightId}] with shift=Night`);
+  assert.strictEqual(addRes.status, 201, 'Should create employee in Shift B');
+  assert.strictEqual(addRes.data.employee.shift, 'B', 'Created employee must have shift=B');
+  console.log(`✅ [PASS] POST /api/employees creates employee [${testShiftBId}] with shift=B`);
 
-  // 3. Test Admin edit employee shift
-  const editRes = await put(`${BASE_URL}/api/employees/${testNightId}`, {
+  // 3. Test Admin edit employee to Shift A
+  const editRes = await put(`${BASE_URL}/api/employees/${testShiftBId}`, {
     adminId: 'ADMIN-001',
-    name: 'สมชาย กะกลางวัน (ย้ายกะ)',
+    name: 'สมชาย กะ A (ย้ายกะ)',
     department: 'Crimping 1',
-    shift: 'Day',
+    shift: 'A',
     role: 'EMPLOYEE',
     vacation_quota: 6,
     personal_quota: 6,
     sick_quota: 30
   });
   assert.strictEqual(editRes.status, 200, 'Should update employee');
-  assert.strictEqual(editRes.data.employee.shift, 'Day', 'Updated employee must have shift=Day');
-  console.log(`✅ [PASS] PUT /api/employees/:id successfully switches employee shift to Day`);
+  assert.strictEqual(editRes.data.employee.shift, 'A', 'Updated employee must have shift=A');
+  console.log(`✅ [PASS] PUT /api/employees/:id successfully switches employee shift to A`);
 
   // 3.1 Test Admin create supervisor with Morning shift (เช้าตลอด)
   const testSupId = `SUP-${Date.now().toString().slice(-4)}`;
@@ -151,8 +151,8 @@ async function runTests() {
   // 4. Test GET /api/employees lists shift
   const listRes = await get(`${BASE_URL}/api/employees?department=Crimping 1`);
   assert.strictEqual(listRes.status, 200, 'Should list employees');
-  const found = listRes.data.employees.find(e => e.id === testNightId);
-  assert(found && found.shift === 'Day', 'Listed employee must have shift attribute');
+  const found = listRes.data.employees.find(e => e.id === testShiftBId);
+  assert(found && found.shift === 'A', 'Listed employee must have shift attribute');
   console.log(`✅ [PASS] GET /api/employees includes shift attribute`);
 
   // 5. Test Leave Requests return shift
@@ -163,11 +163,11 @@ async function runTests() {
     console.log(`✅ [PASS] GET /api/leave-requests returns shift on requests`);
   }
 
-  // 6. Test Department Calendar with shift
-  const calRes = await get(`${BASE_URL}/api/department-calendar?department=Crimping 1&shift=Night`);
+  // 6. Test Department Calendar with Shift B
+  const calRes = await get(`${BASE_URL}/api/department-calendar?department=Crimping 1&shift=B`);
   assert.strictEqual(calRes.status, 200, 'Should return department calendar');
-  assert.strictEqual(calRes.data.shift, 'Night', 'Calendar response must reflect queried shift');
-  console.log(`✅ [PASS] GET /api/department-calendar handles shift query param`);
+  assert.strictEqual(calRes.data.shift, 'B', 'Calendar response must reflect queried shift');
+  console.log(`✅ [PASS] GET /api/department-calendar handles shift=B query param`);
 
   console.log('\n🎉 ALL SHIFT-BASED QUOTA TESTS PASSED 100%!\n');
 }
