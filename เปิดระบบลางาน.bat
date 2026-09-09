@@ -1,7 +1,8 @@
 @echo off
 chcp 65001 > nul
 echo ========================================================
-echo   🚀 กำลังเปิดระบบ Leave Management Application
+echo   🚀 กำลังเปิดระบบออนไลน์ Leave Management Application
+echo   URL: https://leave-management-app-hjzw.onrender.com
 echo ========================================================
-start "" http://localhost:3000
+start "" https://leave-management-app-hjzw.onrender.com
 exit
