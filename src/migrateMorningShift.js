@@ -7,7 +7,7 @@ const pool = new Pool({
 });
 
 async function run() {
-  console.log('Seeding Morning (เช้าตลอด - หัวหน้างาน) shift quotas...');
+  console.log('Seeding Morning (เช้าตลอด) shift quotas...');
   const depts = ['Crimping 1', 'Assembly', 'QC', 'Management'];
   for (const dept of depts) {
     await pool.query(

@@ -7,7 +7,7 @@ const pool = new Pool({
 });
 
 async function run() {
-  console.log('Migrating shifts to: กะ A, กะ B, เช้าตลอด (หัวหน้างาน)...');
+  console.log('Migrating shifts to: กะ A, กะ B, เช้าตลอด...');
 
   // 1. In employees table:
   await pool.query(`UPDATE employees SET shift = 'A' WHERE shift = 'Day' OR shift IS NULL`);
