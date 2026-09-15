@@ -173,7 +173,7 @@
                         </button>
                     </div>
                     
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
                         <!-- Vacation Card -->
                         <div class="bg-white p-4 rounded-2xl shadow-xs border border-emerald-100 hover:shadow-md transition">
                             <div class="flex justify-between items-start mb-2">
@@ -228,6 +228,25 @@
                             <div class="flex justify-between text-[10px] text-gray-400 mt-1.5 font-medium">
                                 <span>เหลือใช้งาน</span>
                                 <span id="quota-sic-pct">--%</span>
+                            </div>
+                        </div>
+
+                        <!-- Unpaid Card -->
+                        <div class="bg-white p-4 rounded-2xl shadow-xs border border-purple-100 hover:shadow-md transition">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-xs font-semibold text-gray-600">ลาไม่รับค่าจ้าง (Unpaid)</span>
+                                <span class="text-lg">📋</span>
+                            </div>
+                            <div class="flex items-baseline space-x-1">
+                                <span id="quota-unpaid-rem" class="text-2xl font-extrabold text-purple-600">--</span>
+                                <span class="text-xs text-gray-400">/ <span id="quota-unpaid-tot">--</span> วัน</span>
+                            </div>
+                            <div class="w-full bg-purple-50 rounded-full h-2 mt-3 overflow-hidden">
+                                <div id="quota-unpaid-bar" class="bg-purple-500 h-full rounded-full transition-all duration-700" style="width: 0%"></div>
+                            </div>
+                            <div class="flex justify-between text-[10px] text-gray-400 mt-1.5 font-medium">
+                                <span>เหลือใช้งาน</span>
+                                <span id="quota-unpaid-pct">--%</span>
                             </div>
                         </div>
                     </div>
@@ -307,6 +326,7 @@
                                 <option value="Vacation">🏖️ ลาพักร้อน (Vacation)</option>
                                 <option value="Personal">💼 ลากิจ (Personal Leave)</option>
                                 <option value="Sick">🏥 ลาป่วย (Sick Leave - ได้รับการยกเว้นโควตาแผนก)</option>
+                                <option value="Unpaid">📋 ลาไม่รับค่าจ้าง (Leave Without Pay)</option>
                             </select>
                         </div>
 
@@ -495,7 +515,7 @@
                                         <th class="p-3.5">แผนก</th>
                                         <th class="p-3.5 text-center">กะ (Shift)</th>
                                         <th class="p-3.5 text-center">บทบาท (Role)</th>
-                                        <th class="p-3.5 text-center">โควตาเริ่มต้น (พักร้อน / กิจ / ป่วย)</th>
+                                        <th class="p-3.5 text-center">โควตาเริ่มต้น (พักร้อน / กิจ / ป่วย / ไม่รับค่าจ้าง)</th>
                                         <th class="p-3.5 text-center pr-5">จัดการ</th>
                                     </tr>
                                 </thead>
@@ -734,7 +754,7 @@
                     <label class="block text-xs font-semibold text-gray-700 mb-2">
                         <span>โควตาวันลาเริ่มต้น (วัน/ปี):</span>
                     </label>
-                    <div class="grid grid-cols-3 gap-2.5">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                         <div class="bg-emerald-50/60 p-2.5 rounded-xl border border-emerald-100">
                             <label class="block text-[11px] font-semibold text-emerald-800 mb-1 text-center">🏖️ พักร้อน</label>
                             <input type="number" id="new-emp-vac-quota" value="6" min="0" max="90" required class="w-full bg-white border border-emerald-200 rounded-lg px-2 py-1 text-xs text-center font-bold text-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
@@ -746,6 +766,10 @@
                         <div class="bg-blue-50/60 p-2.5 rounded-xl border border-blue-100">
                             <label class="block text-[11px] font-semibold text-blue-800 mb-1 text-center">🏥 ลาป่วย</label>
                             <input type="number" id="new-emp-sic-quota" value="30" min="0" max="90" required class="w-full bg-white border border-blue-200 rounded-lg px-2 py-1 text-xs text-center font-bold text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="bg-purple-50/60 p-2.5 rounded-xl border border-purple-100">
+                            <label class="block text-[11px] font-semibold text-purple-800 mb-1 text-center">📋 ไม่รับค่าจ้าง</label>
+                            <input type="number" id="new-emp-unp-quota" value="30" min="0" max="90" required class="w-full bg-white border border-purple-200 rounded-lg px-2 py-1 text-xs text-center font-bold text-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500">
                         </div>
                     </div>
                 </div>
@@ -854,7 +878,7 @@
                     <label class="block text-xs font-semibold text-gray-700 mb-2">
                         <span>โควตาวันลา (วัน/ปี):</span>
                     </label>
-                    <div class="grid grid-cols-3 gap-2.5">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                         <div class="bg-emerald-50/60 p-2.5 rounded-xl border border-emerald-100">
                             <label class="block text-[11px] font-semibold text-emerald-800 mb-1 text-center">🏖️ พักร้อน</label>
                             <input type="number" id="edit-emp-vac-quota" min="0" max="90" required class="w-full bg-white border border-emerald-200 rounded-lg px-2 py-1 text-xs text-center font-bold text-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
@@ -866,6 +890,10 @@
                         <div class="bg-blue-50/60 p-2.5 rounded-xl border border-blue-100">
                             <label class="block text-[11px] font-semibold text-blue-800 mb-1 text-center">🏥 ลาป่วย</label>
                             <input type="number" id="edit-emp-sic-quota" min="0" max="90" required class="w-full bg-white border border-blue-200 rounded-lg px-2 py-1 text-xs text-center font-bold text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="bg-purple-50/60 p-2.5 rounded-xl border border-purple-100">
+                            <label class="block text-[11px] font-semibold text-purple-800 mb-1 text-center">📋 ไม่รับค่าจ้าง</label>
+                            <input type="number" id="edit-emp-unp-quota" min="0" max="90" required class="w-full bg-white border border-purple-200 rounded-lg px-2 py-1 text-xs text-center font-bold text-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500">
                         </div>
                     </div>
                 </div>
@@ -1705,6 +1733,15 @@
                     const sicPct = Math.min(100, Math.round((q.sick.remaining / (q.sick.total || 1)) * 100));
                     document.getElementById('quota-sic-bar').style.width = `${sicPct}%`;
                     document.getElementById('quota-sic-pct').innerText = `${sicPct}%`;
+
+                    // Unpaid Gauge
+                    if (q.unpaid) {
+                        document.getElementById('quota-unpaid-rem').innerText = q.unpaid.remaining;
+                        document.getElementById('quota-unpaid-tot').innerText = q.unpaid.total;
+                        const unpPct = Math.min(100, Math.round((q.unpaid.remaining / (q.unpaid.total || 1)) * 100));
+                        document.getElementById('quota-unpaid-bar').style.width = `${unpPct}%`;
+                        document.getElementById('quota-unpaid-pct').innerText = `${unpPct}%`;
+                    }
                 }
             } catch (err) {
                 console.error('Fetch quota error:', err);
@@ -1839,7 +1876,7 @@
                         statusBadge = '<span class="bg-gray-100 text-gray-500 border border-gray-200 text-[11px] px-2.5 py-0.5 rounded-full font-semibold flex items-center space-x-1"><span>🚫</span><span>ยกเลิกแล้ว</span></span>';
                     }
 
-                    const typeIcon = req.leave_type === 'Sick' ? '🏥' : (req.leave_type === 'Personal' ? '💼' : '🏖️');
+                    const typeIcon = req.leave_type === 'Sick' ? '🏥' : (req.leave_type === 'Personal' ? '💼' : (req.leave_type === 'Unpaid' ? '📋' : '🏖️'));
                     const isHourly = req.duration_type === 'HOURLY';
                     const durationChip = isHourly
                         ? `<span class="text-xs text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-lg font-bold">⏰ ${req.hours_count} ชม. (${req.days_count} วัน)</span>`
@@ -1981,9 +2018,13 @@
             listEl.innerHTML = filtered.map(req => {
                 const typeColor = req.leave_type === 'Sick' 
                     ? 'bg-rose-50 text-rose-700 border border-rose-200/70' 
-                    : (req.leave_type === 'Personal' ? 'bg-amber-50 text-amber-700 border border-amber-200/70' : 'bg-blue-50 text-blue-700 border border-blue-200/70');
+                    : (req.leave_type === 'Personal' 
+                        ? 'bg-amber-50 text-amber-700 border border-amber-200/70' 
+                        : (req.leave_type === 'Unpaid' 
+                            ? 'bg-purple-50 text-purple-700 border border-purple-200/70' 
+                            : 'bg-blue-50 text-blue-700 border border-blue-200/70'));
 
-                const typeIcon = req.leave_type === 'Sick' ? '🏥' : (req.leave_type === 'Personal' ? '💼' : '🏖️');
+                const typeIcon = req.leave_type === 'Sick' ? '🏥' : (req.leave_type === 'Personal' ? '💼' : (req.leave_type === 'Unpaid' ? '📋' : '🏖️'));
                 const initialLetter = (req.employee_name || req.employee_id).charAt(0);
                 const isHourly = req.duration_type === 'HOURLY';
                 const shiftBadge = formatShiftBadge(req.shift);
@@ -2364,7 +2405,8 @@
                         <td class="p-3.5 text-center font-mono text-gray-600">
                             <span class="text-emerald-600 font-bold">${emp.vacation_quota}</span> / 
                             <span class="text-amber-600 font-bold">${emp.personal_quota}</span> / 
-                            <span class="text-blue-600 font-bold">${emp.sick_quota}</span> วัน
+                            <span class="text-blue-600 font-bold">${emp.sick_quota}</span> / 
+                            <span class="text-purple-600 font-bold">${emp.unpaid_quota !== undefined ? emp.unpaid_quota : 30}</span> วัน
                         </td>
                         <td class="p-3.5 text-center pr-5">
                             <button type="button" onclick="openEditEmployeeModal('${escapeHtml(emp.id)}')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 px-2.5 py-1 rounded-lg text-xs font-semibold transition shadow-2xs flex items-center justify-center space-x-1 mx-auto transform active:scale-95">
@@ -2499,6 +2541,7 @@
         function translateLeaveType(type) {
             if (type === 'Sick') return 'ลาป่วย (Sick Leave)';
             if (type === 'Personal') return 'ลากิจ (Personal Leave)';
+            if (type === 'Unpaid' || type === 'LeaveWithoutPay') return 'ลาไม่รับค่าจ้าง (Unpaid Leave)';
             return 'ลาพักร้อน (Vacation)';
         }
 
@@ -2642,6 +2685,7 @@
             const vacation_quota = parseInt(document.getElementById('new-emp-vac-quota').value, 10);
             const personal_quota = parseInt(document.getElementById('new-emp-per-quota').value, 10);
             const sick_quota = parseInt(document.getElementById('new-emp-sic-quota').value, 10);
+            const unpaid_quota = parseInt(document.getElementById('new-emp-unp-quota').value, 10);
 
             if (!id || !name) {
                 showToast('กรุณากรอกรหัสพนักงานและชื่อ-นามสกุล', 'error');
@@ -2671,7 +2715,8 @@
                         pin,
                         vacation_quota,
                         personal_quota,
-                        sick_quota
+                        sick_quota,
+                        unpaid_quota
                     })
                 });
 
@@ -2724,6 +2769,7 @@
             document.getElementById('edit-emp-vac-quota').value = emp.vacation_quota !== undefined ? emp.vacation_quota : 6;
             document.getElementById('edit-emp-per-quota').value = emp.personal_quota !== undefined ? emp.personal_quota : 6;
             document.getElementById('edit-emp-sic-quota').value = emp.sick_quota !== undefined ? emp.sick_quota : 30;
+            document.getElementById('edit-emp-unp-quota').value = emp.unpaid_quota !== undefined ? emp.unpaid_quota : 30;
             document.getElementById('edit-emp-dept-custom').value = '';
             document.getElementById('edit-custom-dept-container').classList.add('hidden');
 
@@ -2797,6 +2843,7 @@
             const vacation_quota = parseInt(document.getElementById('edit-emp-vac-quota').value, 10);
             const personal_quota = parseInt(document.getElementById('edit-emp-per-quota').value, 10);
             const sick_quota = parseInt(document.getElementById('edit-emp-sic-quota').value, 10);
+            const unpaid_quota = parseInt(document.getElementById('edit-emp-unp-quota').value, 10);
 
             if (!name || !department) {
                 showToast('กรุณากรอกชื่อ-นามสกุล และเลือกแผนก', 'error');
@@ -2820,7 +2867,8 @@
                         pin: pin || undefined,
                         vacation_quota,
                         personal_quota,
-                        sick_quota
+                        sick_quota,
+                        unpaid_quota
                     })
                 });
 

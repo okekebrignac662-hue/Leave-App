@@ -5,6 +5,7 @@ const assert = require('assert');
 function normalizeLeaveType(type) {
   if (!type) return 'Vacation';
   const lower = type.toLowerCase();
+  if (lower.includes('unpaid') || lower.includes('ไม่รับค่าจ้าง')) return 'Unpaid';
   if (lower.includes('sick') || lower.includes('ป่วย')) return 'Sick';
   if (lower.includes('personal') || lower.includes('กิจ')) return 'Personal';
   return 'Vacation';
@@ -46,10 +47,16 @@ const personalBlocked = checkDailyQuota({ maxDailyLeaves: 1, activeLeavesOnDate:
 assert.strictEqual(personalBlocked.allowed, false, 'Personal leave must be blocked if quota reached');
 console.log('✅ [PASS] Personal Leave blocked when daily quota limit is reached');
 
-// 5. Thai label normalization
+// 5. Unpaid leave blocked if quota reached
+const unpaidBlocked = checkDailyQuota({ maxDailyLeaves: 1, activeLeavesOnDate: 1, leaveType: 'Unpaid' });
+assert.strictEqual(unpaidBlocked.allowed, false, 'Unpaid leave must be blocked if quota reached');
+console.log('✅ [PASS] Unpaid Leave blocked when daily quota limit is reached');
+
+// 6. Thai label normalization
 assert.strictEqual(normalizeLeaveType('ลาป่วย (Sick Leave)'), 'Sick');
 assert.strictEqual(normalizeLeaveType('ลากิจ (Personal Leave)'), 'Personal');
 assert.strictEqual(normalizeLeaveType('ลาพักร้อน (Vacation)'), 'Vacation');
+assert.strictEqual(normalizeLeaveType('ลาไม่รับค่าจ้าง (Unpaid Leave)'), 'Unpaid');
 console.log('✅ [PASS] Thai leave type strings normalized correctly');
 
 console.log('\n🏁 All Quota Logic Tests Passed successfully!');

@@ -43,10 +43,24 @@ app.get('/api/ping', (req, res) => {
   });
 });
 
+// Helper: Auto-ensure database schema has unpaid_quota
+async function ensureDatabaseSchema() {
+  if (!pool) return;
+  try {
+    await query(`
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS unpaid_quota INT NOT NULL DEFAULT 30;
+    `);
+  } catch (err) {
+    console.warn('⚠️ Auto-migration notice:', err.message);
+  }
+}
+ensureDatabaseSchema();
+
 // Helper: Normalize Leave Type to standard key
 function normalizeLeaveType(type) {
   if (!type) return 'Vacation';
   const lower = type.toLowerCase();
+  if (lower.includes('unpaid') || lower.includes('ไม่รับค่าจ้าง')) return 'Unpaid';
   if (lower.includes('sick') || lower.includes('ป่วย')) return 'Sick';
   if (lower.includes('personal') || lower.includes('กิจ')) return 'Personal';
   return 'Vacation';
@@ -191,18 +205,21 @@ app.get('/api/employees/:id/quota', async (req, res) => {
     let totalVacation = 6;
     let totalPersonal = 6;
     let totalSick = 30;
+    let totalUnpaid = 30;
 
     let usedVacation = 0;
     let usedPersonal = 0;
     let usedSick = 0;
+    let usedUnpaid = 0;
 
     if (pool) {
       // Get base quota from employee record
-      const empRes = await query('SELECT vacation_quota, personal_quota, sick_quota FROM employees WHERE UPPER(id) = $1', [empId]);
+      const empRes = await query('SELECT vacation_quota, personal_quota, sick_quota, COALESCE(unpaid_quota, 30) as unpaid_quota FROM employees WHERE UPPER(id) = $1', [empId]);
       if (empRes.rows.length > 0) {
         totalVacation = empRes.rows[0].vacation_quota;
         totalPersonal = empRes.rows[0].personal_quota;
         totalSick = empRes.rows[0].sick_quota;
+        totalUnpaid = empRes.rows[0].unpaid_quota !== undefined ? empRes.rows[0].unpaid_quota : 30;
       }
 
       // Sum approved/pending days for this employee in current calendar year
@@ -223,11 +240,13 @@ app.get('/api/employees/:id/quota', async (req, res) => {
         if (type === 'Vacation') usedVacation += days;
         if (type === 'Personal') usedPersonal += days;
         if (type === 'Sick') usedSick += days;
+        if (type === 'Unpaid') usedUnpaid += days;
       });
 
       usedVacation = Math.round(usedVacation * 100) / 100;
       usedPersonal = Math.round(usedPersonal * 100) / 100;
       usedSick = Math.round(usedSick * 100) / 100;
+      usedUnpaid = Math.round(usedUnpaid * 100) / 100;
     }
 
     res.json({
@@ -247,6 +266,11 @@ app.get('/api/employees/:id/quota', async (req, res) => {
           total: totalSick,
           used: usedSick,
           remaining: Math.max(0, Math.round((totalSick - usedSick) * 100) / 100)
+        },
+        unpaid: {
+          total: totalUnpaid,
+          used: usedUnpaid,
+          remaining: Math.max(0, Math.round((totalUnpaid - usedUnpaid) * 100) / 100)
         }
       }
     });
@@ -595,7 +619,11 @@ app.post('/api/leave-requests', async (req, res) => {
           [cleanEmpId, normalizedType, currentYear]
         );
         const used = parseFloat(usedRes.rows[0].used || 0);
-        const totalAllowed = normalizedType === 'Vacation' ? empRecord.vacation_quota : empRecord.personal_quota;
+        const totalAllowed = normalizedType === 'Vacation' 
+          ? empRecord.vacation_quota 
+          : (normalizedType === 'Personal' 
+              ? empRecord.personal_quota 
+              : (empRecord.unpaid_quota !== undefined ? empRecord.unpaid_quota : 30));
         if (used + daysCount > totalAllowed) {
           await client.query('ROLLBACK');
           return res.status(400).json({
@@ -1044,7 +1072,8 @@ app.post('/api/employees', async (req, res) => {
       pin, 
       vacation_quota, 
       personal_quota, 
-      sick_quota 
+      sick_quota,
+      unpaid_quota 
     } = req.body;
 
     // Check admin authorization
@@ -1090,6 +1119,9 @@ app.post('/api/employees', async (req, res) => {
     const sicQuota = Number.isInteger(Number(sick_quota)) && Number(sick_quota) >= 0 
       ? Number(sick_quota) 
       : 30;
+    const unpQuota = Number.isInteger(Number(unpaid_quota)) && Number(unpaid_quota) >= 0 
+      ? Number(unpaid_quota) 
+      : 30;
 
     if (!pool) {
       return res.status(201).json({
@@ -1104,7 +1136,8 @@ app.post('/api/employees', async (req, res) => {
           pin: cleanPin,
           vacation_quota: vacQuota,
           personal_quota: perQuota,
-          sick_quota: sicQuota
+          sick_quota: sicQuota,
+          unpaid_quota: unpQuota
         }
       });
     }
@@ -1117,10 +1150,10 @@ app.post('/api/employees', async (req, res) => {
 
     // Insert employee
     const insertRes = await query(`
-      INSERT INTO employees (id, name, department, shift, pin, role, vacation_quota, personal_quota, sick_quota)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-      RETURNING id, name, department, shift, role, vacation_quota, personal_quota, sick_quota, created_at
-    `, [cleanEmpId, cleanName, cleanDept, cleanShift, cleanPin, cleanRole, vacQuota, perQuota, sicQuota]);
+      INSERT INTO employees (id, name, department, shift, pin, role, vacation_quota, personal_quota, sick_quota, unpaid_quota)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      RETURNING id, name, department, shift, role, vacation_quota, personal_quota, sick_quota, unpaid_quota, created_at
+    `, [cleanEmpId, cleanName, cleanDept, cleanShift, cleanPin, cleanRole, vacQuota, perQuota, sicQuota, unpQuota]);
 
     // Ensure department and shift exists in quota_settings
     await query(`
@@ -1148,7 +1181,7 @@ app.get('/api/employees', async (req, res) => {
   try {
     const { department, role, shift, search } = req.query;
     if (pool) {
-      let sql = 'SELECT id, name, department, COALESCE(shift, \'A\') AS shift, role, vacation_quota, personal_quota, sick_quota, created_at FROM employees WHERE 1=1';
+      let sql = 'SELECT id, name, department, COALESCE(shift, \'A\') AS shift, role, vacation_quota, personal_quota, sick_quota, COALESCE(unpaid_quota, 30) AS unpaid_quota, created_at FROM employees WHERE 1=1';
       const params = [];
       if (department && department !== 'ALL') {
         params.push(department.trim());
@@ -1176,10 +1209,10 @@ app.get('/api/employees', async (req, res) => {
       success: true,
       count: 4,
       employees: [
-        { id: 'ADMIN-001', name: 'ผู้ดูแลระบบ (Admin)', department: 'Management', shift: 'A', role: 'ADMIN' },
-        { id: 'SUP-001', name: 'สมศักดิ์ คุมงาน (หัวหน้า)', department: 'Assembly', shift: 'A', role: 'SUPERVISOR' },
-        { id: 'EMP-001', name: 'สมชาย สายลุย', department: 'Crimping 1', shift: 'A', role: 'EMPLOYEE' },
-        { id: 'EMP-002', name: 'สมหญิง จริงใจ', department: 'Crimping 1', shift: 'B', role: 'EMPLOYEE' }
+        { id: 'ADMIN-001', name: 'ผู้ดูแลระบบ (Admin)', department: 'Management', shift: 'A', role: 'ADMIN', vacation_quota: 10, personal_quota: 6, sick_quota: 30, unpaid_quota: 30 },
+        { id: 'SUP-001', name: 'สมศักดิ์ คุมงาน (หัวหน้า)', department: 'Assembly', shift: 'A', role: 'SUPERVISOR', vacation_quota: 10, personal_quota: 6, sick_quota: 30, unpaid_quota: 30 },
+        { id: 'EMP-001', name: 'สมชาย สายลุย', department: 'Crimping 1', shift: 'A', role: 'EMPLOYEE', vacation_quota: 6, personal_quota: 6, sick_quota: 30, unpaid_quota: 30 },
+        { id: 'EMP-002', name: 'สมหญิง จริงใจ', department: 'Crimping 1', shift: 'B', role: 'EMPLOYEE', vacation_quota: 6, personal_quota: 6, sick_quota: 30, unpaid_quota: 30 }
       ]
     });
   } catch (error) {
@@ -1203,7 +1236,8 @@ app.put('/api/employees/:id', async (req, res) => {
       pin, 
       vacation_quota, 
       personal_quota, 
-      sick_quota 
+      sick_quota,
+      unpaid_quota 
     } = req.body;
 
     // Check admin authorization
@@ -1246,6 +1280,7 @@ app.put('/api/employees/:id', async (req, res) => {
     const newVac = Number.isInteger(Number(vacation_quota)) ? Number(vacation_quota) : currentEmp.vacation_quota;
     const newPer = Number.isInteger(Number(personal_quota)) ? Number(personal_quota) : currentEmp.personal_quota;
     const newSic = Number.isInteger(Number(sick_quota)) ? Number(sick_quota) : currentEmp.sick_quota;
+    const newUnp = Number.isInteger(Number(unpaid_quota)) ? Number(unpaid_quota) : (currentEmp.unpaid_quota !== undefined ? currentEmp.unpaid_quota : 30);
 
     const updateRes = await query(`
       UPDATE employees
@@ -1256,10 +1291,11 @@ app.put('/api/employees/:id', async (req, res) => {
           vacation_quota = $5,
           personal_quota = $6,
           sick_quota = $7,
-          shift = $8
-      WHERE UPPER(id) = $9
-      RETURNING id, name, department, shift, role, vacation_quota, personal_quota, sick_quota
-    `, [newName, newDept, newRole, newPin, newVac, newPer, newSic, newShift, targetId]);
+          shift = $8,
+          unpaid_quota = $9
+      WHERE UPPER(id) = $10
+      RETURNING id, name, department, shift, role, vacation_quota, personal_quota, sick_quota, unpaid_quota
+    `, [newName, newDept, newRole, newPin, newVac, newPer, newSic, newShift, newUnp, targetId]);
 
     // Ensure department and shift exists in quota_settings
     if (newDept) {

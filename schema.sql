@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS employees (
     vacation_quota INT NOT NULL DEFAULT 6,
     personal_quota INT NOT NULL DEFAULT 6,
     sick_quota INT NOT NULL DEFAULT 30,
+    unpaid_quota INT NOT NULL DEFAULT 30,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -31,7 +32,7 @@ CREATE TABLE IF NOT EXISTS quota_settings (
 CREATE TABLE IF NOT EXISTS leave_requests (
     id SERIAL PRIMARY KEY,
     employee_id VARCHAR(20) NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
-    leave_type VARCHAR(50) NOT NULL, -- 'Vacation', 'Personal', 'Sick'
+    leave_type VARCHAR(50) NOT NULL, -- 'Vacation', 'Personal', 'Sick', 'Unpaid'
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     days_count NUMERIC(5, 2) NOT NULL DEFAULT 1,
@@ -56,14 +57,14 @@ CREATE INDEX IF NOT EXISTS idx_leave_requests_employee ON leave_requests (employ
 -- =======================================================
 
 -- Insert or Update Employees
-INSERT INTO employees (id, name, department, pin, role, vacation_quota, personal_quota, sick_quota)
+INSERT INTO employees (id, name, department, pin, role, vacation_quota, personal_quota, sick_quota, unpaid_quota)
 VALUES
-    ('EMP-001', 'สมชาย ใจดี', 'Assembly', '1234', 'EMPLOYEE', 6, 6, 30),
-    ('EMP-002', 'สมหญิง รักงาน', 'Assembly', '1234', 'EMPLOYEE', 6, 6, 30),
-    ('EMP-003', 'อนันต์ ตั้งใจ', 'QC', '1234', 'EMPLOYEE', 6, 6, 30),
-    ('SUP-001', 'สมศักดิ์ คุมงาน (หัวหน้า)', 'Assembly', '1234', 'SUPERVISOR', 10, 6, 30),
-    ('SUP-002', 'วิชัย ดูแลดี (หัวหน้า QC)', 'QC', '1234', 'SUPERVISOR', 10, 6, 30),
-    ('ADMIN-001', 'ผู้ดูแลระบบ (Admin)', 'Management', '1234', 'ADMIN', 10, 6, 30)
+    ('EMP-001', 'สมชาย ใจดี', 'Assembly', '1234', 'EMPLOYEE', 6, 6, 30, 30),
+    ('EMP-002', 'สมหญิง รักงาน', 'Assembly', '1234', 'EMPLOYEE', 6, 6, 30, 30),
+    ('EMP-003', 'อนันต์ ตั้งใจ', 'QC', '1234', 'EMPLOYEE', 6, 6, 30, 30),
+    ('SUP-001', 'สมศักดิ์ คุมงาน (หัวหน้า)', 'Assembly', '1234', 'SUPERVISOR', 10, 6, 30, 30),
+    ('SUP-002', 'วิชัย ดูแลดี (หัวหน้า QC)', 'QC', '1234', 'SUPERVISOR', 10, 6, 30, 30),
+    ('ADMIN-001', 'ผู้ดูแลระบบ (Admin)', 'Management', '1234', 'ADMIN', 10, 6, 30, 30)
 ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
     department = EXCLUDED.department,
