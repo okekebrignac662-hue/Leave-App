@@ -1596,9 +1596,10 @@ app.post('/api/google-sheets/sync', async (req, res) => {
             COALESCE(rev.name, lr.reviewed_by) AS reviewer_name,
             lr.reviewed_at,
             lr.rejection_reason,
+            lr.attachment_url,
             lr.created_at
           FROM leave_requests lr
-          JOIN employees e ON lr.employee_id = e.id
+          LEFT JOIN employees e ON UPPER(lr.employee_id) = UPPER(e.id)
           LEFT JOIN employees rev ON UPPER(lr.reviewed_by) = UPPER(rev.id)
           ORDER BY lr.id ASC
         `);

@@ -174,6 +174,47 @@ function doGet(e) {
 // ============================================================================
 
 /**
+ * ค้นหาข้อมูลพนักงาน (ชื่อ-นามสกุล, แผนก, กะ) จากแผ่นงาน "ข้อมูลพนักงาน"
+ */
+function findEmployeeInfo(ss, employeeId) {
+  if (!employeeId) return null;
+  const cleanId = employeeId.toString().trim().toUpperCase();
+  const empSheet = ss.getSheetByName(SHEET_EMPLOYEES);
+  if (!empSheet || empSheet.getLastRow() < 2) return null;
+
+  const empData = empSheet.getRange(2, 1, empSheet.getLastRow() - 1, 4).getValues();
+  for (let i = 0; i < empData.length; i++) {
+    const rowId = (empData[i][0] || '').toString().trim().toUpperCase();
+    if (rowId === cleanId) {
+      return {
+        name: (empData[i][1] || '').toString().trim(),
+        department: (empData[i][2] || '').toString().trim(),
+        shift: (empData[i][3] || '').toString().trim()
+      };
+    }
+  }
+  return null;
+}
+
+/**
+ * แปลงวันที่เป็น YYYY-MM-DD แบบข้อความอ่านง่าย
+ */
+function formatDateOnlyText(dateStr) {
+  if (!dateStr) return '-';
+  const str = dateStr.toString().trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    return str;
+  }
+  try {
+    const d = new Date(str);
+    if (isNaN(d.getTime())) return str;
+    return Utilities.formatDate(d, 'Asia/Bangkok', 'yyyy-MM-dd');
+  } catch (e) {
+    return str;
+  }
+}
+
+/**
  * บันทึกคำขอลางานใหม่ (เพิ่มแถวใหม่)
  */
 function handleCreateLeave(ss, data) {
@@ -184,18 +225,36 @@ function handleCreateLeave(ss, data) {
   const sheet = ensureSheetWithHeaders(ss, SHEET_LEAVES, LEAVE_HEADERS, '#1E3A8A');
   const now = getBangkokTimestamp();
 
+  const empIdStr = (data.employee_id || '').toString().trim();
+  let empName = (data.employee_name || '').toString().trim();
+  let dept = (data.department || '').toString().trim();
+  let shift = data.shift;
+
+  // ค้นหาข้อมูลพนักงานเพิ่มเติมถ้ายังไม่มีชื่อหรือแผนก
+  if (!empName || empName === empIdStr || !dept) {
+    const lookup = findEmployeeInfo(ss, empIdStr);
+    if (lookup) {
+      if (!empName || empName === empIdStr) empName = lookup.name;
+      if (!dept) dept = lookup.department;
+      if (!shift) shift = lookup.shift;
+    }
+  }
+
+  // ป้องกัน Google Sheets ตัดเลข 0 ด้านหน้าของรหัสพนักงาน
+  const displayEmpId = empIdStr.startsWith('0') ? "'" + empIdStr : empIdStr;
+
   // ตรวจสอบว่ามี Request ID นี้อยู่แล้วหรือไม่ ถ้ามีให้อัปเดตแทน
   const existingRow = findRowIndexByColumnValue(sheet, 1, data.id.toString());
   const rowValues = [
     data.id.toString(),
-    data.employee_id || '',
-    data.employee_name || '',
-    data.department || '',
-    formatShiftText(data.shift),
+    displayEmpId,
+    empName || empIdStr,
+    dept || '-',
+    formatShiftText(shift),
     formatLeaveTypeText(data.leave_type),
     data.duration_type === 'HOURLY' ? 'ลารายชั่วโมง' : 'ลาเต็มวัน',
-    data.start_date || '',
-    data.end_date || data.start_date || '',
+    formatDateOnlyText(data.start_date),
+    formatDateOnlyText(data.end_date || data.start_date),
     data.days_count !== undefined ? data.days_count : 1,
     data.start_time || '-',
     data.end_time || '-',
@@ -327,29 +386,56 @@ function handleSyncAllLeaves(ss, rows) {
     return { success: true, count: 0, message: 'ไม่มีข้อมูลคำขอลางาน' };
   }
 
-  const dataValues = rows.map(r => [
-    (r.id || '').toString(),
-    r.employee_id || '',
-    r.employee_name || '',
-    r.department || '',
-    formatShiftText(r.shift),
-    formatLeaveTypeText(r.leave_type),
-    r.duration_type === 'HOURLY' ? 'ลารายชั่วโมง' : 'ลาเต็มวัน',
-    r.start_date || '',
-    r.end_date || r.start_date || '',
-    r.days_count !== undefined ? r.days_count : 1,
-    r.start_time || '-',
-    r.end_time || '-',
-    r.hours_count !== undefined && r.hours_count !== null ? r.hours_count : '-',
-    r.reason || '-',
-    formatStatusText(r.status || 'PENDING'),
-    r.reviewer_name || r.reviewed_by || '-',
-    r.reviewed_at ? formatDateTime(r.reviewed_at) : '-',
-    r.rejection_reason || '-',
-    r.attachment_display || (r.attachment_url ? '📎 มีเอกสารแนบ' : '-'),
-    r.created_at ? formatDateTime(r.created_at) : now,
-    now
-  ]);
+  // สร้าง Lookup Map จากแผ่นงานข้อมูลพนักงาน เผื่อกรณีข้อมูลที่ส่งมาไม่มีชื่อ/แผนก
+  const empSheet = ss.getSheetByName(SHEET_EMPLOYEES);
+  const empLookupMap = {};
+  if (empSheet && empSheet.getLastRow() >= 2) {
+    const empData = empSheet.getRange(2, 1, empSheet.getLastRow() - 1, 4).getValues();
+    for (let i = 0; i < empData.length; i++) {
+      const eId = (empData[i][0] || '').toString().trim().toUpperCase();
+      if (eId) {
+        empLookupMap[eId] = {
+          name: (empData[i][1] || '').toString().trim(),
+          department: (empData[i][2] || '').toString().trim(),
+          shift: (empData[i][3] || '').toString().trim()
+        };
+      }
+    }
+  }
+
+  const dataValues = rows.map(r => {
+    const rawId = (r.employee_id || '').toString().trim();
+    const lookup = empLookupMap[rawId.toUpperCase()] || {};
+    const rawName = (r.employee_name || '').toString().trim();
+    const empName = (rawName && rawName !== rawId) ? rawName : (lookup.name || rawId);
+    const dept = (r.department || '').toString().trim() || lookup.department || '-';
+    const shift = r.shift || lookup.shift || 'A';
+    const displayEmpId = rawId.startsWith('0') ? "'" + rawId : rawId;
+
+    return [
+      (r.id || '').toString(),
+      displayEmpId,
+      empName,
+      dept,
+      formatShiftText(shift),
+      formatLeaveTypeText(r.leave_type),
+      r.duration_type === 'HOURLY' ? 'ลารายชั่วโมง' : 'ลาเต็มวัน',
+      formatDateOnlyText(r.start_date),
+      formatDateOnlyText(r.end_date || r.start_date),
+      r.days_count !== undefined ? r.days_count : 1,
+      r.start_time || '-',
+      r.end_time || '-',
+      r.hours_count !== undefined && r.hours_count !== null ? r.hours_count : '-',
+      r.reason || '-',
+      formatStatusText(r.status || 'PENDING'),
+      r.reviewer_name || r.reviewed_by || '-',
+      r.reviewed_at ? formatDateTime(r.reviewed_at) : '-',
+      r.rejection_reason || '-',
+      r.attachment_display || (r.attachment_url ? '📎 มีเอกสารแนบ' : '-'),
+      r.created_at ? formatDateTime(r.created_at) : now,
+      now
+    ];
+  });
 
   sheet.getRange(2, 1, dataValues.length, LEAVE_HEADERS.length).setValues(dataValues);
 

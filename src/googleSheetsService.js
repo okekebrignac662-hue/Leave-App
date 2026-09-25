@@ -157,6 +157,85 @@ async function testConnection(targetUrl = null) {
 }
 
 /**
+ * แปลงวันที่เป็น YYYY-MM-DD ตามเขตเวลา Asia/Bangkok
+ */
+function formatDateOnly(d) {
+  if (!d) return '';
+  if (typeof d === 'string') {
+    const trimmed = d.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      return trimmed;
+    }
+  }
+  const dateObj = new Date(d);
+  if (isNaN(dateObj.getTime())) return String(d);
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Bangkok',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).format(dateObj);
+}
+
+/**
+ * เติมข้อมูลพนักงาน (ชื่อ-นามสกุล, แผนก, กะ) ในกรณีที่คำขอลาไม่มีข้อมูลหรือชื่อซ้ำกับรหัสพนักงาน
+ */
+async function enrichLeaveRequest(leaveReq) {
+  if (!leaveReq) return leaveReq;
+  const empId = String(leaveReq.employee_id || '').trim().toUpperCase();
+  const currentName = leaveReq.employee_name || leaveReq.name;
+  const needsName = !currentName || currentName === leaveReq.employee_id;
+  const needsDept = !leaveReq.department;
+
+  if (dbQuery && empId && (needsName || needsDept)) {
+    try {
+      const eRes = await dbQuery('SELECT name, department, shift FROM employees WHERE UPPER(id) = $1', [empId]);
+      if (eRes.rows.length > 0) {
+        const emp = eRes.rows[0];
+        return {
+          ...leaveReq,
+          employee_name: (needsName && emp.name) ? emp.name : (currentName || leaveReq.employee_id),
+          department: needsDept ? (emp.department || '') : leaveReq.department,
+          shift: emp.shift || leaveReq.shift || 'A'
+        };
+      }
+    } catch (_) {}
+  }
+  return leaveReq;
+}
+
+/**
+ * เติมข้อมูลพนักงานแบบกลุ่ม (Bulk) ให้กับรายการคำขอลางานทั้งหมด
+ */
+async function enrichLeavesList(leavesList) {
+  if (!Array.isArray(leavesList) || leavesList.length === 0) return [];
+  if (!dbQuery) return leavesList;
+
+  try {
+    const eRes = await dbQuery('SELECT id, name, department, shift FROM employees');
+    const empMap = new Map();
+    eRes.rows.forEach(e => {
+      empMap.set(String(e.id).trim().toUpperCase(), e);
+    });
+
+    return leavesList.map(req => {
+      const empId = String(req.employee_id || '').trim().toUpperCase();
+      const emp = empMap.get(empId);
+      const currentName = req.employee_name || req.name;
+      const validName = (currentName && currentName !== req.employee_id) ? currentName : (emp ? emp.name : req.employee_id);
+      return {
+        ...req,
+        employee_name: validName,
+        department: req.department || (emp ? emp.department : ''),
+        shift: req.shift || (emp ? emp.shift : 'A')
+      };
+    });
+  } catch (_) {
+    return leavesList;
+  }
+}
+
+/**
  * จัดรูปแบบข้อมูลคำขอลางานให้พร้อมส่งไปยัง Google Sheets
  */
 function formatLeavePayload(req) {
@@ -170,16 +249,20 @@ function formatLeavePayload(req) {
     }
   }
 
+  const cleanEmpId = String(req.employee_id || '').trim();
+  const rawEmpName = req.employee_name || req.name;
+  const cleanEmpName = (rawEmpName && rawEmpName.trim() !== cleanEmpId) ? rawEmpName.trim() : cleanEmpId;
+
   return {
     id: req.id,
-    employee_id: req.employee_id,
-    employee_name: req.employee_name || req.name || req.employee_id,
+    employee_id: cleanEmpId,
+    employee_name: cleanEmpName,
     department: req.department || '',
     shift: req.shift || 'A',
     leave_type: req.leave_type,
     duration_type: req.duration_type || 'FULL_DAY',
-    start_date: req.start_date,
-    end_date: req.end_date || req.start_date,
+    start_date: formatDateOnly(req.start_date),
+    end_date: formatDateOnly(req.end_date || req.start_date),
     days_count: req.days_count !== undefined ? parseFloat(req.days_count) : 1,
     start_time: req.start_time || null,
     end_time: req.end_time || null,
@@ -226,12 +309,12 @@ function syncLeaveRequestAsync(leaveReq, actionType = 'CREATE_LEAVE') {
   // เรียกทำงานเบื้องหลังแบบ Non-blocking
   setImmediate(async () => {
     try {
+      const enriched = await enrichLeaveRequest(leaveReq);
       const payload = {
         action: actionType,
-        data: formatLeavePayload(leaveReq)
+        data: formatLeavePayload(enriched)
       };
       await postToWebhook(payload);
-      // console.log(`[GoogleSheets] Synced leave request #${leaveReq.id} (${actionType}) successfully`);
     } catch (err) {
       console.warn(`[GoogleSheets] Auto-sync leave request failed:`, err.message);
     }
@@ -264,7 +347,8 @@ function syncEmployeeAsync(employee) {
  * ซิงค์คำขอลางานทั้งหมด (Manual Bulk Sync)
  */
 async function syncAllLeaves(leavesList) {
-  const formatted = leavesList.map(formatLeavePayload);
+  const enriched = await enrichLeavesList(leavesList);
+  const formatted = enriched.map(formatLeavePayload);
   const result = await postToWebhook({
     action: 'SYNC_ALL_LEAVES',
     rows: formatted
@@ -298,7 +382,8 @@ async function syncAllEmployees(employeesList) {
  * ซิงค์ข้อมูลทั้งหมดทั้งคำขอและพนักงาน (Manual Bulk Sync All)
  */
 async function syncAllData(leavesList, employeesList) {
-  const formattedLeaves = leavesList.map(formatLeavePayload);
+  const enrichedLeaves = await enrichLeavesList(leavesList);
+  const formattedLeaves = enrichedLeaves.map(formatLeavePayload);
   const formattedEmployees = employeesList.map(formatEmployeePayload);
 
   const result = await postToWebhook({
