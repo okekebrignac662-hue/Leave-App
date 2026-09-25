@@ -2,14 +2,33 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Department Leave Management</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Department Leave Management - ระบบลางานออนไลน์</title>
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="description" content="ระบบยื่นและอนุมัติคำขอลางานออนไลน์สำหรับพนักงานและหัวหน้างาน รองรับระบบกะและการทำงานออฟไลน์">
+    
+    <!-- PWA Web App Manifest & Apple iOS Support -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Leave App">
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Prompt', sans-serif; background-color: #f3f4f6; }
         .hidden-view { display: none !important; }
         .toast-slide { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up { animation: fadeInUp 0.25s ease-out forwards; }
     </style>
 </head>
 <body class="text-gray-800 antialiased min-h-screen flex flex-col justify-between">
@@ -31,6 +50,64 @@
 
     <!-- Toast Notification Banner -->
     <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col space-y-2 max-w-sm w-full pointer-events-none"></div>
+
+    <!-- PWA Install Floating Banner (Android / Chrome / Desktop) -->
+    <div id="pwa-floating-banner" class="hidden fixed bottom-4 inset-x-4 sm:left-auto sm:right-6 sm:w-96 z-50 bg-slate-900/95 backdrop-blur-xl border border-indigo-500/50 rounded-2xl shadow-2xl p-4 text-white animate-fade-in-up">
+        <div class="flex items-start space-x-3.5">
+            <img src="/icons/icon-192.png" alt="Leave App Icon" class="w-12 h-12 rounded-xl shadow-md border border-white/20 object-cover flex-shrink-0">
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center space-x-1.5">
+                    <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <h4 class="text-sm font-bold text-white tracking-wide">ติดตั้ง Leave App ลงมือถือ</h4>
+                </div>
+                <p class="text-xs text-slate-300 mt-0.5 leading-snug">เปิดใช้งานได้ทันใจจากหน้าจอโฮม พร้อมใช้งานแม้ขณะออฟไลน์</p>
+                <div class="flex items-center space-x-2 mt-3">
+                    <button id="pwa-floating-install-btn" type="button" onclick="triggerPwaInstall()" class="flex-1 bg-gradient-to-r from-indigo-500 via-indigo-600 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold text-xs py-2 px-3 rounded-xl shadow-md active:scale-95 transition flex items-center justify-center space-x-1.5">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        <span>ติดตั้งทันที</span>
+                    </button>
+                    <button type="button" onclick="dismissPwaBanner()" class="text-xs text-slate-400 hover:text-white px-2.5 py-2 rounded-lg hover:bg-slate-800 transition">
+                        ไว้ทีหลัง
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- iOS Safari PWA Install Modal -->
+    <div id="ios-install-modal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 transition-opacity">
+        <div class="bg-slate-900 border border-slate-700 text-white rounded-3xl p-6 max-w-sm w-full shadow-2xl relative animate-fade-in-up">
+            <button onclick="closeIosInstallModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <div class="flex items-center space-x-3 mb-4">
+                <img src="/icons/icon-192.png" class="w-12 h-12 rounded-2xl shadow-lg border border-indigo-500/40 object-cover" alt="Leave App">
+                <div>
+                    <h3 class="text-base font-bold text-white flex items-center space-x-1.5">
+                        <span>ติดตั้งบน iPhone / iPad</span>
+                    </h3>
+                    <p class="text-xs text-indigo-300">ผ่านเบราว์เซอร์ Safari</p>
+                </div>
+            </div>
+            <div class="space-y-3 text-xs text-slate-300">
+                <div class="flex items-start space-x-3 bg-slate-800/80 p-3 rounded-2xl border border-slate-700/50">
+                    <span class="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs flex-shrink-0">1</span>
+                    <p>แตะที่ปุ่ม <span class="font-bold text-white">"แชร์"</span> <span class="inline-block px-1.5 py-0.5 bg-slate-700 rounded text-sky-400 font-mono text-[11px]">⎋</span> (Share) ที่แถบเมนูด้านล่างของ Safari</p>
+                </div>
+                <div class="flex items-start space-x-3 bg-slate-800/80 p-3 rounded-2xl border border-slate-700/50">
+                    <span class="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs flex-shrink-0">2</span>
+                    <p>เลื่อนลงแล้วเลือก <span class="font-bold text-white">"เพิ่มไปยังหน้าจอโฮม"</span> (Add to Home Screen ➕)</p>
+                </div>
+                <div class="flex items-start space-x-3 bg-slate-800/80 p-3 rounded-2xl border border-slate-700/50">
+                    <span class="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs flex-shrink-0">3</span>
+                    <p>แตะปุ่ม <span class="font-bold text-emerald-400">"เพิ่ม" (Add)</span> ที่มุมขวาบน จะมีไอคอนแอปปรากฏบนหน้าจอมือถือทันที</p>
+                </div>
+            </div>
+            <button onclick="closeIosInstallModal()" class="w-full mt-5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold py-2.5 rounded-xl text-xs shadow-md transition active:scale-95">
+                เข้าใจแล้ว ปิดหน้าต่าง
+            </button>
+        </div>
+    </div>
 
     <div>
         <!-- Navbar -->
@@ -63,6 +140,11 @@
                         <span id="user-role-display" class="text-[10px] text-blue-300 font-medium leading-none mt-1"></span>
                     </div>
                 </div>
+                <!-- PWA Install Button in Navbar -->
+                <button id="btn-pwa-install-nav" type="button" onclick="triggerPwaInstall()" class="hidden bg-indigo-600/30 hover:bg-indigo-600 border border-indigo-400/40 text-indigo-200 hover:text-white px-2.5 py-1.5 rounded-xl transition text-xs font-semibold shadow-xs flex items-center space-x-1.5" title="ติดตั้งแอปลงบนหน้าจอมือถือ">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    <span class="hidden sm:inline">📲 ติดตั้งแอป</span>
+                </button>
                 <button onclick="logout()" class="bg-red-500/10 hover:bg-red-500 hover:text-white text-red-400 border border-red-500/20 px-3 py-1.5 rounded-xl transition text-xs font-semibold shadow-xs flex items-center space-x-1">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
@@ -147,6 +229,24 @@
                             </svg>
                         </button>
                     </form>
+
+                    <!-- PWA Mobile Install Banner Inside Login Card -->
+                    <div id="login-pwa-banner" class="mt-4 p-3 bg-gradient-to-r from-indigo-50/90 via-purple-50/90 to-blue-50/90 border border-indigo-200/80 rounded-2xl flex items-center justify-between shadow-xs">
+                        <div class="flex items-center space-x-2.5">
+                            <img src="/icons/icon-192.png" alt="Leave App" class="w-9 h-9 rounded-xl shadow-xs border border-indigo-200 object-cover flex-shrink-0">
+                            <div>
+                                <p class="text-xs font-bold text-indigo-950 flex items-center space-x-1.5">
+                                    <span>ติดตั้ง Leave App</span>
+                                    <span class="text-[9px] bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-1.5 py-0.5 rounded-full font-semibold">PWA</span>
+                                </p>
+                                <p class="text-[11px] text-indigo-600 leading-tight">ติดตั้งลงหน้าจอมือถือ เปิดใช้ทันใจ</p>
+                            </div>
+                        </div>
+                        <button type="button" onclick="triggerPwaInstall()" class="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-semibold px-3 py-1.5 rounded-xl shadow-xs transition flex-shrink-0 flex items-center space-x-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            <span>ติดตั้ง</span>
+                        </button>
+                    </div>
 
                     <!-- Security Badge Note -->
                     <div class="mt-6 pt-4 border-t border-gray-100 text-center flex items-center justify-center space-x-1.5 text-[11px] text-gray-400">
@@ -475,6 +575,10 @@
                         <button id="tab-sup-history" type="button" onclick="switchSupervisorTab('history')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-gray-600 hover:text-gray-900 transition flex items-center space-x-1.5">
                             <span>📋 ประวัติที่พิจารณาแล้ว (History)</span>
                         </button>
+                        <button id="tab-sup-sheets" type="button" onclick="switchSupervisorTab('sheets')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-gray-600 hover:text-gray-900 transition flex items-center space-x-1.5">
+                            <span>📊 Google Sheets</span>
+                            <span id="sheets-badge-status" class="w-2 h-2 rounded-full bg-amber-400"></span>
+                        </button>
                     </div>
                     <button type="button" onclick="refreshSupervisorData()" class="bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 px-3.5 py-1.5 rounded-xl text-xs font-medium transition flex items-center justify-center space-x-1 shadow-2xs self-end sm:self-auto">
                         <span>🔄 รีเฟรช</span>
@@ -558,6 +662,226 @@
                     </div>
                     <div id="supervisor-history-list" class="space-y-4">
                         <!-- Dynamic history leave cards inserted here -->
+                    </div>
+                </div>
+
+                <!-- Google Sheets Sync Container -->
+                <div id="supervisor-sheets-container" class="hidden-view space-y-4">
+                    <!-- Header Card -->
+                    <div class="bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-900 text-white p-5 rounded-3xl shadow-lg border border-emerald-500/30">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div class="flex items-center space-x-3.5">
+                                <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-2xl shadow-inner shrink-0">
+                                    📊
+                                </div>
+                                <div>
+                                    <div class="flex items-center space-x-2">
+                                        <h3 class="text-base font-bold text-white">Google Sheets Integration</h3>
+                                        <span id="sheets-status-pill" class="bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[10px] px-2.5 py-0.5 rounded-full font-semibold flex items-center space-x-1">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                                            <span id="sheets-status-text">ยังไม่ได้ตั้งค่า Webhook</span>
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-emerald-200/80 mt-1">
+                                        เชื่อมต่อระบบจัดเก็บข้อมูลการลางานและรายชื่อพนักงานลง Google Sheets อัตโนมัติแบบ Real-time
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2 self-start sm:self-auto">
+                                <button type="button" onclick="loadGoogleSheetsConfig(true)" class="bg-white/10 hover:bg-white/20 text-white border border-white/20 px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5">
+                                    <span>🔄 รีเฟรชสถานะ</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Mini Stats Bar -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mt-4 pt-4 border-t border-emerald-500/20 text-xs">
+                            <div class="bg-slate-950/40 rounded-xl p-2.5 border border-white/5 flex items-center justify-between">
+                                <span class="text-slate-300">แผ่นงานคำขอลางาน:</span>
+                                <span class="font-bold text-emerald-400">"รายการลางาน"</span>
+                            </div>
+                            <div class="bg-slate-950/40 rounded-xl p-2.5 border border-white/5 flex items-center justify-between">
+                                <span class="text-slate-300">แผ่นงานพนักงาน:</span>
+                                <span class="font-bold text-teal-400">"ข้อมูลพนักงาน"</span>
+                            </div>
+                            <div class="bg-slate-950/40 rounded-xl p-2.5 border border-white/5 flex items-center justify-between">
+                                <span class="text-slate-300">การซิงค์ล่าสุด:</span>
+                                <span id="sheets-last-sync-time" class="font-semibold text-slate-200">ยังไม่มีข้อมูล</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Webhook URL Configuration Card (Admin Only) -->
+                    <div id="sheets-admin-config-card" class="bg-white p-5 sm:p-6 rounded-3xl shadow-xs border border-gray-100 space-y-4">
+                        <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-sm">
+                                    ⚙️
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-bold text-gray-800">ตั้งค่า Google Apps Script Webhook URL</h4>
+                                    <p class="text-[11px] text-gray-400">นำ URL ที่ได้จากการ Deploy Web App มาใส่ที่นี่</p>
+                                </div>
+                            </div>
+                            <span class="text-[10px] bg-indigo-50 text-indigo-700 font-bold px-2 py-0.5 rounded-full border border-indigo-200">ADMIN SETTING</span>
+                        </div>
+
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1.5">
+                                    <span>Google Webhook URL:</span>
+                                    <span class="text-rose-500">*</span>
+                                </label>
+                                <div class="flex flex-col sm:flex-row gap-2">
+                                    <div class="relative flex-1">
+                                        <input type="url" id="sheets-webhook-url" placeholder="https://script.google.com/macros/s/AKfycbx.../exec" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-mono focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition">
+                                    </div>
+                                    <div class="flex space-x-2">
+                                        <button type="button" id="btn-test-sheets" onclick="testGoogleSheetsWebhook()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 shrink-0">
+                                            <span>🧪 ทดสอบการเชื่อมต่อ</span>
+                                        </button>
+                                        <button type="button" id="btn-save-sheets" onclick="saveGoogleSheetsWebhook()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-md shadow-indigo-600/20 transition flex items-center space-x-1.5 shrink-0">
+                                            <span>💾 บันทึก URL</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Auto-sync Toggle -->
+                            <div class="flex items-center justify-between p-3 bg-gray-50/80 rounded-2xl border border-gray-100">
+                                <div class="flex items-center space-x-2.5">
+                                    <span class="text-lg">⚡</span>
+                                    <div>
+                                        <span class="text-xs font-bold text-gray-800 block">บันทึกข้อมูลอัตโนมัติแบบ Real-time (Auto-Sync)</span>
+                                        <span class="text-[11px] text-gray-500 block">ส่งข้อมูลไป Google Sheets ทันทีที่มีการยื่นคำขอใหม่, อนุมัติ, ปฏิเสธ, ยกเลิก หรือแก้ไขข้อมูลพนักงาน</span>
+                                    </div>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="sheets-auto-sync-toggle" checked onchange="toggleAutoSync(this.checked)" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                                </label>
+                            </div>
+
+                            <!-- Test Result Alert Box -->
+                            <div id="sheets-test-result-box" class="hidden text-xs p-3 rounded-2xl border transition"></div>
+                        </div>
+                    </div>
+
+                    <!-- Manual Bulk Sync Cards -->
+                    <div class="bg-white p-5 sm:p-6 rounded-3xl shadow-xs border border-gray-100 space-y-4">
+                        <div class="border-b border-gray-100 pb-3">
+                            <h4 class="text-sm font-bold text-gray-800 flex items-center space-x-2">
+                                <span>🚀 ซิงค์ข้อมูลทั้งหมดไปยัง Google Sheets (Manual Export / Sync)</span>
+                            </h4>
+                            <p class="text-[11px] text-gray-500 mt-0.5">กดส่งข้อมูลทั้งหมดจากระบบขึ้นไปเขียนบน Google Sheets ได้ทุกเวลา</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <!-- Sync All -->
+                            <div class="bg-gradient-to-br from-indigo-50 to-blue-50/60 p-4 rounded-2xl border border-indigo-100 flex flex-col justify-between space-y-3">
+                                <div>
+                                    <div class="flex items-center space-x-2 text-indigo-700 font-bold text-xs">
+                                        <span class="text-base">🔄</span>
+                                        <span>ซิงค์ข้อมูลทั้งหมด (Sync All)</span>
+                                    </div>
+                                    <p class="text-[11px] text-gray-600 mt-1">
+                                        ส่งทั้งคำขอลางานทั้งหมด และรายชื่อพนักงานทั้งหมดแยก 2 แผ่นงาน
+                                    </p>
+                                </div>
+                                <button type="button" id="btn-sync-all" onclick="triggerManualSync('ALL')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-xl text-xs shadow-xs transition flex items-center justify-center space-x-1.5">
+                                    <span>ซิงค์ทั้งหมดทันที</span>
+                                </button>
+                            </div>
+
+                            <!-- Sync Leaves Only -->
+                            <div class="bg-gradient-to-br from-blue-50 to-sky-50/60 p-4 rounded-2xl border border-blue-100 flex flex-col justify-between space-y-3">
+                                <div>
+                                    <div class="flex items-center space-x-2 text-blue-700 font-bold text-xs">
+                                        <span class="text-base">📄</span>
+                                        <span>เฉพาะคำขอลางาน (Leaves)</span>
+                                    </div>
+                                    <p class="text-[11px] text-gray-600 mt-1">
+                                        ส่งประวัติการขอลางานทั้งหมด และจัดสีสถานะ (อนุมัติ/รอ/ปฏิเสธ)
+                                    </p>
+                                </div>
+                                <button type="button" id="btn-sync-leaves" onclick="triggerManualSync('LEAVES')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-xl text-xs shadow-xs transition flex items-center justify-center space-x-1.5">
+                                    <span>ซิงค์คำขอลางาน</span>
+                                </button>
+                            </div>
+
+                            <!-- Sync Employees Only -->
+                            <div class="bg-gradient-to-br from-emerald-50 to-teal-50/60 p-4 rounded-2xl border border-emerald-100 flex flex-col justify-between space-y-3">
+                                <div>
+                                    <div class="flex items-center space-x-2 text-emerald-700 font-bold text-xs">
+                                        <span class="text-base">👥</span>
+                                        <span>เฉพาะข้อมูลพนักงาน (Employees)</span>
+                                    </div>
+                                    <p class="text-[11px] text-gray-600 mt-1">
+                                        ส่งรายชื่อพนักงาน แผนก กะการทำงาน และโควตาวันลาเริ่มต้น
+                                    </p>
+                                </div>
+                                <button type="button" id="btn-sync-employees" onclick="triggerManualSync('EMPLOYEES')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 rounded-xl text-xs shadow-xs transition flex items-center justify-center space-x-1.5">
+                                    <span>ซิงค์รายชื่อพนักงาน</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Setup Guide with 1-Click Code Copy Accordion -->
+                    <div class="bg-white rounded-3xl shadow-xs border border-gray-100 overflow-hidden">
+                        <button type="button" onclick="toggleSetupGuide()" class="w-full p-4 sm:p-5 text-left flex items-center justify-between hover:bg-gray-50/80 transition">
+                            <div class="flex items-center space-x-2.5">
+                                <span class="text-lg">📖</span>
+                                <div>
+                                    <h4 class="text-xs sm:text-sm font-bold text-gray-800">คู่มือวิธีติดตั้ง Google Sheets และคัดลอกโค้ด Apps Script (ใช้เวลา 2 นาที)</h4>
+                                    <p class="text-[11px] text-gray-400">คลิกเพื่อดูขั้นตอนและคัดลอกโค้ดไปวางใน Google Sheets ของคุณ</p>
+                                </div>
+                            </div>
+                            <span id="setup-guide-arrow" class="text-gray-400 text-xs transform transition duration-200">▼</span>
+                        </button>
+
+                        <div id="setup-guide-content" class="hidden p-5 sm:p-6 border-t border-gray-100 bg-gray-50/50 space-y-4 text-xs text-gray-700">
+                            <!-- Steps List -->
+                            <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+                                <div class="bg-white p-3.5 rounded-2xl border border-gray-200 space-y-1.5">
+                                    <div class="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-xs">1</div>
+                                    <h5 class="font-bold text-gray-800">สร้าง Sheet ใหม่</h5>
+                                    <p class="text-[11px] text-gray-500">เปิด Google Sheets บน Google Drive แล้วตั้งชื่อตามต้องการ</p>
+                                </div>
+                                <div class="bg-white p-3.5 rounded-2xl border border-gray-200 space-y-1.5">
+                                    <div class="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-xs">2</div>
+                                    <h5 class="font-bold text-gray-800">เปิด Apps Script</h5>
+                                    <p class="text-[11px] text-gray-500">ไปที่เมนู <b>ส่วนขยาย (Extensions)</b> แล้วเลือก <b>Apps Script</b></p>
+                                </div>
+                                <div class="bg-white p-3.5 rounded-2xl border border-gray-200 space-y-1.5">
+                                    <div class="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-xs">3</div>
+                                    <h5 class="font-bold text-gray-800">วางโค้ดสคริปต์</h5>
+                                    <p class="text-[11px] text-gray-500">ลบโค้ดเดิมออกทั้งหมด แล้ววางโค้ดจากปุ่มด้านล่างนี้</p>
+                                </div>
+                                <div class="bg-white p-3.5 rounded-2xl border border-gray-200 space-y-1.5">
+                                    <div class="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-xs">4</div>
+                                    <h5 class="font-bold text-gray-800">Deploy เว็บแอป</h5>
+                                    <p class="text-[11px] text-gray-500">กด <b>Deploy > New deployment</b> เลือกประเภท <b>Web app</b> และสิทธิ์ <b>ทุกคน (Anyone)</b></p>
+                                </div>
+                                <div class="bg-white p-3.5 rounded-2xl border border-gray-200 space-y-1.5">
+                                    <div class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-700 font-bold flex items-center justify-center text-xs">5</div>
+                                    <h5 class="font-bold text-gray-800">นำ URL มาใส่</h5>
+                                    <p class="text-[11px] text-gray-500">คัดลอก URL ของ Web app มาวางในช่องด้านบน แล้วกดบันทึก</p>
+                                </div>
+                            </div>
+
+                            <!-- Script Code Box with Copy Button -->
+                            <div class="bg-slate-900 rounded-2xl p-4 border border-slate-800 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-mono text-emerald-400 font-semibold">📄 google-apps-script.js</span>
+                                    <button type="button" onclick="copyAppsScriptCode()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-xl text-xs font-semibold shadow-xs transition flex items-center space-x-1.5">
+                                        <span id="copy-script-icon">📋</span>
+                                        <span id="copy-script-text">คัดลอกโค้ดสคริปต์</span>
+                                    </button>
+                                </div>
+                                <p class="text-[11px] text-slate-400">กดปุ่ม "คัดลอกโค้ดสคริปต์" ด้านบน เพื่อนำโค้ดไปวางในหน้า Google Apps Script ได้ทันที</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -1655,6 +1979,7 @@
                         switchSupervisorTab('pending');
                     }
                     loadDepartmentCalendar();
+                    loadGoogleSheetsConfig();
                 } else {
                     document.getElementById('employee-view').classList.remove('hidden-view');
                     document.getElementById('supervisor-view').classList.add('hidden-view');
@@ -2276,15 +2601,17 @@
             }
         }
 
-        // Switch Supervisor / Admin Tabs (Employees vs Pending vs History)
+        // Switch Supervisor / Admin Tabs (Employees vs Pending vs History vs Sheets)
         function switchSupervisorTab(tab) {
             const btnEmployees = document.getElementById('tab-admin-employees');
             const btnPending = document.getElementById('tab-sup-pending');
             const btnHistory = document.getElementById('tab-sup-history');
+            const btnSheets = document.getElementById('tab-sup-sheets');
             
             const containerEmployees = document.getElementById('admin-employees-container');
             const containerPending = document.getElementById('supervisor-pending-container');
             const containerHistory = document.getElementById('supervisor-history-container');
+            const containerSheets = document.getElementById('supervisor-sheets-container');
 
             // Reset tab styles
             const inactiveClass = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold text-gray-600 hover:text-gray-900 transition flex items-center space-x-1.5';
@@ -2293,10 +2620,12 @@
             if (btnEmployees) btnEmployees.className = (tab === 'employees' ? activeClass : inactiveClass) + (currentUser && currentUser.isAdmin ? '' : ' hidden-view');
             if (btnPending) btnPending.className = tab === 'pending' ? activeClass : inactiveClass;
             if (btnHistory) btnHistory.className = tab === 'history' ? activeClass : inactiveClass;
+            if (btnSheets) btnSheets.className = tab === 'sheets' ? activeClass : inactiveClass;
 
             if (containerEmployees) containerEmployees.classList.toggle('hidden-view', tab !== 'employees');
             if (containerPending) containerPending.classList.toggle('hidden-view', tab !== 'pending');
             if (containerHistory) containerHistory.classList.toggle('hidden-view', tab !== 'history');
+            if (containerSheets) containerSheets.classList.toggle('hidden-view', tab !== 'sheets');
 
             if (tab === 'employees') {
                 loadAdminEmployeesList();
@@ -2304,6 +2633,8 @@
                 loadPendingRequests();
             } else if (tab === 'history') {
                 loadSupervisorHistory();
+            } else if (tab === 'sheets') {
+                loadGoogleSheetsConfig();
             }
         }
 
@@ -2425,6 +2756,7 @@
             loadPendingRequests();
             loadSupervisorHistory();
             loadDepartmentCalendar();
+            loadGoogleSheetsConfig();
             showToast('อัปเดตข้อมูลล่าสุดเรียบร้อย', 'info');
         }
 
@@ -2890,6 +3222,424 @@
                 btn.innerHTML = '<span>บันทึกการแก้ไข</span>';
             }
         }
+
+        // ==========================================
+        // Google Sheets Integration Handlers
+        // ==========================================
+        let googleSheetsConfig = {
+            configured: false,
+            webhookUrl: '',
+            autoSync: true,
+            lastSyncTime: null,
+            lastSyncStatus: null,
+            lastSyncMessage: null
+        };
+
+        async function loadGoogleSheetsConfig(showNotice = false) {
+            try {
+                const res = await safeFetch('/api/google-sheets/config');
+                const data = await res.json();
+                if (data.success && data.config) {
+                    googleSheetsConfig = data.config;
+                    renderGoogleSheetsUI();
+                    if (showNotice) {
+                        showToast('อัปเดตสถานะ Google Sheets เรียบร้อย', 'info');
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to load Google Sheets config:', err);
+            }
+        }
+
+        function renderGoogleSheetsUI() {
+            const input = document.getElementById('sheets-webhook-url');
+            if (input && !input.value) {
+                input.value = googleSheetsConfig.webhookUrl || '';
+            }
+
+            const toggle = document.getElementById('sheets-auto-sync-toggle');
+            if (toggle) {
+                toggle.checked = googleSheetsConfig.autoSync !== false;
+            }
+
+            const statusPill = document.getElementById('sheets-status-pill');
+            const statusText = document.getElementById('sheets-status-text');
+            const badgeDot = document.getElementById('sheets-badge-status');
+
+            if (googleSheetsConfig.configured) {
+                if (statusPill) statusPill.className = 'bg-emerald-400/20 text-emerald-300 border border-emerald-400/30 text-[10px] px-2.5 py-0.5 rounded-full font-semibold flex items-center space-x-1';
+                if (statusText) statusText.innerText = 'เชื่อมต่อแล้ว (Connected)';
+                if (badgeDot) badgeDot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+            } else {
+                if (statusPill) statusPill.className = 'bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[10px] px-2.5 py-0.5 rounded-full font-semibold flex items-center space-x-1';
+                if (statusText) statusText.innerText = 'ยังไม่ได้ตั้งค่า Webhook';
+                if (badgeDot) badgeDot.className = 'w-2 h-2 rounded-full bg-amber-400';
+            }
+
+            const lastSyncEl = document.getElementById('sheets-last-sync-time');
+            if (lastSyncEl) {
+                if (googleSheetsConfig.lastSyncTime) {
+                    const d = new Date(googleSheetsConfig.lastSyncTime);
+                    lastSyncEl.innerText = d.toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', dateStyle: 'short', timeStyle: 'short' });
+                } else {
+                    lastSyncEl.innerText = 'ยังไม่มีข้อมูลการซิงค์';
+                }
+            }
+
+            // Admin only controls visibility
+            const adminCard = document.getElementById('sheets-admin-config-card');
+            if (adminCard) {
+                adminCard.style.display = (currentUser && currentUser.isAdmin) ? 'block' : 'none';
+            }
+        }
+
+        async function saveGoogleSheetsWebhook() {
+            if (!currentUser || !currentUser.isAdmin) {
+                showToast('เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่สามารถแก้ไข URL ได้', 'error');
+                return;
+            }
+
+            const input = document.getElementById('sheets-webhook-url');
+            const url = input ? input.value.trim() : '';
+
+            if (url && !url.startsWith('https://script.google.com/')) {
+                showToast('URL ไม่ถูกต้อง ต้องขึ้นต้นด้วย https://script.google.com/', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('btn-save-sheets');
+            btn.disabled = true;
+            btn.innerText = 'กำลังบันทึก...';
+
+            try {
+                const res = await safeFetch('/api/google-sheets/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        adminId: currentUser.id,
+                        webhookUrl: url,
+                        autoSync: document.getElementById('sheets-auto-sync-toggle')?.checked
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'บันทึกการตั้งค่าไม่สำเร็จ');
+                }
+
+                googleSheetsConfig = data.config;
+                renderGoogleSheetsUI();
+                showToast('บันทึกการตั้งค่า Google Sheets เรียบร้อยแล้ว', 'success');
+
+                // If URL was provided, automatically trigger a test
+                if (url) {
+                    testGoogleSheetsWebhook();
+                }
+            } catch (err) {
+                showToast(err.message || 'เกิดข้อผิดพลาดในการบันทึก', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span>💾 บันทึก URL</span>';
+            }
+        }
+
+        async function toggleAutoSync(enabled) {
+            if (!currentUser || !currentUser.isAdmin) return;
+            try {
+                const res = await safeFetch('/api/google-sheets/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        adminId: currentUser.id,
+                        autoSync: enabled
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    googleSheetsConfig.autoSync = enabled;
+                    showToast(enabled ? 'เปิดการบันทึกข้อมูลอัตโนมัติ (Auto-Sync) แล้ว' : 'ปิดการบันทึกข้อมูลอัตโนมัติแล้ว', 'info');
+                }
+            } catch (err) {
+                console.error('Failed to toggle auto-sync:', err);
+            }
+        }
+
+        async function testGoogleSheetsWebhook() {
+            const input = document.getElementById('sheets-webhook-url');
+            const url = input ? input.value.trim() : googleSheetsConfig.webhookUrl;
+
+            if (!url) {
+                showToast('กรุณาระบุ Webhook URL ก่อนกดทดสอบ', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('btn-test-sheets');
+            const resultBox = document.getElementById('sheets-test-result-box');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="animate-spin">🔄</span><span>กำลังทดสอบ...</span>';
+            if (resultBox) {
+                resultBox.className = 'text-xs p-3 rounded-2xl border bg-blue-50 text-blue-900 border-blue-200 block';
+                resultBox.innerHTML = '⏳ กำลังส่งคำขอทดสอบไปยัง Google Sheets...';
+            }
+
+            try {
+                const res = await safeFetch('/api/google-sheets/test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ webhookUrl: url })
+                });
+                const data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'ไม่สามารถเชื่อมต่อได้');
+                }
+
+                if (resultBox) {
+                    resultBox.className = 'text-xs p-3 rounded-2xl border bg-emerald-50 text-emerald-900 border-emerald-200 block';
+                    resultBox.innerHTML = `
+                        <div class="flex items-center space-x-2 font-bold text-emerald-800">
+                            <span>✓</span>
+                            <span>เชื่อมต่อสำเร็จ! Google Sheets ตอบสนองปกติ</span>
+                        </div>
+                        <p class="text-[11px] text-emerald-700 mt-1">ชื่อสเปรดชีต: <b>"${escapeHtml(data.details?.sheetTitle || '-')}"</b> • สร้างแผ่นงาน "รายการลางาน" และ "ข้อมูลพนักงาน" พร้อมใช้งานเรียบร้อย</p>
+                    `;
+                }
+                showToast('เชื่อมต่อ Google Sheets สำเร็จเรียบร้อย!', 'success');
+                loadGoogleSheetsConfig();
+            } catch (err) {
+                if (resultBox) {
+                    resultBox.className = 'text-xs p-3 rounded-2xl border bg-rose-50 text-rose-900 border-rose-200 block';
+                    resultBox.innerHTML = `
+                        <div class="flex items-center space-x-2 font-bold text-rose-800">
+                            <span>✕</span>
+                            <span>การเชื่อมต่อล้มเหลว</span>
+                        </div>
+                        <p class="text-[11px] text-rose-700 mt-1">${escapeHtml(err.message)}</p>
+                        <p class="text-[10px] text-rose-600 mt-1">💡 ตรวจสอบว่าใน Apps Script ตอน Deploy ได้เลือก "ผู้มีสิทธิ์เข้าถึง: ทุกคน (Anyone)" แล้วหรือไม่</p>
+                    `;
+                }
+                showToast(err.message || 'การเชื่อมต่อล้มเหลว', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span>🧪 ทดสอบการเชื่อมต่อ</span>';
+            }
+        }
+
+        async function triggerManualSync(syncType = 'ALL') {
+            if (!googleSheetsConfig.configured) {
+                showToast('กรุณาระบุและบันทึก Webhook URL ก่อนกดซิงค์', 'error');
+                return;
+            }
+
+            const btnId = syncType === 'LEAVES' ? 'btn-sync-leaves' : (syncType === 'EMPLOYEES' ? 'btn-sync-employees' : 'btn-sync-all');
+            const btn = document.getElementById(btnId);
+            const originalHtml = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="animate-spin">🔄</span><span>กำลังซิงค์...</span>';
+            }
+
+            try {
+                const res = await safeFetch('/api/google-sheets/sync', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        syncType,
+                        requesterId: currentUser?.id
+                    })
+                }, 45000); // 45s timeout for bulk write
+
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'การซิงค์ข้อมูลไม่สำเร็จ');
+                }
+
+                showToast(data.message || 'ซิงค์ข้อมูลไปยัง Google Sheets เรียบร้อยแล้ว', 'success');
+                loadGoogleSheetsConfig();
+            } catch (err) {
+                console.error('Sync error:', err);
+                showToast(err.message || 'เกิดข้อผิดพลาดในการซิงค์ข้อมูล', 'error');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+            }
+        }
+
+        function toggleSetupGuide() {
+            const content = document.getElementById('setup-guide-content');
+            const arrow = document.getElementById('setup-guide-arrow');
+            if (!content) return;
+            const isHidden = content.classList.contains('hidden');
+            content.classList.toggle('hidden', !isHidden);
+            if (arrow) {
+                arrow.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+            }
+        }
+
+        async function copyAppsScriptCode() {
+            const btnText = document.getElementById('copy-script-text');
+            const btnIcon = document.getElementById('copy-script-icon');
+
+            try {
+                const res = await fetch('/google-apps-script.js');
+                let code = '';
+                if (res.ok) {
+                    code = await res.text();
+                }
+                if (!code) {
+                    throw new Error('Could not load code file');
+                }
+
+                await navigator.clipboard.writeText(code);
+                if (btnText) btnText.innerText = 'คัดลอกสำเร็จแล้ว!';
+                if (btnIcon) btnIcon.innerText = '✓';
+                showToast('คัดลอกโค้ดสคริปต์ Google Apps Script ลง Clipboard แล้ว', 'success');
+                setTimeout(() => {
+                    if (btnText) btnText.innerText = 'คัดลอกโค้ดสคริปต์';
+                    if (btnIcon) btnIcon.innerText = '📋';
+                }, 3000);
+            } catch (err) {
+                showToast('ไม่สามารถคัดลอกอัตโนมัติได้ สามารถเปิดไฟล์ google-apps-script.js ในโฟลเดอร์โครงการได้', 'info');
+            }
+        }
+
+        // ====================================================================
+        // PWA (Progressive Web App) Client-Side Controller
+        // ====================================================================
+        let deferredPrompt = null;
+        const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+        // 1. Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((reg) => {
+                        console.log('[PWA] Service Worker registered successfully, scope:', reg.scope);
+
+                        // Check for service worker updates
+                        reg.addEventListener('updatefound', () => {
+                            const newWorker = reg.installing;
+                            if (newWorker) {
+                                newWorker.addEventListener('statechange', () => {
+                                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                        showToast('มีเวอร์ชันใหม่ของแอปพร้อมใช้งาน รีเฟรชเพื่ออัปเดต', 'info');
+                                    }
+                                });
+                            }
+                        });
+                    })
+                    .catch((err) => {
+                        console.warn('[PWA] Service Worker registration failed:', err);
+                    });
+            });
+        }
+
+        // 2. Handle beforeinstallprompt (Android / Chrome / Desktop)
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+
+            // Show install buttons
+            const navBtn = document.getElementById('btn-pwa-install-nav');
+            if (navBtn) navBtn.classList.remove('hidden');
+
+            const loginBanner = document.getElementById('login-pwa-banner');
+            if (loginBanner && !isStandalone) loginBanner.classList.remove('hidden');
+
+            // Show floating banner if user hasn't dismissed it in the last 24 hours
+            const dismissedAt = localStorage.getItem('pwa_banner_dismissed');
+            const now = Date.now();
+            const oneDay = 24 * 60 * 60 * 1000;
+            if (!dismissedAt || (now - parseInt(dismissedAt, 10)) > oneDay) {
+                const floatingBanner = document.getElementById('pwa-floating-banner');
+                if (floatingBanner && !isStandalone) {
+                    setTimeout(() => {
+                        floatingBanner.classList.remove('hidden');
+                    }, 2000);
+                }
+            }
+        });
+
+        // 3. Trigger Installation Prompt
+        async function triggerPwaInstall() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const choiceResult = await deferredPrompt.userChoice;
+                if (choiceResult && choiceResult.outcome === 'accepted') {
+                    showToast('กำลังติดตั้ง Leave App ลงบนอุปกรณ์ของคุณ...', 'success');
+                    dismissPwaBanner();
+                }
+                deferredPrompt = null;
+            } else if (isIos) {
+                openIosInstallModal();
+            } else {
+                // If on browser without beforeinstallprompt support or already installed
+                if (isStandalone) {
+                    showToast('แอปนี้ได้รับการติดตั้งบนเครื่องของคุณเรียบร้อยแล้ว', 'info');
+                } else {
+                    openIosInstallModal();
+                }
+            }
+        }
+
+        function dismissPwaBanner() {
+            const floatingBanner = document.getElementById('pwa-floating-banner');
+            if (floatingBanner) floatingBanner.classList.add('hidden');
+            localStorage.setItem('pwa_banner_dismissed', Date.now().toString());
+        }
+
+        // 4. iOS Install Modal Helpers
+        function openIosInstallModal() {
+            const modal = document.getElementById('ios-install-modal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeIosInstallModal() {
+            const modal = document.getElementById('ios-install-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        // 5. Hide install buttons if already in standalone mode
+        if (isStandalone) {
+            const floatingBanner = document.getElementById('pwa-floating-banner');
+            if (floatingBanner) floatingBanner.classList.add('hidden');
+            const loginBanner = document.getElementById('login-pwa-banner');
+            if (loginBanner) loginBanner.classList.add('hidden');
+            const navBtn = document.getElementById('btn-pwa-install-nav');
+            if (navBtn) navBtn.classList.add('hidden');
+        } else if (isIos) {
+            // On iOS Safari, show navbar install button and login banner
+            const navBtn = document.getElementById('btn-pwa-install-nav');
+            if (navBtn) navBtn.classList.remove('hidden');
+            const loginBanner = document.getElementById('login-pwa-banner');
+            if (loginBanner) loginBanner.classList.remove('hidden');
+        }
+
+        // 6. Network Online / Offline Detection
+        window.addEventListener('online', () => {
+            const banner = document.getElementById('offline-banner');
+            if (banner) banner.classList.add('hidden');
+            showToast('เชื่อมต่ออินเทอร์เน็ตเรียบร้อยแล้ว', 'success');
+        });
+
+        window.addEventListener('offline', () => {
+            const banner = document.getElementById('offline-banner');
+            if (banner) banner.classList.remove('hidden');
+            showToast('สัญญาณอินเทอร์เน็ตขาดหาย กำลังทำงานในโหมดออฟไลน์', 'error');
+        });
+
+        // 7. Track successful installation
+        window.addEventListener('appinstalled', () => {
+            showToast('ติดตั้ง Leave App บนหน้าจอโฮมสำเร็จเรียบร้อยแล้ว!', 'success');
+            const floatingBanner = document.getElementById('pwa-floating-banner');
+            if (floatingBanner) floatingBanner.classList.add('hidden');
+            const loginBanner = document.getElementById('login-pwa-banner');
+            if (loginBanner) loginBanner.classList.add('hidden');
+            const navBtn = document.getElementById('btn-pwa-install-nav');
+            if (navBtn) navBtn.classList.add('hidden');
+        });
     </script>
 </body>
 </html>

@@ -172,6 +172,7 @@ async function runTests() {
   console.log(`✅ [PASS] GET /api/department-calendar handles shift=B query param`);
 
   console.log('\n🎉 ALL SHIFT-BASED QUOTA TESTS PASSED 100%!\n');
+  process.exit(0);
 }
 
 runTests().catch(err => {

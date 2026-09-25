@@ -1,0 +1,68 @@
+{
+  "id": "/",
+  "name": "Leave App - ระบบลางานออนไลน์",
+  "short_name": "Leave App",
+  "description": "ระบบยื่นและอนุมัติคำขอลางานออนไลน์ รองรับการทำงานกะ A/B และซิงค์ข้อมูล Google Sheets แบบเรียลไทม์",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0f172a",
+  "theme_color": "#4f46e5",
+  "lang": "th",
+  "dir": "ltr",
+  "categories": [
+    "business",
+    "productivity",
+    "utilities"
+  ],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "ยื่นขอลางาน",
+      "short_name": "ขอลางาน",
+      "description": "เปิดหน้ายื่นคำขอลางานใหม่ทันที",
+      "url": "/#request-section",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "ตรวจสอบสถานะการลา",
+      "short_name": "สถานะการลา",
+      "description": "ดูประวัติและผลการอนุมัติการลา",
+      "url": "/#history-section",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "พอร์ทัลหัวหน้างาน",
+      "short_name": "หัวหน้างาน",
+      "description": "เข้าสู่ระบบเพื่ออนุมัติคำขอลางาน",
+      "url": "/#supervisor-section",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

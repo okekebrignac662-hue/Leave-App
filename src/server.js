@@ -5,6 +5,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const { pool, query, getClient } = require('./db');
+const googleSheetsService = require('./googleSheetsService');
 require('dotenv').config();
 
 const app = express();
@@ -21,6 +22,11 @@ app.get('/ping', (req, res) => {
   res.status(200).json({ status: 'ok', message: 'pong' });
 });
 
+// Serve Google Apps Script raw template file
+app.get('/google-apps-script.js', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'google-apps-script.js'));
+});
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '..', 'public'), {
   setHeaders: (res, filePath) => {
@@ -28,6 +34,13 @@ app.use(express.static(path.join(__dirname, '..', 'public'), {
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
+    } else if (filePath.endsWith('sw.js')) {
+      res.setHeader('Service-Worker-Allowed', '/');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    } else if (filePath.endsWith('manifest.json') || filePath.endsWith('.webmanifest')) {
+      res.setHeader('Content-Type', 'application/manifest+json; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, max-age=3600');
     }
   }
 }));
@@ -43,15 +56,25 @@ app.get('/api/ping', (req, res) => {
   });
 });
 
-// Helper: Auto-ensure database schema has unpaid_quota
+// Helper: Auto-ensure database schema has unpaid_quota & system_settings
 async function ensureDatabaseSchema() {
-  if (!pool) return;
+  if (!pool) {
+    await googleSheetsService.init(null, null);
+    return;
+  }
   try {
     await query(`
       ALTER TABLE employees ADD COLUMN IF NOT EXISTS unpaid_quota INT NOT NULL DEFAULT 30;
+      CREATE TABLE IF NOT EXISTS system_settings (
+        key VARCHAR(100) PRIMARY KEY,
+        value TEXT,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
     `);
+    await googleSheetsService.init(pool, query);
   } catch (err) {
     console.warn('⚠️ Auto-migration notice:', err.message);
+    await googleSheetsService.init(pool, query);
   }
 }
 ensureDatabaseSchema();
@@ -546,23 +569,25 @@ app.post('/api/leave-requests', async (req, res) => {
 
     if (!pool) {
       // In case DB is not yet hooked up, simulate success
+      const demoRequest = {
+        id: Math.floor(Math.random() * 10000),
+        employee_id: cleanEmpId,
+        leave_type: normalizedType,
+        start_date: startDate,
+        end_date: actualEndDate,
+        days_count: daysCount,
+        duration_type: isHourly ? 'HOURLY' : 'FULL_DAY',
+        start_time: cleanStartTime,
+        end_time: cleanEndTime,
+        hours_count: cleanHoursCount,
+        reason,
+        status: 'PENDING'
+      };
+      googleSheetsService.syncLeaveRequestAsync(demoRequest, 'CREATE_LEAVE');
       return res.status(201).json({
         success: true,
         message: 'ส่งคำขอลางานเรียบร้อยแล้ว (Demo mode)',
-        request: {
-          id: Math.floor(Math.random() * 10000),
-          employee_id: cleanEmpId,
-          leave_type: normalizedType,
-          start_date: startDate,
-          end_date: actualEndDate,
-          days_count: daysCount,
-          duration_type: isHourly ? 'HOURLY' : 'FULL_DAY',
-          start_time: cleanStartTime,
-          end_time: cleanEndTime,
-          hours_count: cleanHoursCount,
-          reason,
-          status: 'PENDING'
-        }
+        request: demoRequest
       });
     }
 
@@ -704,6 +729,14 @@ app.post('/api/leave-requests', async (req, res) => {
       // Commit the transaction atomically
       await client.query('COMMIT');
 
+      // Auto-sync leave request to Google Sheets in background
+      googleSheetsService.syncLeaveRequestAsync({
+        ...insertRes.rows[0],
+        employee_name: empRecord ? empRecord.name : cleanEmpId,
+        department,
+        shift: employeeShift
+      }, 'CREATE_LEAVE');
+
       res.status(201).json({
         success: true,
         message: isHourly 
@@ -733,6 +766,7 @@ app.delete('/api/leave-requests/:id', async (req, res) => {
     const employeeId = (req.body && req.body.employeeId) || req.query.employeeId;
 
     if (!pool) {
+      googleSheetsService.syncLeaveRequestAsync({ id: requestId, status: 'CANCELLED' }, 'UPDATE_LEAVE_STATUS');
       return res.json({
         success: true,
         message: 'ยกเลิกคำขอลางานเรียบร้อยแล้ว (Demo mode)',
@@ -794,6 +828,9 @@ app.delete('/api/leave-requests/:id', async (req, res) => {
       );
 
       await client.query('COMMIT');
+
+      // Sync cancellation to Google Sheets
+      googleSheetsService.syncLeaveRequestAsync(updateRes.rows[0], 'UPDATE_LEAVE_STATUS');
 
       res.json({
         success: true,
@@ -960,6 +997,12 @@ app.patch('/api/leave-requests/:id/status', async (req, res) => {
     }
 
     if (!pool) {
+      googleSheetsService.syncLeaveRequestAsync({
+        id: requestId,
+        status: cleanStatus,
+        reviewed_by: supervisorId,
+        rejection_reason: rejectionReason || null
+      }, 'UPDATE_LEAVE_STATUS');
       return res.json({
         success: true,
         message: `ดำเนินการ ${cleanStatus === 'APPROVED' ? 'อนุมัติ' : 'ไม่อนุมัติ'} เรียบร้อยแล้ว (Demo mode)`,
@@ -998,6 +1041,15 @@ app.patch('/api/leave-requests/:id/status', async (req, res) => {
       );
 
       await client.query('COMMIT');
+
+      // Fetch reviewer name for clean Google Sheets display
+      const supNameRes = await query('SELECT name FROM employees WHERE UPPER(id) = $1', [supervisorId]).catch(() => ({ rows: [] }));
+      const reviewerName = (supNameRes.rows && supNameRes.rows.length > 0) ? supNameRes.rows[0].name : supervisorId;
+
+      googleSheetsService.syncLeaveRequestAsync({
+        ...updateRes.rows[0],
+        reviewer_name: reviewerName
+      }, 'UPDATE_LEAVE_STATUS');
 
       res.json({
         success: true,
@@ -1124,21 +1176,23 @@ app.post('/api/employees', async (req, res) => {
       : 30;
 
     if (!pool) {
+      const demoEmp = {
+        id: cleanEmpId,
+        name: cleanName,
+        department: cleanDept,
+        shift: cleanShift,
+        role: cleanRole,
+        pin: cleanPin,
+        vacation_quota: vacQuota,
+        personal_quota: perQuota,
+        sick_quota: sicQuota,
+        unpaid_quota: unpQuota
+      };
+      googleSheetsService.syncEmployeeAsync(demoEmp);
       return res.status(201).json({
         success: true,
         message: `เพิ่มข้อมูลพนักงาน [${cleanEmpId}] ${cleanName} เรียบร้อยแล้ว (Demo mode)`,
-        employee: {
-          id: cleanEmpId,
-          name: cleanName,
-          department: cleanDept,
-          shift: cleanShift,
-          role: cleanRole,
-          pin: cleanPin,
-          vacation_quota: vacQuota,
-          personal_quota: perQuota,
-          sick_quota: sicQuota,
-          unpaid_quota: unpQuota
-        }
+        employee: demoEmp
       });
     }
 
@@ -1161,6 +1215,9 @@ app.post('/api/employees', async (req, res) => {
       VALUES ($1, $2, 2)
       ON CONFLICT (department, shift) DO NOTHING
     `, [cleanDept, cleanShift]);
+
+    // Sync newly created employee to Google Sheets
+    googleSheetsService.syncEmployeeAsync(insertRes.rows[0]);
 
     res.status(201).json({
       success: true,
@@ -1306,6 +1363,9 @@ app.put('/api/employees/:id', async (req, res) => {
       `, [newDept, newShift]);
     }
 
+    // Sync updated employee to Google Sheets
+    googleSheetsService.syncEmployeeAsync(updateRes.rows[0]);
+
     res.json({
       success: true,
       message: `แก้ไขข้อมูลพนักงาน [${targetId}] ${newName} สำเร็จแล้ว`,
@@ -1314,6 +1374,195 @@ app.put('/api/employees/:id', async (req, res) => {
   } catch (error) {
     console.error('Error updating employee:', error);
     res.status(500).json({ error: 'เกิดข้อผิดพลาดในการแก้ไขข้อมูลพนักงาน: ' + error.message });
+  }
+});
+
+// ==========================================
+// 12. Google Sheets Integration APIs
+// ==========================================
+
+// 12.1 Get Google Sheets Config
+app.get('/api/google-sheets/config', async (req, res) => {
+  try {
+    const config = googleSheetsService.getConfig();
+    res.json({
+      success: true,
+      config
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'ไม่สามารถดึงการตั้งค่า Google Sheets ได้: ' + err.message });
+  }
+});
+
+// 12.2 Save Google Sheets Config (ADMIN only)
+app.post('/api/google-sheets/config', async (req, res) => {
+  try {
+    const { adminId, webhookUrl, autoSync } = req.body;
+    const cleanAdminId = (adminId || '').trim().toUpperCase();
+
+    let isAuthorizedAdmin = cleanAdminId.startsWith('ADMIN');
+    if (!isAuthorizedAdmin && pool) {
+      const adminCheck = await query('SELECT role FROM employees WHERE UPPER(id) = $1', [cleanAdminId]);
+      if (adminCheck.rows.length > 0 && adminCheck.rows[0].role === 'ADMIN') {
+        isAuthorizedAdmin = true;
+      }
+    }
+
+    if (!isAuthorizedAdmin) {
+      return res.status(403).json({ error: 'เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่สามารถเปลี่ยนการตั้งค่า Google Sheets ได้' });
+    }
+
+    if (webhookUrl && !webhookUrl.startsWith('https://script.google.com/')) {
+      return res.status(400).json({ error: 'URL ไม่ถูกต้อง ต้องเป็น Webhook URL ที่ขึ้นต้นด้วย https://script.google.com/' });
+    }
+
+    const updatedConfig = await googleSheetsService.saveConfig({
+      webhookUrl: webhookUrl !== undefined ? webhookUrl.trim() : undefined,
+      autoSync: autoSync !== undefined ? Boolean(autoSync) : undefined
+    });
+
+    res.json({
+      success: true,
+      message: 'บันทึกการตั้งค่า Google Sheets เรียบร้อยแล้ว',
+      config: updatedConfig
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการบันทึกการตั้งค่า: ' + err.message });
+  }
+});
+
+// 12.3 Test Google Sheets Webhook Connection
+app.post('/api/google-sheets/test', async (req, res) => {
+  try {
+    const { webhookUrl } = req.body;
+    const result = await googleSheetsService.testConnection(webhookUrl ? webhookUrl.trim() : null);
+    res.json({
+      success: true,
+      message: result.message || 'เชื่อมต่อ Google Sheets สำเร็จเรียบร้อย!',
+      details: result
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      error: 'การเชื่อมต่อล้มเหลว: ' + err.message
+    });
+  }
+});
+
+// 12.4 Manual Bulk Sync to Google Sheets
+app.post('/api/google-sheets/sync', async (req, res) => {
+  try {
+    const { syncType = 'ALL', requesterId } = req.body;
+    const cleanReqId = (requesterId || '').trim().toUpperCase();
+
+    // Verify authorized user (Supervisor or Admin)
+    let isAuthorized = cleanReqId.startsWith('ADMIN') || cleanReqId.startsWith('SUP');
+    if (!isAuthorized && pool && cleanReqId) {
+      const uCheck = await query('SELECT role FROM employees WHERE UPPER(id) = $1', [cleanReqId]);
+      if (uCheck.rows.length > 0 && (uCheck.rows[0].role === 'ADMIN' || uCheck.rows[0].role === 'SUPERVISOR')) {
+        isAuthorized = true;
+      }
+    }
+    if (cleanReqId && !isAuthorized) {
+      return res.status(403).json({ error: 'เฉพาะหัวหน้างาน (Supervisor) หรือผู้ดูแลระบบเท่านั้นที่สามารถกดซิงค์ข้อมูลได้' });
+    }
+
+    const cfg = googleSheetsService.getConfig();
+    if (!cfg.configured) {
+      return res.status(400).json({ error: 'ยังไม่ได้ตั้งค่า Google Sheets Webhook URL กรุณาตั้งค่าก่อนซิงค์' });
+    }
+
+    let leavesList = [];
+    let employeesList = [];
+
+    if (pool) {
+      if (syncType === 'ALL' || syncType === 'LEAVES') {
+        const lRes = await query(`
+          SELECT 
+            lr.id,
+            lr.employee_id,
+            COALESCE(e.name, lr.employee_id) AS employee_name,
+            COALESCE(e.department, 'Assembly') AS department,
+            COALESCE(e.shift, 'A') AS shift,
+            lr.leave_type,
+            TO_CHAR(lr.start_date, 'YYYY-MM-DD') AS start_date,
+            TO_CHAR(lr.end_date, 'YYYY-MM-DD') AS end_date,
+            lr.days_count,
+            lr.duration_type,
+            lr.start_time,
+            lr.end_time,
+            lr.hours_count,
+            lr.reason,
+            lr.status,
+            lr.reviewed_by,
+            COALESCE(rev.name, lr.reviewed_by) AS reviewer_name,
+            lr.reviewed_at,
+            lr.rejection_reason,
+            lr.created_at
+          FROM leave_requests lr
+          JOIN employees e ON lr.employee_id = e.id
+          LEFT JOIN employees rev ON UPPER(lr.reviewed_by) = UPPER(rev.id)
+          ORDER BY lr.id ASC
+        `);
+        leavesList = lRes.rows;
+      }
+
+      if (syncType === 'ALL' || syncType === 'EMPLOYEES') {
+        const eRes = await query(`
+          SELECT id, name, department, COALESCE(shift, 'A') as shift, role, pin,
+                 vacation_quota, personal_quota, sick_quota, COALESCE(unpaid_quota, 30) as unpaid_quota, created_at
+          FROM employees
+          ORDER BY department ASC, id ASC
+        `);
+        employeesList = eRes.rows;
+      }
+    } else {
+      // Demo mock lists
+      leavesList = [
+        {
+          id: 101,
+          employee_id: 'EMP-001',
+          employee_name: 'สมชาย ใจดี',
+          department: 'Assembly',
+          shift: 'A',
+          leave_type: 'Vacation',
+          duration_type: 'FULL_DAY',
+          start_date: '2026-09-15',
+          end_date: '2026-09-15',
+          days_count: 1,
+          reason: 'พาครอบครัวไปทำธุระ',
+          status: 'PENDING',
+          created_at: new Date().toISOString()
+        }
+      ];
+      employeesList = [
+        { id: 'ADMIN-001', name: 'ผู้ดูแลระบบ (Admin)', department: 'Management', shift: 'Morning', role: 'ADMIN', vacation_quota: 10, personal_quota: 6, sick_quota: 30, unpaid_quota: 30 },
+        { id: 'SUP-001', name: 'สมศักดิ์ คุมงาน (หัวหน้า)', department: 'Assembly', shift: 'Morning', role: 'SUPERVISOR', vacation_quota: 10, personal_quota: 6, sick_quota: 30, unpaid_quota: 30 },
+        { id: 'EMP-001', name: 'สมชาย ใจดี', department: 'Assembly', shift: 'A', role: 'EMPLOYEE', vacation_quota: 6, personal_quota: 6, sick_quota: 30, unpaid_quota: 30 },
+        { id: 'EMP-002', name: 'สมหญิง รักงาน', department: 'Assembly', shift: 'B', role: 'EMPLOYEE', vacation_quota: 6, personal_quota: 6, sick_quota: 30, unpaid_quota: 30 }
+      ];
+    }
+
+    let syncResult;
+    if (syncType === 'LEAVES') {
+      syncResult = await googleSheetsService.syncAllLeaves(leavesList);
+    } else if (syncType === 'EMPLOYEES') {
+      syncResult = await googleSheetsService.syncAllEmployees(employeesList);
+    } else {
+      syncResult = await googleSheetsService.syncAllData(leavesList, employeesList);
+    }
+
+    res.json({
+      success: true,
+      message: syncResult.message || 'ซิงค์ข้อมูลไปยัง Google Sheets สำเร็จเรียบร้อย',
+      syncType,
+      leavesCount: leavesList.length,
+      employeesCount: employeesList.length,
+      details: syncResult
+    });
+  } catch (err) {
+    console.error('Manual sync to Google Sheets error:', err);
+    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการซิงค์ข้อมูล: ' + err.message });
   }
 });
 

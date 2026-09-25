@@ -48,6 +48,13 @@ CREATE TABLE IF NOT EXISTS leave_requests (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 4. Create System Settings Table (e.g. Google Sheets Webhook URL & Auto-Sync)
+CREATE TABLE IF NOT EXISTS system_settings (
+    key VARCHAR(100) PRIMARY KEY,
+    value TEXT,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Index for performance when checking daily overlapping leaves
 CREATE INDEX IF NOT EXISTS idx_leave_requests_dates ON leave_requests (start_date, end_date, status);
 CREATE INDEX IF NOT EXISTS idx_leave_requests_employee ON leave_requests (employee_id);
