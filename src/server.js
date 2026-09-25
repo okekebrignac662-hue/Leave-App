@@ -4,6 +4,7 @@ process.env.TZ = 'Asia/Bangkok';
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const { pool, query, getClient } = require('./db');
 const googleSheetsService = require('./googleSheetsService');
 require('dotenv').config();
@@ -27,7 +28,23 @@ app.get('/google-apps-script.js', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'google-apps-script.js'));
 });
 
-app.use(express.json());
+// Increase JSON and URL-encoded payload limit for medical certificate / base64 image uploads
+app.use(express.json({ limit: '25mb' }));
+app.use(express.urlencoded({ extended: true, limit: '25mb' }));
+
+// Ensure public/uploads directory exists
+const UPLOADS_DIR = path.join(__dirname, '..', 'public', 'uploads');
+if (!fs.existsSync(UPLOADS_DIR)) {
+  try {
+    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+  } catch (e) {
+    console.warn('Could not create uploads directory:', e.message);
+  }
+}
+
+// Serve uploaded attachments directly
+app.use('/uploads', express.static(UPLOADS_DIR));
+
 app.use(express.static(path.join(__dirname, '..', 'public'), {
   setHeaders: (res, filePath) => {
     if (filePath.endsWith('.html')) {
@@ -56,26 +73,98 @@ app.get('/api/ping', (req, res) => {
   });
 });
 
-// Helper: Auto-ensure database schema has unpaid_quota & system_settings
-async function ensureDatabaseSchema() {
-  if (!pool) {
-    await googleSheetsService.init(null, null);
-    return;
+// Helper: Save Base64 or uploaded attachment to disk and return URL
+function saveBase64Attachment(dataUrl, prefix = 'cert') {
+  if (!dataUrl || typeof dataUrl !== 'string') return null;
+  const trimmed = dataUrl.trim();
+  if (!trimmed) return null;
+
+  // If already an existing URL or path
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/uploads/')) {
+    return trimmed;
   }
+
+  // If Base64 Data URL (e.g. data:image/jpeg;base64,...)
+  const matches = trimmed.match(/^data:([A-Za-z0-9\-+\/]+);base64,(.+)$/);
+  if (!matches || matches.length !== 3) {
+    return trimmed;
+  }
+
   try {
-    await query(`
-      ALTER TABLE employees ADD COLUMN IF NOT EXISTS unpaid_quota INT NOT NULL DEFAULT 30;
-      CREATE TABLE IF NOT EXISTS system_settings (
-        key VARCHAR(100) PRIMARY KEY,
-        value TEXT,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-    await googleSheetsService.init(pool, query);
+    const mimeType = matches[1].toLowerCase();
+    const base64Data = matches[2];
+    const buffer = Buffer.from(base64Data, 'base64');
+
+    let ext = '.jpg';
+    if (mimeType.includes('png')) ext = '.png';
+    else if (mimeType.includes('webp')) ext = '.webp';
+    else if (mimeType.includes('pdf')) ext = '.pdf';
+
+    if (!fs.existsSync(UPLOADS_DIR)) {
+      fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+    }
+
+    const cleanPrefix = prefix.replace(/[^a-zA-Z0-9_-]/g, '');
+    const uniqueName = `${cleanPrefix}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}${ext}`;
+    const filePath = path.join(UPLOADS_DIR, uniqueName);
+    fs.writeFileSync(filePath, buffer);
+
+    return `/uploads/${uniqueName}`;
   } catch (err) {
-    console.warn('⚠️ Auto-migration notice:', err.message);
-    await googleSheetsService.init(pool, query);
+    console.error('Failed to save base64 attachment to disk:', err);
+    // Return original dataUrl as fallback so nothing is lost
+    return trimmed;
   }
+}
+
+// Dedicated Attachment Upload API
+app.post('/api/upload-attachment', async (req, res) => {
+  try {
+    const { dataUrl, filename, prefix } = req.body;
+    if (!dataUrl) {
+      return res.status(400).json({ error: 'ไม่พบข้อมูลไฟล์ที่ต้องการอัปโหลด' });
+    }
+    const savedUrl = saveBase64Attachment(dataUrl, prefix || 'cert');
+    if (!savedUrl) {
+      return res.status(400).json({ error: 'ไม่สามารถบันทึกไฟล์ได้ รูปแบบไฟล์ไม่ถูกต้อง' });
+    }
+    res.json({
+      success: true,
+      url: savedUrl,
+      filename: filename || path.basename(savedUrl)
+    });
+  } catch (err) {
+    console.error('Upload attachment error:', err);
+    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการอัปโหลดไฟล์: ' + err.message });
+  }
+});
+
+// Helper: Auto-ensure database schema has unpaid_quota, attachment_url & system_settings
+let dbSchemaPromise = null;
+async function ensureDatabaseSchema() {
+  if (dbSchemaPromise) return dbSchemaPromise;
+  dbSchemaPromise = (async () => {
+    if (!pool) {
+      await googleSheetsService.init(null, null);
+      return;
+    }
+    try {
+      await query(`
+        ALTER TABLE employees ADD COLUMN IF NOT EXISTS unpaid_quota INT NOT NULL DEFAULT 30;
+        ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS attachment_url TEXT;
+        CREATE TABLE IF NOT EXISTS system_settings (
+          key VARCHAR(100) PRIMARY KEY,
+          value TEXT,
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      await googleSheetsService.init(pool, query);
+    } catch (err) {
+      console.warn('⚠️ Auto-migration notice:', err.message);
+      await googleSheetsService.init(pool, query);
+    }
+  })();
+  return dbSchemaPromise;
 }
 ensureDatabaseSchema();
 
@@ -483,7 +572,7 @@ app.get('/api/department-calendar', async (req, res) => {
 // ==========================================
 app.post('/api/leave-requests', async (req, res) => {
   try {
-    const { employeeId, leaveType, startDate, endDate, durationType, startTime, endTime, reason } = req.body;
+    const { employeeId, leaveType, startDate, endDate, durationType, startTime, endTime, reason, attachmentUrl, attachment_url, attachment } = req.body;
 
     if (!employeeId || !leaveType || !startDate) {
       return res.status(400).json({ error: 'กรุณากรอกข้อมูลให้ครบถ้วน (All fields required)' });
@@ -495,6 +584,10 @@ app.post('/api/leave-requests', async (req, res) => {
     let cleanHoursCount = null;
     let actualEndDate = endDate || startDate;
     let daysCount = 1;
+
+    // Process attachment (Base64 or URL)
+    const rawAttachment = attachmentUrl || attachment_url || attachment || null;
+    const cleanAttachmentUrl = rawAttachment ? saveBase64Attachment(rawAttachment, `emp-${employeeId.trim().toUpperCase()}`) : null;
 
     if (isHourly) {
       if (!startTime || !endTime) {
@@ -581,6 +674,7 @@ app.post('/api/leave-requests', async (req, res) => {
         end_time: cleanEndTime,
         hours_count: cleanHoursCount,
         reason,
+        attachment_url: cleanAttachmentUrl,
         status: 'PENDING'
       };
       googleSheetsService.syncLeaveRequestAsync(demoRequest, 'CREATE_LEAVE');
@@ -708,9 +802,9 @@ app.post('/api/leave-requests', async (req, res) => {
       const insertRes = await client.query(
         `INSERT INTO leave_requests (
            employee_id, leave_type, start_date, end_date, days_count,
-           duration_type, start_time, end_time, hours_count, reason, status
+           duration_type, start_time, end_time, hours_count, reason, status, attachment_url
          )
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'PENDING')
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'PENDING', $11)
          RETURNING *`,
         [
           cleanEmpId,
@@ -722,7 +816,8 @@ app.post('/api/leave-requests', async (req, res) => {
           cleanStartTime,
           cleanEndTime,
           cleanHoursCount,
-          reason || ''
+          reason || '',
+          cleanAttachmentUrl
         ]
       );
 
@@ -918,6 +1013,7 @@ app.get('/api/leave-requests', async (req, res) => {
         COALESCE(rev.name, lr.reviewed_by) AS reviewer_name,
         lr.reviewed_at,
         lr.rejection_reason,
+        lr.attachment_url,
         lr.created_at
       FROM leave_requests lr
       JOIN employees e ON lr.employee_id = e.id
@@ -1384,6 +1480,7 @@ app.put('/api/employees/:id', async (req, res) => {
 // 12.1 Get Google Sheets Config
 app.get('/api/google-sheets/config', async (req, res) => {
   try {
+    await ensureDatabaseSchema();
     const config = googleSheetsService.getConfig();
     res.json({
       success: true,
@@ -1397,6 +1494,7 @@ app.get('/api/google-sheets/config', async (req, res) => {
 // 12.2 Save Google Sheets Config (ADMIN only)
 app.post('/api/google-sheets/config', async (req, res) => {
   try {
+    await ensureDatabaseSchema();
     const { adminId, webhookUrl, autoSync } = req.body;
     const cleanAdminId = (adminId || '').trim().toUpperCase();
 

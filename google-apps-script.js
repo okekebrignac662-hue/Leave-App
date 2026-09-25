@@ -46,6 +46,7 @@ const LEAVE_HEADERS = [
   'ผู้พิจารณา',
   'วันที่พิจารณา',
   'เหตุผลที่ไม่อนุมัติ',
+  'เอกสารแนบ',
   'วันที่ยื่นคำขอ',
   'อัปเดตล่าสุด'
 ];
@@ -204,6 +205,7 @@ function handleCreateLeave(ss, data) {
     data.reviewer_name || data.reviewed_by || '-',
     data.reviewed_at ? formatDateTime(data.reviewed_at) : '-',
     data.rejection_reason || '-',
+    data.attachment_display || (data.attachment_url ? '📎 มีเอกสารแนบ' : '-'),
     data.created_at ? formatDateTime(data.created_at) : now,
     now
   ];
@@ -240,7 +242,7 @@ function handleUpdateLeaveStatus(ss, data) {
   const now = getBangkokTimestamp();
   const statusText = formatStatusText(data.status);
 
-  // คอลัมน์: 15=สถานะ, 16=ผู้พิจารณา, 17=วันที่พิจารณา, 18=เหตุผลที่ไม่อนุมัติ, 20=อัปเดตล่าสุด
+  // คอลัมน์: 15=สถานะ, 16=ผู้พิจารณา, 17=วันที่พิจารณา, 18=เหตุผลที่ไม่อนุมัติ, 21=อัปเดตล่าสุด
   if (data.status) {
     const statusCell = sheet.getRange(rowIndex, 15);
     statusCell.setValue(statusText);
@@ -257,7 +259,7 @@ function handleUpdateLeaveStatus(ss, data) {
   if (data.rejection_reason !== undefined) {
     sheet.getRange(rowIndex, 18).setValue(data.rejection_reason || '-');
   }
-  sheet.getRange(rowIndex, 20).setValue(now);
+  sheet.getRange(rowIndex, 21).setValue(now);
 
   return {
     success: true,
@@ -344,6 +346,7 @@ function handleSyncAllLeaves(ss, rows) {
     r.reviewer_name || r.reviewed_by || '-',
     r.reviewed_at ? formatDateTime(r.reviewed_at) : '-',
     r.rejection_reason || '-',
+    r.attachment_display || (r.attachment_url ? '📎 มีเอกสารแนบ' : '-'),
     r.created_at ? formatDateTime(r.created_at) : now,
     now
   ]);

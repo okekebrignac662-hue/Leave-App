@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS leave_requests (
     reviewed_by VARCHAR(20) REFERENCES employees(id) ON DELETE SET NULL,
     reviewed_at TIMESTAMP WITH TIME ZONE,
     rejection_reason TEXT,
+    attachment_url TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 

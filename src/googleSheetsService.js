@@ -160,6 +160,16 @@ async function testConnection(targetUrl = null) {
  * จัดรูปแบบข้อมูลคำขอลางานให้พร้อมส่งไปยัง Google Sheets
  */
 function formatLeavePayload(req) {
+  const hasAttachment = Boolean(req.attachment_url && String(req.attachment_url).trim());
+  let attachmentDisplay = '-';
+  if (hasAttachment) {
+    if (req.attachment_url.startsWith('http://') || req.attachment_url.startsWith('https://')) {
+      attachmentDisplay = req.attachment_url;
+    } else {
+      attachmentDisplay = '📎 มีใบรับรองแพทย์/เอกสารแนบ';
+    }
+  }
+
   return {
     id: req.id,
     employee_id: req.employee_id,
@@ -180,6 +190,8 @@ function formatLeavePayload(req) {
     reviewed_by: req.reviewed_by || '',
     reviewed_at: req.reviewed_at || null,
     rejection_reason: req.rejection_reason || '',
+    attachment_url: req.attachment_url || '',
+    attachment_display: attachmentDisplay,
     created_at: req.created_at || new Date().toISOString()
   };
 }
