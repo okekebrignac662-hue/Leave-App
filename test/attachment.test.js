@@ -59,7 +59,7 @@ async function runAttachmentTests() {
   }
 
   // 1. Direct Attachment Upload API (PNG)
-  await test('POST /api/upload-attachment saves Base64 PNG image into public/uploads/', async () => {
+  await test('POST /api/upload-attachment returns Base64 PNG image directly', async () => {
     const res = await request(
       { hostname: 'localhost', port: PORT, path: '/api/upload-attachment', method: 'POST', headers: { 'Content-Type': 'application/json' } },
       { dataUrl: SAMPLE_PNG_BASE64, prefix: 'test-cert' }
@@ -67,15 +67,7 @@ async function runAttachmentTests() {
 
     assert.strictEqual(res.status, 200, 'Status should be 200');
     assert.strictEqual(res.data.success, true, 'success should be true');
-    assert(res.data.url && res.data.url.startsWith('/uploads/test-cert-'), 'URL must start with /uploads/test-cert-');
-    assert(res.data.url.endsWith('.png'), 'URL must end with .png');
-
-    // Check physical file on disk
-    const diskPath = path.join(__dirname, '..', 'public', res.data.url.replace(/^\//, ''));
-    assert(fs.existsSync(diskPath), 'Saved file must exist on disk in public/uploads/');
-    const fileStat = fs.statSync(diskPath);
-    assert(fileStat.size > 0, 'Saved file must not be empty');
-    createdFiles.push(diskPath);
+    assert(res.data.url && res.data.url.startsWith('data:image/png;base64,'), 'URL must start with data:image/png;base64,');
   });
 
   // 2. Direct Attachment Upload API (PDF)
@@ -87,35 +79,16 @@ async function runAttachmentTests() {
 
     assert.strictEqual(res.status, 200);
     assert.strictEqual(res.data.success, true);
-    assert(res.data.url.endsWith('.pdf'), 'URL must end with .pdf');
-
-    const diskPath = path.join(__dirname, '..', 'public', res.data.url.replace(/^\//, ''));
-    assert(fs.existsSync(diskPath), 'PDF file must exist on disk');
-    createdFiles.push(diskPath);
+    assert(res.data.url.startsWith('data:application/pdf;base64,'), 'URL must start with data:application/pdf;base64,');
   });
 
-  // 3. Static serving of uploaded attachments
-  await test('GET /uploads/... serves uploaded files with correct HTTP 200 status', async () => {
-    const uploadRes = await request(
-      { hostname: 'localhost', port: PORT, path: '/api/upload-attachment', method: 'POST', headers: { 'Content-Type': 'application/json' } },
-      { dataUrl: SAMPLE_PNG_BASE64, prefix: 'static-test' }
-    );
-
-    const uploadedUrl = uploadRes.data.url;
-    const staticRes = await request(
-      { hostname: 'localhost', port: PORT, path: uploadedUrl, method: 'GET' }
-    );
-    assert.strictEqual(staticRes.status, 200, 'Static GET on uploaded file must return 200 OK');
-
-    const diskPath = path.join(__dirname, '..', 'public', uploadedUrl.replace(/^\//, ''));
-    createdFiles.push(diskPath);
-  });
+  // 3. (Removed) Static serving test since files are no longer uploaded to disk
 
   // 4. Submit Leave Request with Base64 Medical Certificate Attachment
   let createdRequestId = null;
   let attachedFileUrl = null;
 
-  await test('POST /api/leave-requests with attachmentUrl saves file and stores attachment_url', async () => {
+  await test('POST /api/leave-requests with attachmentUrl saves stores attachment_url as base64', async () => {
     const leavePayload = {
       employeeId: 'EMP-001',
       leaveType: 'Sick',
@@ -135,13 +108,10 @@ async function runAttachmentTests() {
     assert.strictEqual(res.data.success, true);
     const reqData = res.data.request;
     assert(reqData, 'Returned leave request object must exist');
-    assert(reqData.attachment_url.startsWith('/uploads/'), 'attachment_url must point to /uploads/');
+    assert(reqData.attachment_url.startsWith('data:image/png;base64,'), 'attachment_url must be the base64 string');
 
     createdRequestId = reqData.id;
     attachedFileUrl = reqData.attachment_url;
-
-    const diskPath = path.join(__dirname, '..', 'public', attachedFileUrl.replace(/^\//, ''));
-    if (fs.existsSync(diskPath)) createdFiles.push(diskPath);
   });
 
   // 5. Query leave requests returns attachment_url
@@ -196,10 +166,10 @@ async function runAttachmentTests() {
       days_count: 3,
       duration_type: 'FULL_DAY',
       reason: 'ป่วย',
-      attachment_url: '/uploads/cert-1234.jpg'
+      attachment_url: 'data:image/png;base64,12345'
     }, 'APPROVED');
 
-    assert.strictEqual(payloadWithAtt.attachment_url, '/uploads/cert-1234.jpg');
+    assert.strictEqual(payloadWithAtt.attachment_url, 'data:image/png;base64,12345');
     assert.strictEqual(payloadWithAtt.attachment_display, '📎 มีใบรับรองแพทย์/เอกสารแนบ');
 
     const payloadWithoutAtt = googleSheetsService.formatLeavePayload({
