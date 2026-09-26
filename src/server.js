@@ -79,42 +79,10 @@ function saveBase64Attachment(dataUrl, prefix = 'cert') {
   const trimmed = dataUrl.trim();
   if (!trimmed) return null;
 
-  // If already an existing URL or path
-  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/uploads/')) {
-    return trimmed;
-  }
-
-  // If Base64 Data URL (e.g. data:image/jpeg;base64,...)
-  const matches = trimmed.match(/^data:([A-Za-z0-9\-+\/]+);base64,(.+)$/);
-  if (!matches || matches.length !== 3) {
-    return trimmed;
-  }
-
-  try {
-    const mimeType = matches[1].toLowerCase();
-    const base64Data = matches[2];
-    const buffer = Buffer.from(base64Data, 'base64');
-
-    let ext = '.jpg';
-    if (mimeType.includes('png')) ext = '.png';
-    else if (mimeType.includes('webp')) ext = '.webp';
-    else if (mimeType.includes('pdf')) ext = '.pdf';
-
-    if (!fs.existsSync(UPLOADS_DIR)) {
-      fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-    }
-
-    const cleanPrefix = prefix.replace(/[^a-zA-Z0-9_-]/g, '');
-    const uniqueName = `${cleanPrefix}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}${ext}`;
-    const filePath = path.join(UPLOADS_DIR, uniqueName);
-    fs.writeFileSync(filePath, buffer);
-
-    return `/uploads/${uniqueName}`;
-  } catch (err) {
-    console.error('Failed to save base64 attachment to disk:', err);
-    // Return original dataUrl as fallback so nothing is lost
-    return trimmed;
-  }
+  // For platforms with ephemeral filesystems (like Render), 
+  // it's better to store the base64 string directly in the database (since the column is TEXT)
+  // rather than saving to the local disk which will be wiped on restart/scaling.
+  return trimmed;
 }
 
 // Dedicated Attachment Upload API
