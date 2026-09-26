@@ -344,6 +344,48 @@ function syncEmployeeAsync(employee) {
 }
 
 /**
+ * ลบคำขอลางานออกจาก Google Sheets
+ */
+function deleteLeaveRequestAsync(id) {
+  if (!cachedConfig.webhookUrl || !cachedConfig.autoSync) {
+    return;
+  }
+
+  setImmediate(async () => {
+    try {
+      const payload = {
+        action: 'DELETE_LEAVE',
+        data: { id: id }
+      };
+      await postToWebhook(payload);
+    } catch (err) {
+      console.warn(`[GoogleSheets] Auto-sync delete leave failed:`, err.message);
+    }
+  });
+}
+
+/**
+ * ลบพนักงานออกจาก Google Sheets
+ */
+function deleteEmployeeAsync(id) {
+  if (!cachedConfig.webhookUrl || !cachedConfig.autoSync) {
+    return;
+  }
+
+  setImmediate(async () => {
+    try {
+      const payload = {
+        action: 'DELETE_EMPLOYEE',
+        data: { id: id }
+      };
+      await postToWebhook(payload);
+    } catch (err) {
+      console.warn(`[GoogleSheets] Auto-sync delete employee failed:`, err.message);
+    }
+  });
+}
+
+/**
  * ซิงค์คำขอลางานทั้งหมด (Manual Bulk Sync)
  */
 async function syncAllLeaves(leavesList) {
@@ -408,6 +450,8 @@ module.exports = {
   formatEmployeePayload,
   syncLeaveRequestAsync,
   syncEmployeeAsync,
+  deleteLeaveRequestAsync,
+  deleteEmployeeAsync,
   syncAllLeaves,
   syncAllEmployees,
   syncAllData

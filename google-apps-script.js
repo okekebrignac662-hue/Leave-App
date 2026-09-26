@@ -140,6 +140,16 @@ function doPost(e) {
         };
         break;
 
+      // 8. ลบข้อมูลคำขอลางาน (Delete Leave)
+      case 'DELETE_LEAVE':
+        result = handleDeleteLeave(ss, payload.data);
+        break;
+
+      // 9. ลบข้อมูลพนักงาน (Delete Employee)
+      case 'DELETE_EMPLOYEE':
+        result = handleDeleteEmployee(ss, payload.data);
+        break;
+
       default:
         result = { success: false, error: 'ไม่รู้จัก Action: ' + action };
     }
@@ -501,6 +511,47 @@ function handleSyncAllEmployees(ss, rows) {
     count: rows.length,
     message: `ซิงค์รายชื่อพนักงานสำเร็จทั้งหมด ${rows.length} คน`
   };
+}
+
+/**
+ * ลบข้อมูลคำขอลางาน (ลบแถวออกจาก Sheet)
+ */
+function handleDeleteLeave(ss, data) {
+  if (!data || !data.id) {
+    return { success: false, error: 'กรุณาระบุรหัสคำขอ (Request ID)' };
+  }
+  const sheet = ss.getSheetByName(SHEET_LEAVES);
+  if (!sheet) return { success: false, error: 'ไม่พบแผ่นงานรายการลางาน' };
+
+  const rowIndex = findRowIndexByColumnValue(sheet, 1, data.id.toString());
+  if (rowIndex > 0) {
+    sheet.deleteRow(rowIndex);
+    return { success: true, message: 'ลบข้อมูลคำขอลางานออกจาก Sheet เรียบร้อยแล้ว', id: data.id };
+  } else {
+    // ถ้าไม่เจอถือว่าสำเร็จ (เพราะโดนลบไปแล้วหรือไม่มีตั้งแต่ต้น)
+    return { success: true, message: 'ไม่พบข้อมูลคำขอลางานนี้ในระบบ (อาจถูกลบไปแล้ว)', id: data.id };
+  }
+}
+
+/**
+ * ลบข้อมูลพนักงาน (ลบแถวออกจาก Sheet)
+ */
+function handleDeleteEmployee(ss, data) {
+  if (!data || !data.id) {
+    return { success: false, error: 'กรุณาระบุรหัสพนักงาน (Employee ID)' };
+  }
+  const sheet = ss.getSheetByName(SHEET_EMPLOYEES);
+  if (!sheet) return { success: false, error: 'ไม่พบแผ่นงานข้อมูลพนักงาน' };
+
+  const cleanId = data.id.toString().trim().toUpperCase();
+  const rowIndex = findRowIndexByColumnValue(sheet, 1, cleanId);
+  if (rowIndex > 0) {
+    sheet.deleteRow(rowIndex);
+    return { success: true, message: 'ลบข้อมูลพนักงานออกจาก Sheet เรียบร้อยแล้ว', id: cleanId };
+  } else {
+    // ถ้าไม่เจอถือว่าสำเร็จ
+    return { success: true, message: 'ไม่พบข้อมูลพนักงานรายนี้ในระบบ (อาจถูกลบไปแล้ว)', id: cleanId };
+  }
 }
 
 // ============================================================================
