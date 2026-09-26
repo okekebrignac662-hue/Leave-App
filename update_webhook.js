@@ -7,7 +7,7 @@ const pool = new Pool({
 
 async function updateWebhook() {
   try {
-    const url = 'https://script.google.com/macros/s/AKfycbxl5D1r8k79bWXmq4qlCraAnvhm73fcx4RhwUKtmwu5iz8WwF5LHbsc7xMQxG9bfQB3/exec';
+    const url = 'https://script.google.com/macros/s/AKfycbyUiFgdsg4LalhYz0orZJhqRkxzhM-AYAyh8iLU7w4ALHusJ7BDljH1zcnlUDrgjcqK/exec';
     await pool.query(
       `INSERT INTO system_settings (key, value, updated_at)
        VALUES ('google_sheet_webhook_url', $1, CURRENT_TIMESTAMP)
