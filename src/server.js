@@ -1689,8 +1689,8 @@ app.get('/api/reports/leave-export', async (req, res) => {
       rows = [
         {
           id: 101,
-          employee_id: '051057',
-          employee_name: 'พรทิพย์ ดวงมณี',
+          employee_id: '099998',
+          employee_name: 'ตัวอย่าง พนักงานทดสอบ',
           department: 'Crimping 1',
           shift: 'A',
           leave_type: 'Vacation',
@@ -1712,8 +1712,8 @@ app.get('/api/reports/leave-export', async (req, res) => {
         },
         {
           id: 102,
-          employee_id: '031838',
-          employee_name: 'วีระพล สว่างจิต',
+          employee_id: '099999',
+          employee_name: 'ตัวอย่าง ระบบจำลอง',
           department: 'Crimping 1',
           shift: 'A',
           leave_type: 'Sick',

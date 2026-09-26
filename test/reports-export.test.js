@@ -47,12 +47,12 @@ async function runReportExportTests() {
   const testDate = '2028-11-15';
   if (pool) {
     try {
-      // Ensure test employees exist
+      // Ensure test employees exist with isolated test IDs (never overwrite real staff)
       await pool.query(`
         INSERT INTO employees (id, name, department, shift, pin, role, vacation_quota, personal_quota, sick_quota, unpaid_quota)
         VALUES 
-          ('051057', 'พรทิพย์ ดวงมณี', 'Crimping 1', 'A', '1234', 'EMPLOYEE', 6, 6, 30, 30),
-          ('031838', 'วีระพล สว่างจิต', 'Crimping 1', 'B', '1234', 'EMPLOYEE', 6, 6, 30, 30)
+          ('099998', 'ทดสอบ สรุปรายงานเอ็กเซล', 'Crimping 1', 'A', '1234', 'EMPLOYEE', 6, 6, 30, 30),
+          ('099999', 'ทดสอบ ส่งออกข้อมูลพีดีเอฟ', 'Crimping 1', 'B', '1234', 'EMPLOYEE', 6, 6, 30, 30)
         ON CONFLICT (id) DO UPDATE SET
           name = EXCLUDED.name,
           department = EXCLUDED.department,
@@ -66,9 +66,9 @@ async function runReportExportTests() {
       await pool.query(`
         INSERT INTO leave_requests (employee_id, leave_type, start_date, end_date, days_count, duration_type, hours_count, reason, status, reviewed_by, reviewed_at)
         VALUES 
-          ('051057', 'Vacation', '2028-11-10', '2028-11-12', 3, 'FULL_DAY', NULL, 'พักผ่อนประจำปี', 'APPROVED', 'SUP-001', CURRENT_TIMESTAMP),
-          ('031838', 'Sick', '2028-11-15', '2028-11-15', 0.25, 'HOURLY', 2.0, 'ไปพบแพทย์', 'APPROVED', 'SUP-001', CURRENT_TIMESTAMP),
-          ('051057', 'Personal', '2028-11-20', '2028-11-20', 1, 'FULL_DAY', NULL, 'ทำธุระส่วนตัว', 'PENDING', NULL, NULL);
+          ('099998', 'Vacation', '2028-11-10', '2028-11-12', 3, 'FULL_DAY', NULL, 'พักผ่อนประจำปี', 'APPROVED', 'SUP-001', CURRENT_TIMESTAMP),
+          ('099999', 'Sick', '2028-11-15', '2028-11-15', 0.25, 'HOURLY', 2.0, 'ไปพบแพทย์', 'APPROVED', 'SUP-001', CURRENT_TIMESTAMP),
+          ('099998', 'Personal', '2028-11-20', '2028-11-20', 1, 'FULL_DAY', NULL, 'ทำธุระส่วนตัว', 'PENDING', NULL, NULL);
       `);
     } catch (setupErr) {
       console.warn('Note on test DB setup:', setupErr.message);
@@ -122,8 +122,8 @@ async function runReportExportTests() {
     assert.ok(rawBody.includes('สถานะคำขอ'), 'CSV must contain "สถานะคำขอ" header');
 
     // If test records exist, verify numeric employee id has formula protection
-    if (rawBody.includes('051057')) {
-      assert.ok(rawBody.includes('="051057"'), 'Employee ID with leading zero must be formatted as ="051057" for Excel');
+    if (rawBody.includes('099998')) {
+      assert.ok(rawBody.includes('="099998"'), 'Employee ID with leading zero must be formatted as ="099998" for Excel');
     }
   });
 
@@ -183,14 +183,15 @@ async function runReportExportTests() {
     const res = await request({
       hostname: 'localhost',
       port: PORT,
-      path: '/api/reports/leave-export?format=json&search=' + encodeURIComponent('พรทิพย์'),
+      path: '/api/reports/leave-export?format=json&search=099998',
       method: 'GET'
     });
 
     assert.strictEqual(res.status, 200);
     assert.strictEqual(res.data.success, true);
+    assert.ok(res.data.rows.length >= 2, 'Should return at least 2 records for 099998');
     res.data.rows.forEach(r => {
-      const match = r.employee_name.includes('พรทิพย์') || r.employee_id.includes('พรทิพย์');
+      const match = r.employee_name.includes('099998') || r.employee_id.includes('099998') || (r.reason && r.reason.includes('099998'));
       assert.ok(match, 'Result should match search query');
     });
   });
@@ -198,6 +199,7 @@ async function runReportExportTests() {
   // Cleanup test data
   if (pool) {
     await pool.query("DELETE FROM leave_requests WHERE start_date >= '2028-11-01' AND start_date <= '2028-11-30'").catch(() => {});
+    await pool.query("DELETE FROM employees WHERE id IN ('099998', '099999')").catch(() => {});
   }
 
   console.log(`\n========================================`);
