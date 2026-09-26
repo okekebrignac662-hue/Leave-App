@@ -22,6 +22,12 @@
  * ============================================================================
  */
 
+// ============================================================================
+// การตั้งค่า LINE Notify (ไม่บังคับ)
+// ============================================================================
+// ถ้านำ Token จาก https://notify-bot.line.me/ มาใส่ ระบบจะแจ้งเตือนเข้า LINE กลุ่มทันที
+const LINE_NOTIFY_TOKEN = '';
+
 // ชื่อแผ่นงาน (Sheet Names)
 const SHEET_LEAVES = 'รายการลางาน';
 const SHEET_EMPLOYEES = 'ข้อมูลพนักงาน';
@@ -310,12 +316,24 @@ function handleCreateLeave(ss, data) {
   if (existingRow > 0) {
     sheet.getRange(existingRow, 1, 1, rowValues.length).setValues([rowValues]);
     formatStatusCell(sheet.getRange(existingRow, 15), data.status || 'PENDING');
+    
+    // แจ้งเตือน LINE (กรณีแก้ไขคำขอ)
+    if (data.status !== 'CANCELLED') {
+      const msg = `\n📝 มีการแก้ไขคำขอลางาน\nพนักงาน: ${empName || empIdStr} (${dept || '-'}) \nประเภท: ${formatLeaveTypeText(data.leave_type)}\nวันที่: ${formatDateOnlyText(data.start_date)}\nสถานะ: ${formatStatusText(data.status || 'PENDING')}`;
+      sendLineNotify(msg);
+    }
+
     return { success: true, message: 'อัปเดตคำขอลางานเดิมสำเร็จ', id: data.id, row: existingRow };
   } else {
     sheet.appendRow(rowValues);
     const newRow = sheet.getLastRow();
     formatStatusCell(sheet.getRange(newRow, 15), data.status || 'PENDING');
     styleDataRow(sheet, newRow, LEAVE_HEADERS.length);
+
+    // แจ้งเตือน LINE (กรณีสร้างใหม่)
+    const msg = `\n🔔 มีคำขอลางานใหม่\nพนักงาน: ${empName || empIdStr} (${dept || '-'}) \nประเภท: ${formatLeaveTypeText(data.leave_type)}\nวันที่: ${formatDateOnlyText(data.start_date)}\nเหตุผล: ${data.reason || '-'}`;
+    sendLineNotify(msg);
+
     return { success: true, message: 'บันทึกคำขอลางานใหม่สำเร็จ', id: data.id, row: newRow };
   }
 }
@@ -357,6 +375,21 @@ function handleUpdateLeaveStatus(ss, data) {
     sheet.getRange(rowIndex, 18).setValue(data.rejection_reason || '-');
   }
   sheet.getRange(rowIndex, 21).setValue(now);
+
+  // แจ้งเตือน LINE (กรณีอนุมัติ หรือ ไม่อนุมัติ)
+  if (data.status && data.status !== 'PENDING') {
+    const empName = sheet.getRange(rowIndex, 3).getValue();
+    const leaveDate = sheet.getRange(rowIndex, 8).getValue();
+    const formattedDate = formatDateOnlyText(leaveDate);
+    
+    let emoji = 'ℹ️';
+    if (data.status === 'APPROVED') emoji = '✅';
+    if (data.status === 'REJECTED') emoji = '❌';
+    if (data.status === 'CANCELLED') emoji = '🚫';
+
+    const msg = `\n${emoji} อัปเดตสถานะการลา\nพนักงาน: ${empName}\nวันที่ลา: ${formattedDate}\nสถานะใหม่: ${formatStatusText(data.status)}\nผู้พิจารณา: ${data.reviewer_name || data.reviewed_by || '-'}`;
+    sendLineNotify(msg);
+  }
 
   return {
     success: true,
@@ -824,4 +857,25 @@ function getBangkokTimestamp() {
 function createJsonResponse(data) {
   return ContentService.createTextOutput(JSON.stringify(data))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+/**
+ * ส่งข้อความแจ้งเตือนผ่าน LINE Notify
+ */
+function sendLineNotify(message) {
+  if (!LINE_NOTIFY_TOKEN || LINE_NOTIFY_TOKEN.trim() === '') return;
+  
+  const url = 'https://notify-api.line.me/api/notify';
+  const options = {
+    method: 'post',
+    payload: { message: message },
+    headers: { 'Authorization': 'Bearer ' + LINE_NOTIFY_TOKEN.trim() },
+    muteHttpExceptions: true
+  };
+  
+  try {
+    UrlFetchApp.fetch(url, options);
+  } catch (err) {
+    // ป้องกันแอปพังถ้าส่ง LINE ไม่สำเร็จ
+  }
 }
