@@ -56,9 +56,22 @@ CREATE TABLE IF NOT EXISTS system_settings (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 5. Create In-App Notifications Table
+CREATE TABLE IF NOT EXISTS notifications (
+    id SERIAL PRIMARY KEY,
+    user_id VARCHAR(50) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    type VARCHAR(50) NOT NULL DEFAULT 'SYSTEM',
+    reference_id INT,
+    is_read BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Index for performance when checking daily overlapping leaves
 CREATE INDEX IF NOT EXISTS idx_leave_requests_dates ON leave_requests (start_date, end_date, status);
 CREATE INDEX IF NOT EXISTS idx_leave_requests_employee ON leave_requests (employee_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_unread ON notifications (user_id, is_read, created_at DESC);
 
 -- =======================================================
 -- Seed Demo Data

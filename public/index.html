@@ -183,6 +183,42 @@
                         <span id="user-role-display" class="text-[10px] text-indigo-300 font-semibold leading-none mt-1"></span>
                     </div>
                 </div>
+                <!-- In-App Notification Bell & Dropdown Wrapper -->
+                <div class="relative" id="notif-wrapper">
+                    <button id="btn-notif-bell" type="button" onclick="toggleNotificationDropdown()" class="relative p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/80 transition active:scale-95 flex items-center justify-center focus:outline-none" title="การแจ้งเตือน (Notifications)">
+                        <svg class="w-4 sm:w-5 h-4 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                        </svg>
+                        <!-- Unread Ping Indicator -->
+                        <span id="notif-badge-ping" class="hidden absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full animate-ping"></span>
+                        <!-- Unread Count Badge -->
+                        <span id="notif-badge-count" class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-gradient-to-r from-rose-500 to-red-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 shadow-md border-2 border-slate-900 leading-none">0</span>
+                    </button>
+
+                    <!-- Notification Dropdown Panel -->
+                    <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 sm:w-96 max-w-[90vw] bg-slate-900/95 backdrop-blur-2xl border border-slate-700/80 rounded-2xl shadow-2xl z-50 overflow-hidden animate-fade-in-up">
+                        <!-- Header -->
+                        <div class="p-3.5 px-4 bg-slate-800/80 border-b border-slate-700/60 flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-sm">🔔</span>
+                                <h4 class="text-xs font-bold text-white tracking-wide">การแจ้งเตือน</h4>
+                                <span id="notif-header-count" class="bg-indigo-500/30 text-indigo-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-indigo-400/30">0</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button type="button" onclick="markAllNotificationsAsRead()" class="text-[11px] text-indigo-400 hover:text-indigo-300 font-medium transition hover:underline">
+                                    อ่านทั้งหมด
+                                </button>
+                                <button type="button" onclick="loadNotifications()" class="text-[11px] text-slate-400 hover:text-slate-200 transition" title="รีเฟรชการแจ้งเตือน">
+                                    🔄
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Notification Items List -->
+                        <div id="notif-list-container" class="max-h-[380px] overflow-y-auto divide-y divide-slate-800/60 custom-scrollbar">
+                            <div class="p-8 text-center text-xs text-slate-400">กำลังโหลด...</div>
+                        </div>
+                    </div>
+                </div>
                 <!-- Personal Leave Toggle Button for HR / Supervisor / Admin -->
                 <button id="btn-toggle-hr-emp-view" type="button" onclick="toggleHrEmployeeView()" class="hidden bg-purple-500/20 hover:bg-purple-600 border border-purple-400/40 text-purple-200 hover:text-white px-3 py-1.5 rounded-xl transition text-xs font-semibold shadow-xs flex items-center space-x-1.5" title="สลับมุมมองยื่นคำขอลางานส่วนตัว">
                     <span id="btn-toggle-hr-emp-view-text">📝 ยื่นขอลางานส่วนตัว</span>
@@ -2458,6 +2494,9 @@
                     calculateRequestedDays();
                 }
 
+                // Start in-app notification polling
+                startNotificationPolling();
+
                 showToast(`ยินดีต้อนรับคุณ ${currentUser.name}`, 'success');
 
             } catch (err) {
@@ -2505,8 +2544,235 @@
             }
         }
 
+        // ==========================================
+        // 🔔 In-App Notification Center State & Handlers
+        // ==========================================
+        let notificationPollingInterval = null;
+        let lastUnreadNotificationCount = 0;
+
+        function toggleNotificationDropdown() {
+            const dropdown = document.getElementById('notif-dropdown');
+            if (!dropdown) return;
+            const isHidden = dropdown.classList.contains('hidden');
+            if (isHidden) {
+                dropdown.classList.remove('hidden');
+                loadNotifications();
+            } else {
+                dropdown.classList.add('hidden');
+            }
+        }
+
+        // Close notification dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            const wrapper = document.getElementById('notif-wrapper');
+            const dropdown = document.getElementById('notif-dropdown');
+            if (wrapper && dropdown && !dropdown.classList.contains('hidden')) {
+                if (!wrapper.contains(e.target)) {
+                    dropdown.classList.add('hidden');
+                }
+            }
+        });
+
+        async function loadNotifications() {
+            if (!currentUser) return;
+            try {
+                const res = await safeFetch(`/api/notifications?userId=${encodeURIComponent(currentUser.id)}`);
+                const data = await res.json();
+                if (!data.success) return;
+
+                const unreadCount = data.unreadCount || 0;
+                const badgeCount = document.getElementById('notif-badge-count');
+                const badgePing = document.getElementById('notif-badge-ping');
+                const headerCount = document.getElementById('notif-header-count');
+                const bellBtn = document.getElementById('btn-notif-bell');
+
+                if (headerCount) headerCount.innerText = unreadCount;
+
+                if (unreadCount > 0) {
+                    if (badgeCount) {
+                        badgeCount.innerText = unreadCount > 99 ? '99+' : unreadCount;
+                        badgeCount.classList.remove('hidden');
+                    }
+                    if (badgePing) badgePing.classList.remove('hidden');
+
+                    // If unread notifications increased, trigger shake animation and toast
+                    if (unreadCount > lastUnreadNotificationCount && lastUnreadNotificationCount > 0) {
+                        if (bellBtn) {
+                            bellBtn.classList.remove('animate-bell-ring');
+                            void bellBtn.offsetWidth; // trigger reflow
+                            bellBtn.classList.add('animate-bell-ring');
+                        }
+                        showToast(`🔔 คุณมีการแจ้งเตือนใหม่ (${unreadCount} รายการ)`, 'info');
+                    }
+                } else {
+                    if (badgeCount) badgeCount.classList.add('hidden');
+                    if (badgePing) badgePing.classList.add('hidden');
+                }
+
+                lastUnreadNotificationCount = unreadCount;
+                renderNotificationsList(data.notifications || []);
+            } catch (err) {
+                console.error('Fetch notifications error:', err);
+            }
+        }
+
+        function formatNotifTimeThai(dateStr) {
+            if (!dateStr) return '';
+            try {
+                const d = new Date(dateStr);
+                const now = new Date();
+                const diffMs = now.getTime() - d.getTime();
+                const diffMin = Math.floor(diffMs / (1000 * 60));
+                const diffHr = Math.floor(diffMs / (1000 * 60 * 60));
+
+                if (diffMin < 1) return 'เมื่อสักครู่';
+                if (diffMin < 60) return `${diffMin} นาทีที่แล้ว`;
+                if (diffHr < 24) return `${diffHr} ชม. ที่แล้ว`;
+                
+                const day = d.getDate();
+                const m = thaiMonths[d.getMonth()] || '';
+                const time = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} น.`;
+                return `${day} ${m} ${time}`;
+            } catch (e) {
+                return dateStr;
+            }
+        }
+
+        function renderNotificationsList(items) {
+            const container = document.getElementById('notif-list-container');
+            if (!container) return;
+
+            if (!items || items.length === 0) {
+                container.innerHTML = `
+                    <div class="p-8 text-center flex flex-col items-center justify-center space-y-2 text-slate-400">
+                        <span class="text-3xl opacity-60">🔕</span>
+                        <p class="text-xs font-semibold text-slate-200">ไม่มีการแจ้งเตือนในขณะนี้</p>
+                        <p class="text-[11px] text-slate-500">ผลการอนุมัติและคำขอลาจะแจ้งเตือนที่นี่</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = items.map(item => {
+                const isUnread = !item.is_read;
+                let icon = '🔔';
+                let iconBg = 'bg-indigo-500/20 text-indigo-300 border-indigo-400/30';
+
+                if (item.type === 'LEAVE_APPROVED') {
+                    icon = '✅';
+                    iconBg = 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30';
+                } else if (item.type === 'LEAVE_REJECTED') {
+                    icon = '❌';
+                    iconBg = 'bg-rose-500/20 text-rose-300 border-rose-400/30';
+                } else if (item.type === 'LEAVE_SUBMITTED') {
+                    icon = '📩';
+                    iconBg = 'bg-blue-500/20 text-blue-300 border-blue-400/30';
+                } else if (item.type === 'LEAVE_CANCELLED') {
+                    icon = '↩️';
+                    iconBg = 'bg-amber-500/20 text-amber-300 border-amber-400/30';
+                }
+
+                return `
+                    <div class="p-3.5 px-4 notif-item ${isUnread ? 'notif-unread' : ''} flex items-start space-x-3 cursor-pointer group" onclick="handleNotificationClick(${item.id}, ${isUnread})">
+                        <div class="w-8 h-8 rounded-xl flex items-center justify-center text-sm border flex-shrink-0 ${iconBg}">
+                            ${icon}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between">
+                                <h5 class="text-xs font-bold text-white tracking-wide truncate ${isUnread ? 'text-indigo-200' : 'text-slate-200'}">
+                                    ${escapeHtml(item.title)}
+                                </h5>
+                                <span class="text-[10px] text-slate-400 font-normal shrink-0 ml-2">
+                                    ${formatNotifTimeThai(item.created_at)}
+                                </span>
+                            </div>
+                            <p class="text-[11px] text-slate-300 mt-0.5 leading-snug">
+                                ${escapeHtml(item.message)}
+                            </p>
+                        </div>
+                        <div class="flex flex-col items-center space-y-1.5 flex-shrink-0 pt-0.5">
+                            ${isUnread ? '<span class="notif-unread-dot" title="ยังไม่ได้อ่าน"></span>' : '<span class="w-1.5 h-1.5"></span>'}
+                            <button type="button" onclick="event.stopPropagation(); dismissNotification(${item.id})" class="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-rose-400 text-xs transition p-0.5" title="ลบการแจ้งเตือน">
+                                ✕
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function handleNotificationClick(notifId, isUnread) {
+            if (isUnread) {
+                await markNotificationAsRead(notifId);
+            }
+        }
+
+        async function markNotificationAsRead(notifId) {
+            if (!currentUser) return;
+            try {
+                await safeFetch(`/api/notifications/${notifId}/read`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: currentUser.id })
+                });
+                loadNotifications();
+            } catch (err) {
+                console.error('Mark notification read error:', err);
+            }
+        }
+
+        async function markAllNotificationsAsRead() {
+            if (!currentUser) return;
+            try {
+                await safeFetch('/api/notifications/read-all', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: currentUser.id })
+                });
+                showToast('ทำเครื่องหมายอ่านทั้งหมดเรียบร้อยแล้ว', 'success');
+                loadNotifications();
+            } catch (err) {
+                console.error('Mark all read error:', err);
+            }
+        }
+
+        async function dismissNotification(notifId) {
+            if (!currentUser) return;
+            try {
+                await safeFetch(`/api/notifications/${notifId}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: currentUser.id })
+                });
+                loadNotifications();
+            } catch (err) {
+                console.error('Dismiss notification error:', err);
+            }
+        }
+
+        function startNotificationPolling() {
+            stopNotificationPolling();
+            loadNotifications();
+            notificationPollingInterval = setInterval(() => {
+                if (currentUser) {
+                    loadNotifications();
+                }
+            }, 30000); // Check every 30 seconds
+        }
+
+        function stopNotificationPolling() {
+            if (notificationPollingInterval) {
+                clearInterval(notificationPollingInterval);
+                notificationPollingInterval = null;
+            }
+            lastUnreadNotificationCount = 0;
+            const dropdown = document.getElementById('notif-dropdown');
+            if (dropdown) dropdown.classList.add('hidden');
+        }
+
         // Logout Handler
         function logout() {
+            stopNotificationPolling();
             currentUser = null;
             document.getElementById('navbar').classList.add('hidden-view');
             document.getElementById('employee-view').classList.add('hidden-view');
@@ -2669,6 +2935,7 @@
                 loadEmployeeQuota();
                 loadMyLeaveRequests();
                 loadDepartmentCalendar();
+                loadNotifications();
 
             } catch (err) {
                 console.error('Submit request error:', err);
@@ -2787,6 +3054,7 @@
                 loadEmployeeQuota();
                 loadMyLeaveRequests();
                 loadDepartmentCalendar();
+                loadNotifications();
             } catch (err) {
                 console.error('Cancel request error:', err);
                 showToast(err.message || 'เกิดข้อผิดพลาดในการยกเลิกคำขอ', 'error');
@@ -3383,6 +3651,7 @@
                 showToast(status === 'APPROVED' ? '✓ อนุมัติคำขอลางานเรียบร้อยแล้ว' : '✓ ปฏิเสธคำขอลางานเรียบร้อยแล้ว', status === 'APPROVED' ? 'success' : 'info');
                 loadPendingRequests();
                 loadDepartmentCalendar();
+                loadNotifications();
 
             } catch (err) {
                 console.error('Review request error:', err);

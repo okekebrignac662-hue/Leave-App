@@ -329,3 +329,42 @@ input:focus, select:focus, textarea:focus {
     font-size: 0.75rem;
     font-weight: 600;
 }
+
+/* ==========================================================================
+   🔔 IN-APP NOTIFICATION BELL & DROPDOWN PANEL
+   ========================================================================== */
+
+@keyframes bellRing {
+    0%, 100% { transform: rotate(0); }
+    20%, 60% { transform: rotate(14deg); }
+    40%, 80% { transform: rotate(-14deg); }
+}
+
+.animate-bell-ring {
+    animation: bellRing 0.8s ease-in-out;
+}
+
+.notif-item {
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.notif-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.notif-unread {
+    background-color: rgba(99, 102, 241, 0.08);
+    border-left: 3px solid #6366f1;
+}
+
+.notif-unread:hover {
+    background-color: rgba(99, 102, 241, 0.13);
+}
+
+.notif-unread-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 9999px;
+    background-color: #6366f1;
+    box-shadow: 0 0 8px rgba(99, 102, 241, 0.7);
+}

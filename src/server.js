@@ -125,6 +125,17 @@ async function ensureDatabaseSchema() {
           value TEXT,
           updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         );
+        CREATE TABLE IF NOT EXISTS notifications (
+          id SERIAL PRIMARY KEY,
+          user_id VARCHAR(50) NOT NULL,
+          title VARCHAR(255) NOT NULL,
+          message TEXT NOT NULL,
+          type VARCHAR(50) NOT NULL DEFAULT 'SYSTEM',
+          reference_id INT,
+          is_read BOOLEAN NOT NULL DEFAULT FALSE,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE INDEX IF NOT EXISTS idx_notifications_user_unread ON notifications (user_id, is_read, created_at DESC);
         INSERT INTO quota_settings (department, shift, max_daily_leaves)
         VALUES ('HR', 'Morning', 2)
         ON CONFLICT (department, shift) DO NOTHING;
@@ -142,6 +153,44 @@ async function ensureDatabaseSchema() {
 }
 ensureDatabaseSchema();
 
+// In-Memory Notifications store for fallback / testing without database connection
+let demoNotifications = [];
+let nextDemoNotifId = 1;
+
+/**
+ * Create In-App Notification (Database or In-Memory fallback)
+ */
+async function createNotification(userId, title, message, type = 'SYSTEM', referenceId = null) {
+  if (!userId) return null;
+  const cleanUserId = userId.toString().trim().toUpperCase();
+  try {
+    if (!pool) {
+      const notif = {
+        id: nextDemoNotifId++,
+        user_id: cleanUserId,
+        title,
+        message,
+        type,
+        reference_id: referenceId,
+        is_read: false,
+        created_at: new Date().toISOString()
+      };
+      demoNotifications.unshift(notif);
+      return notif;
+    }
+    const res = await query(
+      `INSERT INTO notifications (user_id, title, message, type, reference_id)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING *`,
+      [cleanUserId, title, message, type, referenceId]
+    );
+    return res.rows[0];
+  } catch (err) {
+    console.error('Failed to create in-app notification:', err.message);
+    return null;
+  }
+}
+
 // Helper: Normalize Leave Type to standard key
 function normalizeLeaveType(type) {
   if (!type) return 'Vacation';
@@ -150,6 +199,17 @@ function normalizeLeaveType(type) {
   if (lower.includes('sick') || lower.includes('ป่วย')) return 'Sick';
   if (lower.includes('personal') || lower.includes('กิจ')) return 'Personal';
   return 'Vacation';
+}
+
+function formatLeaveTypeThai(type) {
+  const norm = normalizeLeaveType(type);
+  switch (norm) {
+    case 'Vacation': return 'ลาพักร้อน';
+    case 'Personal': return 'ลากิจ';
+    case 'Sick': return 'ลาป่วย';
+    case 'Unpaid': return 'ลาไม่รับค่าจ้าง';
+    default: return type || 'อื่นๆ';
+  }
 }
 
 // Helper: Generate array of YYYY-MM-DD date strings between start and end date
@@ -812,6 +872,54 @@ app.post('/api/leave-requests', async (req, res) => {
         shift: employeeShift
       }, 'CREATE_LEAVE');
 
+      // Create In-App Notification for employee
+      const thaiLeaveType = formatLeaveTypeThai(normalizedType);
+      const leaveDurationStr = isHourly 
+        ? `${startDate} (${cleanStartTime} - ${cleanEndTime} น.)` 
+        : (startDate === actualEndDate ? startDate : `${startDate} ถึง ${actualEndDate}`);
+      
+      await createNotification(
+        cleanEmpId,
+        `ยื่นคำขอลางานสำเร็จ (${thaiLeaveType})`,
+        `คำขอลา ${thaiLeaveType} วันที่ ${leaveDurationStr} จำนวน ${daysCount} วัน ถูกส่งไปยังหัวหน้างานเรียบร้อยแล้ว`,
+        'LEAVE_SUBMITTED',
+        insertRes.rows[0].id
+      );
+
+      // Create In-App Notification for department supervisors & HR & Admin
+      try {
+        const empName = empRecord ? empRecord.name : cleanEmpId;
+        if (pool) {
+          const supRes = await query(
+            `SELECT id FROM employees 
+             WHERE (UPPER(department) = UPPER($1) AND UPPER(role) = 'SUPERVISOR')
+                OR UPPER(role) IN ('ADMIN', 'HR')`,
+            [department]
+          );
+          for (const sup of supRes.rows) {
+            if (sup.id.toUpperCase() !== cleanEmpId) {
+              await createNotification(
+                sup.id,
+                `คำขอลางานใหม่: ${empName}`,
+                `${empName} (${department} - กะ ${employeeShift}) ขอลา ${thaiLeaveType} (${leaveDurationStr})`,
+                'LEAVE_SUBMITTED',
+                insertRes.rows[0].id
+              );
+            }
+          }
+        } else {
+          await createNotification(
+            'SUP-001',
+            `คำขอลางานใหม่: ${empName}`,
+            `${empName} (${department}) ขอลา ${thaiLeaveType} (${leaveDurationStr})`,
+            'LEAVE_SUBMITTED',
+            insertRes.rows[0].id
+          );
+        }
+      } catch (e) {
+        console.warn('Supervisor notification failed:', e.message);
+      }
+
       res.status(201).json({
         success: true,
         message: isHourly 
@@ -906,6 +1014,15 @@ app.delete('/api/leave-requests/:id', async (req, res) => {
 
       // Sync cancellation to Google Sheets
       googleSheetsService.syncLeaveRequestAsync(updateRes.rows[0], 'UPDATE_LEAVE_STATUS');
+
+      // Create In-App Notification for employee
+      await createNotification(
+        cleanEmpId,
+        'ยกเลิกคำขอลางานเรียบร้อย',
+        `คำขอลา ${formatLeaveTypeThai(leaveReq.leave_type)} วันที่ ${leaveReq.start_date} ถูกยกเลิกแล้ว โควตาถูกคืนเข้าระบบทันที`,
+        'LEAVE_CANCELLED',
+        requestId
+      );
 
       res.json({
         success: true,
@@ -1131,6 +1248,29 @@ app.patch('/api/leave-requests/:id/status', async (req, res) => {
         ...updateRes.rows[0],
         reviewer_name: reviewerName
       }, 'UPDATE_LEAVE_STATUS');
+
+      // Create In-App Notification for employee
+      const targetEmpId = updateRes.rows[0].employee_id;
+      const targetLeaveType = formatLeaveTypeThai(updateRes.rows[0].leave_type);
+      const targetStartDate = updateRes.rows[0].start_date;
+      
+      if (cleanStatus === 'APPROVED') {
+        await createNotification(
+          targetEmpId,
+          `คำขอลางานได้รับอนุมัติแล้ว ✅`,
+          `คำขอลา ${targetLeaveType} (วันที่ ${targetStartDate}) ได้รับการอนุมัติแล้วโดย ${reviewerName}`,
+          'LEAVE_APPROVED',
+          updateRes.rows[0].id
+        );
+      } else {
+        await createNotification(
+          targetEmpId,
+          `คำขอลางานไม่ได้รับการอนุมัติ ❌`,
+          `คำขอลา ${targetLeaveType} (วันที่ ${targetStartDate}) ไม่ได้รับการอนุมัติโดย ${reviewerName}${rejectionReason ? ' (เหตุผล: ' + rejectionReason + ')' : ''}`,
+          'LEAVE_REJECTED',
+          updateRes.rows[0].id
+        );
+      }
 
       res.json({
         success: true,
@@ -2023,6 +2163,146 @@ app.get('/api/reports/leave-export', async (req, res) => {
 });
 
 
+
+// ==========================================
+// In-App Notification Center APIs
+// ==========================================
+
+// GET /api/notifications - Fetch user notifications and unread count
+app.get('/api/notifications', async (req, res) => {
+  try {
+    const userId = (req.query.userId || req.query.user_id || '').trim().toUpperCase();
+    if (!userId) {
+      return res.status(400).json({ error: 'กรุณาระบุรหัสผู้ใช้งาน (userId required)' });
+    }
+
+    if (!pool) {
+      const userNotifs = demoNotifications.filter(n => n.user_id === userId);
+      const unreadCount = userNotifs.filter(n => !n.is_read).length;
+      return res.json({
+        success: true,
+        unreadCount,
+        notifications: userNotifs.slice(0, 40)
+      });
+    }
+
+    const notifRes = await query(
+      `SELECT id, user_id, title, message, type, reference_id, is_read, 
+              TO_CHAR(created_at, 'YYYY-MM-DD"T"HH24:MI:SS') AS created_at
+       FROM notifications
+       WHERE UPPER(user_id) = $1
+       ORDER BY created_at DESC
+       LIMIT 40`,
+      [userId]
+    );
+
+    const countRes = await query(
+      `SELECT COUNT(*)::int AS unread_count
+       FROM notifications
+       WHERE UPPER(user_id) = $1 AND is_read = FALSE`,
+      [userId]
+    );
+
+    const unreadCount = countRes.rows[0] ? countRes.rows[0].unread_count : 0;
+
+    res.json({
+      success: true,
+      unreadCount,
+      notifications: notifRes.rows
+    });
+  } catch (error) {
+    console.error('Fetch notifications error:', error);
+    res.status(500).json({ error: 'ไม่สามารถดึงข้อมูลการแจ้งเตือนได้: ' + error.message });
+  }
+});
+
+// PATCH /api/notifications/:id/read - Mark single notification as read
+app.patch('/api/notifications/:id/read', async (req, res) => {
+  try {
+    const notifId = req.params.id;
+    const userId = (req.body.userId || req.body.user_id || req.query.userId || '').trim().toUpperCase();
+
+    if (!pool) {
+      const item = demoNotifications.find(n => n.id == notifId && (!userId || n.user_id === userId));
+      if (item) item.is_read = true;
+      return res.json({ success: true, message: 'ทำเครื่องหมายว่าอ่านแล้ว' });
+    }
+
+    if (userId) {
+      await query(
+        `UPDATE notifications SET is_read = TRUE WHERE id = $1 AND UPPER(user_id) = $2`,
+        [notifId, userId]
+      );
+    } else {
+      await query(
+        `UPDATE notifications SET is_read = TRUE WHERE id = $1`,
+        [notifId]
+      );
+    }
+
+    res.json({ success: true, message: 'ทำเครื่องหมายว่าอ่านแล้ว' });
+  } catch (error) {
+    console.error('Mark notification read error:', error);
+    res.status(500).json({ error: 'ไม่สามารถอัปเดตสถานะการแจ้งเตือนได้: ' + error.message });
+  }
+});
+
+// PATCH /api/notifications/read-all - Mark all user notifications as read
+app.patch('/api/notifications/read-all', async (req, res) => {
+  try {
+    const userId = (req.body.userId || req.body.user_id || req.query.userId || '').trim().toUpperCase();
+    if (!userId) {
+      return res.status(400).json({ error: 'กรุณาระบุรหัสผู้ใช้งาน (userId required)' });
+    }
+
+    if (!pool) {
+      demoNotifications.forEach(n => {
+        if (n.user_id === userId) n.is_read = true;
+      });
+      return res.json({ success: true, message: 'ทำเครื่องหมายอ่านทั้งหมดเรียบร้อยแล้ว' });
+    }
+
+    await query(
+      `UPDATE notifications SET is_read = TRUE WHERE UPPER(user_id) = $1 AND is_read = FALSE`,
+      [userId]
+    );
+
+    res.json({ success: true, message: 'ทำเครื่องหมายอ่านทั้งหมดเรียบร้อยแล้ว' });
+  } catch (error) {
+    console.error('Mark all notifications read error:', error);
+    res.status(500).json({ error: 'ไม่สามารถอัปเดตสถานะการแจ้งเตือนได้: ' + error.message });
+  }
+});
+
+// DELETE /api/notifications/:id - Dismiss / Delete notification
+app.delete('/api/notifications/:id', async (req, res) => {
+  try {
+    const notifId = req.params.id;
+    const userId = (req.body?.userId || req.query.userId || '').trim().toUpperCase();
+
+    if (!pool) {
+      demoNotifications = demoNotifications.filter(n => !(n.id == notifId && (!userId || n.user_id === userId)));
+      return res.json({ success: true, message: 'ลบการแจ้งเตือนเรียบร้อยแล้ว' });
+    }
+
+    if (userId) {
+      await query(
+        `DELETE FROM notifications WHERE id = $1 AND UPPER(user_id) = $2`,
+        [notifId, userId]
+      );
+    } else {
+      await query(
+        `DELETE FROM notifications WHERE id = $1`,
+        [notifId]
+      );
+    }
+
+    res.json({ success: true, message: 'ลบการแจ้งเตือนเรียบร้อยแล้ว' });
+  } catch (error) {
+    console.error('Delete notification error:', error);
+    res.status(500).json({ error: 'ไม่สามารถลบการแจ้งเตือนได้: ' + error.message });
+  }
+});
 
 // Start Server
 app.listen(PORT, () => {
