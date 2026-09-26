@@ -29,6 +29,42 @@
             to { opacity: 1; transform: translateY(0); }
         }
         .animate-fade-in-up { animation: fadeInUp 0.25s ease-out forwards; }
+
+        /* Print formatting for HR & Payroll Leave Reports */
+        @media print {
+            body > *:not(#print-report-container) {
+                display: none !important;
+            }
+            #print-report-container {
+                display: block !important;
+                position: static !important;
+                width: 100% !important;
+                background: white !important;
+                color: #000 !important;
+                padding: 10px !important;
+                font-family: 'Prompt', sans-serif !important;
+            }
+            #print-report-container table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+                margin-top: 12px !important;
+            }
+            #print-report-container th,
+            #print-report-container td {
+                border: 1px solid #4b5563 !important;
+                padding: 5px 6px !important;
+                font-size: 8.5pt !important;
+                color: #000 !important;
+            }
+            #print-report-container th {
+                background-color: #f3f4f6 !important;
+                font-weight: bold !important;
+                text-align: center !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body class="text-gray-800 antialiased min-h-screen flex flex-col justify-between">
@@ -635,6 +671,9 @@
                             <span>📊 Google Sheets</span>
                             <span id="sheets-badge-status" class="w-2 h-2 rounded-full bg-amber-400"></span>
                         </button>
+                        <button id="tab-sup-reports" type="button" onclick="switchSupervisorTab('reports')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-gray-600 hover:text-gray-900 transition flex items-center space-x-1.5">
+                            <span>📑 ส่งออกรายงาน (HR Export)</span>
+                        </button>
                     </div>
                     <button type="button" onclick="refreshSupervisorData()" class="bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 px-3.5 py-1.5 rounded-xl text-xs font-medium transition flex items-center justify-center space-x-1 shadow-2xs self-end sm:self-auto">
                         <span>🔄 รีเฟรช</span>
@@ -937,6 +976,230 @@
                                 </div>
                                 <p class="text-[11px] text-slate-400">กดปุ่ม "คัดลอกโค้ดสคริปต์" ด้านบน เพื่อนำโค้ดไปวางในหน้า Google Apps Script ได้ทันที</p>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- HR & Payroll Report Export Container -->
+                <div id="supervisor-reports-container" class="hidden-view space-y-4">
+                    <!-- Header Card -->
+                    <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-900 text-white p-5 sm:p-6 rounded-3xl shadow-lg border border-indigo-500/30">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div class="flex items-center space-x-3.5">
+                                <div class="w-12 h-12 rounded-2xl bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center text-2xl shadow-inner shrink-0">
+                                    📊
+                                </div>
+                                <div>
+                                    <div class="flex items-center space-x-2">
+                                        <h3 class="text-base sm:text-lg font-bold text-white">ระบบส่งออกรายงานการลา (HR & Payroll Export)</h3>
+                                        <span class="bg-indigo-400/20 text-indigo-300 border border-indigo-400/30 text-[10px] px-2.5 py-0.5 rounded-full font-semibold">
+                                            EXCEL & CSV READY
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-indigo-200/80 mt-1">
+                                        สรุปข้อมูลสถิติการลางาน กรองแยกตามช่วงวัน แผนก กะ และสถานะ พร้อมส่งออกไฟล์ Excel/CSV ที่รองรับภาษาไทย 100%
+                                    </p>
+                                </div>
+                            </div>
+                            <!-- Export Actions Quick Buttons -->
+                            <div class="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+                                <button type="button" onclick="downloadLeaveReportCsv()" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-3.5 py-2 rounded-xl text-xs font-semibold shadow-md transition flex items-center space-x-1.5 shrink-0 transform active:scale-95">
+                                    <span>📥 ดาวน์โหลด Excel / CSV</span>
+                                </button>
+                                <button type="button" onclick="copyReportTableToClipboard()" class="bg-white/10 hover:bg-white/20 text-white border border-white/20 px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 shrink-0">
+                                    <span>📋 คัดลอกตาราง (Copy)</span>
+                                </button>
+                                <button type="button" onclick="printLeaveReport()" class="bg-white/10 hover:bg-white/20 text-white border border-white/20 px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 shrink-0">
+                                    <span>🖨️ พิมพ์รายงาน / PDF</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Summary KPI Cards Bar -->
+                        <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5 mt-5 pt-4 border-t border-indigo-500/20 text-xs">
+                            <div class="bg-slate-950/40 rounded-xl p-2.5 border border-white/5">
+                                <span class="text-slate-300 text-[11px] block">รายการทั้งหมด</span>
+                                <span id="report-stat-total-records" class="font-bold text-lg text-white">0</span>
+                                <span class="text-[10px] text-slate-400">คำขอ</span>
+                            </div>
+                            <div class="bg-slate-950/40 rounded-xl p-2.5 border border-white/5">
+                                <span class="text-slate-300 text-[11px] block">รวมวันลา</span>
+                                <span id="report-stat-total-days" class="font-bold text-lg text-emerald-400">0.0</span>
+                                <span class="text-[10px] text-slate-400">วัน</span>
+                            </div>
+                            <div class="bg-slate-950/40 rounded-xl p-2.5 border border-white/5">
+                                <span class="text-slate-300 text-[11px] block">รวมชั่วโมงลา</span>
+                                <span id="report-stat-total-hours" class="font-bold text-lg text-teal-400">0.0</span>
+                                <span class="text-[10px] text-slate-400">ชั่วโมง</span>
+                            </div>
+                            <div class="bg-slate-950/40 rounded-xl p-2.5 border border-white/5">
+                                <span class="text-slate-300 text-[11px] block">พักร้อน</span>
+                                <span id="report-stat-vacation-days" class="font-bold text-base text-blue-300">0.0</span>
+                                <span class="text-[10px] text-slate-400">วัน</span>
+                            </div>
+                            <div class="bg-slate-950/40 rounded-xl p-2.5 border border-white/5">
+                                <span class="text-slate-300 text-[11px] block">ลากิจ</span>
+                                <span id="report-stat-personal-days" class="font-bold text-base text-amber-300">0.0</span>
+                                <span class="text-[10px] text-slate-400">วัน</span>
+                            </div>
+                            <div class="bg-slate-950/40 rounded-xl p-2.5 border border-white/5">
+                                <span class="text-slate-300 text-[11px] block">ลาป่วย</span>
+                                <span id="report-stat-sick-days" class="font-bold text-base text-rose-300">0.0</span>
+                                <span class="text-[10px] text-slate-400">วัน</span>
+                            </div>
+                            <div class="bg-slate-950/40 rounded-xl p-2.5 border border-white/5">
+                                <span class="text-slate-300 text-[11px] block">ไม่รับค่าจ้าง</span>
+                                <span id="report-stat-unpaid-days" class="font-bold text-base text-purple-300">0.0</span>
+                                <span class="text-[10px] text-slate-400">วัน</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Comprehensive Filter Controls Card -->
+                    <div class="bg-white p-4 sm:p-5 rounded-3xl shadow-xs border border-gray-100 space-y-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 pb-3">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-base">🔍</span>
+                                <h4 class="text-xs sm:text-sm font-bold text-gray-800">ตัวกรองรายงานสำหรับฝ่ายบุคคล (HR & Payroll Filters)</h4>
+                            </div>
+                            <!-- Date Range Presets -->
+                            <div class="flex flex-wrap items-center gap-1.5 text-xs">
+                                <span class="text-[11px] text-gray-400 font-medium mr-1">ช่วงเวลา:</span>
+                                <button type="button" id="btn-preset-this-month" onclick="setReportDatePreset('THIS_MONTH')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-600 text-white transition shadow-2xs">เดือนนี้</button>
+                                <button type="button" id="btn-preset-last-month" onclick="setReportDatePreset('LAST_MONTH')" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition">เดือนที่แล้ว</button>
+                                <button type="button" id="btn-preset-this-year" onclick="setReportDatePreset('THIS_YEAR')" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition">ปีนี้</button>
+                                <button type="button" id="btn-preset-all" onclick="setReportDatePreset('ALL')" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition">ทั้งหมด</button>
+                            </div>
+                        </div>
+
+                        <!-- Filter Fields Grid -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                            <!-- Start Date -->
+                            <div>
+                                <label class="block font-semibold text-gray-700 mb-1">วันที่เริ่มต้น (Start Date):</label>
+                                <input type="date" id="report-filter-start-date" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:bg-white focus:border-indigo-600 focus:outline-none transition">
+                            </div>
+                            <!-- End Date -->
+                            <div>
+                                <label class="block font-semibold text-gray-700 mb-1">วันที่สิ้นสุด (End Date):</label>
+                                <input type="date" id="report-filter-end-date" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:bg-white focus:border-indigo-600 focus:outline-none transition">
+                            </div>
+                            <!-- Department -->
+                            <div>
+                                <label class="block font-semibold text-gray-700 mb-1">แผนก (Department):</label>
+                                <select id="report-filter-dept" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:bg-white focus:border-indigo-600 focus:outline-none transition">
+                                    <option value="ALL">ทุกแผนก (All Departments)</option>
+                                </select>
+                            </div>
+                            <!-- Shift -->
+                            <div>
+                                <label class="block font-semibold text-gray-700 mb-1">กะการทำงาน (Shift):</label>
+                                <select id="report-filter-shift" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:bg-white focus:border-indigo-600 focus:outline-none transition">
+                                    <option value="ALL">ทุกกะ (All Shifts)</option>
+                                    <option value="A">กะ A</option>
+                                    <option value="B">กะ B</option>
+                                    <option value="Morning">กะกลางวัน / เช้า</option>
+                                </select>
+                            </div>
+                            <!-- Leave Type -->
+                            <div>
+                                <label class="block font-semibold text-gray-700 mb-1">ประเภทการลา (Leave Type):</label>
+                                <select id="report-filter-type" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:bg-white focus:border-indigo-600 focus:outline-none transition">
+                                    <option value="ALL">ทุกประเภทการลา (All Types)</option>
+                                    <option value="Vacation">ลาพักร้อน (Vacation)</option>
+                                    <option value="Personal">ลากิจ (Personal)</option>
+                                    <option value="Sick">ลาป่วย (Sick)</option>
+                                    <option value="Unpaid">ลาไม่รับค่าจ้าง (Unpaid)</option>
+                                </select>
+                            </div>
+                            <!-- Status -->
+                            <div>
+                                <label class="block font-semibold text-gray-700 mb-1">สถานะคำขอ (Status):</label>
+                                <select id="report-filter-status" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:bg-white focus:border-indigo-600 focus:outline-none transition">
+                                    <option value="ALL">ทุกสถานะ (All Statuses)</option>
+                                    <option value="APPROVED" selected>เฉพาะอนุมัติแล้ว (Approved Only - แนะนำสำหรับคิดค่าจ้าง)</option>
+                                    <option value="PENDING">รออนุมัติ (Pending)</option>
+                                    <option value="REJECTED">ปฏิเสธ (Rejected)</option>
+                                    <option value="CANCELLED">ยกเลิก (Cancelled)</option>
+                                </select>
+                            </div>
+                            <!-- Search Query -->
+                            <div class="sm:col-span-2">
+                                <label class="block font-semibold text-gray-700 mb-1">ค้นหารายการ (Search):</label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">🔍</span>
+                                    <input type="text" id="report-filter-search" placeholder="ค้นหาชื่อพนักงาน, รหัส หรือเหตุผลการลา..." class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-3.5 py-2 text-xs focus:bg-white focus:border-indigo-600 focus:outline-none transition">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Apply / Reset Button Row -->
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-gray-100">
+                            <span class="text-[11px] text-gray-400">
+                                💡 ไฟล์ CSV ที่ส่งออกใช้รหัส UTF-8 BOM และสูตร Text เพื่อป้องกันรหัสพนักงานขึ้นหน้าด้วยศูนย์ (เช่น 051057) ไม่ให้ถูกตัดใน Excel
+                            </span>
+                            <div class="flex items-center space-x-2 shrink-0">
+                                <button type="button" onclick="resetReportFilters()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition">
+                                    <span>🔄 ล้างค่าตัวกรอง</span>
+                                </button>
+                                <button type="button" onclick="loadLeaveReportData()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-xl text-xs font-semibold shadow-xs transition flex items-center space-x-1.5">
+                                    <span>🔍 กรองข้อมูลรายงาน</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Report Preview Table Card -->
+                    <div class="bg-white rounded-3xl shadow-xs border border-gray-100 overflow-hidden space-y-0">
+                        <div class="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100">
+                            <div class="flex items-center space-x-2.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <h4 class="text-xs sm:text-sm font-bold text-gray-800">
+                                    ตารางพรีวิวข้อมูลรายงาน (Live Data Preview)
+                                </h4>
+                                <span id="report-table-count-badge" class="bg-indigo-50 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-indigo-200">
+                                    0 รายการ
+                                </span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button type="button" onclick="downloadLeaveReportCsv()" class="bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center space-x-1">
+                                    <span>📥 ดาวน์โหลด Excel (.csv)</span>
+                                </button>
+                                <button type="button" onclick="copyReportTableToClipboard()" class="bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 px-3 py-1.5 rounded-xl text-xs font-medium transition flex items-center space-x-1">
+                                    <span>📋 คัดลอกตาราง</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Responsive Table -->
+                        <div class="overflow-x-auto max-h-[550px] overflow-y-auto">
+                            <table id="report-preview-table" class="w-full text-left text-xs">
+                                <thead class="bg-gray-50/90 text-gray-600 border-b border-gray-100 font-semibold sticky top-0 backdrop-blur-xs z-10">
+                                    <tr>
+                                        <th class="p-3 pl-4 text-center">#</th>
+                                        <th class="p-3">เลขที่คำขอ</th>
+                                        <th class="p-3">รหัสพนักงาน</th>
+                                        <th class="p-3">ชื่อ - นามสกุล</th>
+                                        <th class="p-3">แผนก</th>
+                                        <th class="p-3 text-center">กะ</th>
+                                        <th class="p-3">ประเภทการลา</th>
+                                        <th class="p-3">ช่วงวันที่ลา</th>
+                                        <th class="p-3 text-center">จำนวน</th>
+                                        <th class="p-3">เหตุผลการลา</th>
+                                        <th class="p-3 text-center">เอกสาร</th>
+                                        <th class="p-3 text-center">สถานะ</th>
+                                        <th class="p-3">ผู้อนุมัติ</th>
+                                        <th class="p-3 pr-4">วันที่พิจารณา</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="report-preview-tbody" class="divide-y divide-gray-100 text-gray-700">
+                                    <tr>
+                                        <td colspan="14" class="text-center py-10 text-gray-400">
+                                            กำลังโหลดข้อมูลรายงาน...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -2728,17 +2991,19 @@
             }
         }
 
-        // Switch Supervisor / Admin Tabs (Employees vs Pending vs History vs Sheets)
+        // Switch Supervisor / Admin Tabs (Employees vs Pending vs History vs Sheets vs Reports)
         function switchSupervisorTab(tab) {
             const btnEmployees = document.getElementById('tab-admin-employees');
             const btnPending = document.getElementById('tab-sup-pending');
             const btnHistory = document.getElementById('tab-sup-history');
             const btnSheets = document.getElementById('tab-sup-sheets');
+            const btnReports = document.getElementById('tab-sup-reports');
             
             const containerEmployees = document.getElementById('admin-employees-container');
             const containerPending = document.getElementById('supervisor-pending-container');
             const containerHistory = document.getElementById('supervisor-history-container');
             const containerSheets = document.getElementById('supervisor-sheets-container');
+            const containerReports = document.getElementById('supervisor-reports-container');
 
             // Reset tab styles
             const inactiveClass = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold text-gray-600 hover:text-gray-900 transition flex items-center space-x-1.5';
@@ -2748,11 +3013,13 @@
             if (btnPending) btnPending.className = tab === 'pending' ? activeClass : inactiveClass;
             if (btnHistory) btnHistory.className = tab === 'history' ? activeClass : inactiveClass;
             if (btnSheets) btnSheets.className = tab === 'sheets' ? activeClass : inactiveClass;
+            if (btnReports) btnReports.className = tab === 'reports' ? activeClass : inactiveClass;
 
             if (containerEmployees) containerEmployees.classList.toggle('hidden-view', tab !== 'employees');
             if (containerPending) containerPending.classList.toggle('hidden-view', tab !== 'pending');
             if (containerHistory) containerHistory.classList.toggle('hidden-view', tab !== 'history');
             if (containerSheets) containerSheets.classList.toggle('hidden-view', tab !== 'sheets');
+            if (containerReports) containerReports.classList.toggle('hidden-view', tab !== 'reports');
 
             if (tab === 'employees') {
                 loadAdminEmployeesList();
@@ -2762,6 +3029,8 @@
                 loadSupervisorHistory();
             } else if (tab === 'sheets') {
                 loadGoogleSheetsConfig();
+            } else if (tab === 'reports') {
+                initReportTab();
             }
         }
 
@@ -2884,6 +3153,10 @@
             loadSupervisorHistory();
             loadDepartmentCalendar();
             loadGoogleSheetsConfig();
+            const repCont = document.getElementById('supervisor-reports-container');
+            if (repCont && !repCont.classList.contains('hidden-view')) {
+                loadLeaveReportData();
+            }
             showToast('อัปเดตข้อมูลล่าสุดเรียบร้อย', 'info');
         }
 
@@ -4040,6 +4313,474 @@
                 }
             });
         });
+
+        // ==========================================
+        // HR & Payroll Report Export Controller
+        // ==========================================
+        let currentReportRows = [];
+        let currentReportPreset = 'THIS_MONTH';
+        let reportDeptsLoaded = false;
+
+        async function initReportTab() {
+            if (!reportDeptsLoaded) {
+                await loadReportDepartments();
+            }
+            const startInput = document.getElementById('report-filter-start-date');
+            const endInput = document.getElementById('report-filter-end-date');
+            if (!startInput.value || !endInput.value) {
+                setReportDatePreset('THIS_MONTH');
+            } else {
+                loadLeaveReportData();
+            }
+        }
+
+        async function loadReportDepartments() {
+            const selectEl = document.getElementById('report-filter-dept');
+            if (!selectEl) return;
+            try {
+                const res = await safeFetch('/api/departments');
+                const data = await res.json();
+                if (data.success && Array.isArray(data.departments)) {
+                    let html = '<option value="ALL">ทุกแผนก (All Departments)</option>';
+                    data.departments.forEach(d => {
+                        const name = typeof d === 'string' ? d : d.name;
+                        html += `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`;
+                    });
+                    selectEl.innerHTML = html;
+                    reportDeptsLoaded = true;
+                }
+            } catch (err) {
+                console.warn('Could not load report departments:', err);
+            }
+        }
+
+        function setReportDatePreset(preset) {
+            currentReportPreset = preset;
+            const now = new Date();
+            const startInput = document.getElementById('report-filter-start-date');
+            const endInput = document.getElementById('report-filter-end-date');
+            if (!startInput || !endInput) return;
+
+            // Highlight buttons
+            const presets = [
+                { id: 'btn-preset-this-month', key: 'THIS_MONTH' },
+                { id: 'btn-preset-last-month', key: 'LAST_MONTH' },
+                { id: 'btn-preset-this-year', key: 'THIS_YEAR' },
+                { id: 'btn-preset-all', key: 'ALL' }
+            ];
+            presets.forEach(p => {
+                const el = document.getElementById(p.id);
+                if (el) {
+                    if (p.key === preset) {
+                        el.className = 'px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-600 text-white transition shadow-2xs';
+                    } else {
+                        el.className = 'px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition';
+                    }
+                }
+            });
+
+            if (preset === 'THIS_MONTH') {
+                const y = now.getFullYear();
+                const m = now.getMonth();
+                const pad = (n) => String(n).padStart(2, '0');
+                const firstDayStr = `${y}-${pad(m + 1)}-01`;
+                const lastDay = new Date(y, m + 1, 0).getDate();
+                const lastDayStr = `${y}-${pad(m + 1)}-${pad(lastDay)}`;
+                startInput.value = firstDayStr;
+                endInput.value = lastDayStr;
+            } else if (preset === 'LAST_MONTH') {
+                let y = now.getFullYear();
+                let m = now.getMonth() - 1;
+                if (m < 0) { m = 11; y--; }
+                const pad = (n) => String(n).padStart(2, '0');
+                const firstDayStr = `${y}-${pad(m + 1)}-01`;
+                const lastDay = new Date(y, m + 1, 0).getDate();
+                const lastDayStr = `${y}-${pad(m + 1)}-${pad(lastDay)}`;
+                startInput.value = firstDayStr;
+                endInput.value = lastDayStr;
+            } else if (preset === 'THIS_YEAR') {
+                const y = now.getFullYear();
+                startInput.value = `${y}-01-01`;
+                endInput.value = `${y}-12-31`;
+            } else if (preset === 'ALL') {
+                startInput.value = '';
+                endInput.value = '';
+            }
+
+            loadLeaveReportData();
+        }
+
+        function resetReportFilters() {
+            const deptEl = document.getElementById('report-filter-dept');
+            const shiftEl = document.getElementById('report-filter-shift');
+            const typeEl = document.getElementById('report-filter-type');
+            const statusEl = document.getElementById('report-filter-status');
+            const searchEl = document.getElementById('report-filter-search');
+
+            if (deptEl) deptEl.value = 'ALL';
+            if (shiftEl) shiftEl.value = 'ALL';
+            if (typeEl) typeEl.value = 'ALL';
+            if (statusEl) statusEl.value = 'APPROVED';
+            if (searchEl) searchEl.value = '';
+
+            setReportDatePreset('THIS_MONTH');
+        }
+
+        function buildReportQueryParams() {
+            const startDate = document.getElementById('report-filter-start-date')?.value || '';
+            const endDate = document.getElementById('report-filter-end-date')?.value || '';
+            const department = document.getElementById('report-filter-dept')?.value || 'ALL';
+            const shift = document.getElementById('report-filter-shift')?.value || 'ALL';
+            const leaveType = document.getElementById('report-filter-type')?.value || 'ALL';
+            const status = document.getElementById('report-filter-status')?.value || 'ALL';
+            const search = document.getElementById('report-filter-search')?.value || '';
+
+            const params = new URLSearchParams();
+            if (startDate) params.set('startDate', startDate);
+            if (endDate) params.set('endDate', endDate);
+            if (department && department !== 'ALL') params.set('department', department);
+            if (shift && shift !== 'ALL') params.set('shift', shift);
+            if (leaveType && leaveType !== 'ALL') params.set('leaveType', leaveType);
+            if (status && status !== 'ALL') params.set('status', status);
+            if (search.trim()) params.set('search', search.trim());
+
+            return params;
+        }
+
+        async function loadLeaveReportData() {
+            const tbody = document.getElementById('report-preview-tbody');
+            const countBadge = document.getElementById('report-table-count-badge');
+            if (tbody) {
+                tbody.innerHTML = '<tr><td colspan="14" class="text-center py-10 text-gray-400"><div class="flex items-center justify-center space-x-2"><svg class="animate-spin h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg><span>กำลังดึงข้อมูลรายงาน...</span></div></td></tr>';
+            }
+
+            try {
+                const params = buildReportQueryParams();
+                params.set('format', 'json');
+
+                const res = await safeFetch(`/api/reports/leave-export?${params.toString()}`);
+                const data = await res.json();
+
+                if (!data.success) {
+                    if (tbody) tbody.innerHTML = `<tr><td colspan="14" class="text-center py-8 text-rose-500 font-semibold">${escapeHtml(data.error || 'เกิดข้อผิดพลาดในการโหลดรายงาน')}</td></tr>`;
+                    return;
+                }
+
+                currentReportRows = data.rows || [];
+                const summary = data.summary || {};
+
+                // Update KPI Cards
+                const totalRecordsEl = document.getElementById('report-stat-total-records');
+                const totalDaysEl = document.getElementById('report-stat-total-days');
+                const totalHoursEl = document.getElementById('report-stat-total-hours');
+                const vacDaysEl = document.getElementById('report-stat-vacation-days');
+                const perDaysEl = document.getElementById('report-stat-personal-days');
+                const sickDaysEl = document.getElementById('report-stat-sick-days');
+                const unpaidDaysEl = document.getElementById('report-stat-unpaid-days');
+
+                if (totalRecordsEl) totalRecordsEl.innerText = summary.totalRecords || 0;
+                if (totalDaysEl) totalDaysEl.innerText = (summary.totalDays || 0).toFixed(1);
+                if (totalHoursEl) totalHoursEl.innerText = (summary.totalHours || 0).toFixed(1);
+                if (vacDaysEl) vacDaysEl.innerText = (summary.byType?.Vacation?.days || 0).toFixed(1);
+                if (perDaysEl) perDaysEl.innerText = (summary.byType?.Personal?.days || 0).toFixed(1);
+                if (sickDaysEl) sickDaysEl.innerText = (summary.byType?.Sick?.days || 0).toFixed(1);
+                if (unpaidDaysEl) unpaidDaysEl.innerText = (summary.byType?.Unpaid?.days || 0).toFixed(1);
+
+                if (countBadge) countBadge.innerText = `${currentReportRows.length} รายการ`;
+
+                // Render Table Rows
+                if (!tbody) return;
+                if (currentReportRows.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="14" class="text-center py-12 text-gray-400">📭 ไม่พบข้อมูลคำขอลางานตามเงื่อนไขตัวกรองที่เลือก</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = currentReportRows.map((r, idx) => {
+                    const st = (r.status || '').toUpperCase();
+                    let stBadge = '<span class="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-[10px] font-bold">รออนุมัติ</span>';
+                    if (st === 'APPROVED') {
+                        stBadge = '<span class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full text-[10px] font-bold">✓ อนุมัติแล้ว</span>';
+                    } else if (st === 'REJECTED') {
+                        stBadge = '<span class="bg-rose-50 text-rose-700 border border-rose-200 px-2 py-0.5 rounded-full text-[10px] font-bold">✗ ปฏิเสธ</span>';
+                    } else if (st === 'CANCELLED') {
+                        stBadge = '<span class="bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-full text-[10px] font-semibold">ยกเลิก</span>';
+                    }
+
+                    let typeLabel = r.leave_type;
+                    let typeClass = 'bg-blue-50 text-blue-800 border-blue-200';
+                    const norm = normalizeLeaveTypeKey(r.leave_type);
+                    if (norm === 'Sick') {
+                        typeLabel = 'ลาป่วย';
+                        typeClass = 'bg-rose-50 text-rose-800 border-rose-200';
+                    } else if (norm === 'Personal') {
+                        typeLabel = 'ลากิจ';
+                        typeClass = 'bg-amber-50 text-amber-800 border-amber-200';
+                    } else if (norm === 'Unpaid') {
+                        typeLabel = 'ไม่รับค่าจ้าง';
+                        typeClass = 'bg-purple-50 text-purple-800 border-purple-200';
+                    } else {
+                        typeLabel = 'ลาพักร้อน';
+                        typeClass = 'bg-blue-50 text-blue-800 border-blue-200';
+                    }
+
+                    const isHourly = r.duration_type === 'HOURLY';
+                    const amountText = isHourly 
+                        ? `<span class="font-bold text-teal-700">${r.hours_count || 0} ชม.</span>`
+                        : `<span class="font-bold text-gray-800">${r.days_count} วัน</span>`;
+
+                    const dateRangeText = (r.start_date === r.end_date)
+                        ? r.start_date
+                        : `${r.start_date} ถึง ${r.end_date}`;
+
+                    const timeSubText = isHourly && r.start_time
+                        ? `<span class="text-[10px] text-teal-600 block">(${r.start_time} - ${r.end_time})</span>`
+                        : '';
+
+                    let attachBtn = '<span class="text-gray-300">-</span>';
+                    if (r.attachment_url) {
+                        attachBtn = `<button type="button" onclick="openAttachmentModal('${escapeHtml(r.attachment_url)}', 'หลักฐานการลา')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-lg text-[10px] font-bold transition flex items-center space-x-1 mx-auto"><span>📎 ดูไฟล์</span></button>`;
+                    }
+
+                    return `
+                        <tr class="hover:bg-indigo-50/30 transition text-xs">
+                            <td class="p-3 pl-4 text-center font-mono text-gray-400">${idx + 1}</td>
+                            <td class="p-3 font-mono font-semibold text-gray-700">REQ-${r.id}</td>
+                            <td class="p-3 font-mono font-bold text-indigo-700">${escapeHtml(r.employee_id)}</td>
+                            <td class="p-3 font-medium text-gray-900">${escapeHtml(r.employee_name)}</td>
+                            <td class="p-3 text-gray-600">${escapeHtml(r.department)}</td>
+                            <td class="p-3 text-center"><span class="px-1.5 py-0.5 rounded bg-gray-100 font-bold text-[10px] text-gray-700">${escapeHtml(r.shift || 'A')}</span></td>
+                            <td class="p-3"><span class="px-2 py-0.5 rounded-md border text-[10px] font-bold ${typeClass}">${typeLabel}</span></td>
+                            <td class="p-3 whitespace-nowrap"><span class="font-medium">${dateRangeText}</span>${timeSubText}</td>
+                            <td class="p-3 text-center whitespace-nowrap">${amountText}</td>
+                            <td class="p-3 max-w-[200px] truncate text-gray-500" title="${escapeHtml(r.reason || '')}">${escapeHtml(r.reason || '-')}</td>
+                            <td class="p-3 text-center">${attachBtn}</td>
+                            <td class="p-3 text-center">${stBadge}</td>
+                            <td class="p-3 text-gray-600 text-[11px]">${escapeHtml(r.reviewer_name || r.reviewed_by || '-')}</td>
+                            <td class="p-3 pr-4 text-gray-400 text-[11px] whitespace-nowrap">${r.reviewed_at ? r.reviewed_at.substring(0, 16) : '-'}</td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error('Failed to load leave report:', err);
+                if (tbody) tbody.innerHTML = `<tr><td colspan="14" class="text-center py-8 text-rose-500">เกิดข้อผิดพลาดในการโหลดข้อมูล: ${escapeHtml(err.message)}</td></tr>`;
+            }
+        }
+
+        function normalizeLeaveTypeKey(type) {
+            if (!type) return 'Vacation';
+            const l = type.toLowerCase();
+            if (l.includes('unpaid') || l.includes('ไม่รับค่าจ้าง')) return 'Unpaid';
+            if (l.includes('sick') || l.includes('ป่วย')) return 'Sick';
+            if (l.includes('personal') || l.includes('กิจ')) return 'Personal';
+            return 'Vacation';
+        }
+
+        function downloadLeaveReportCsv() {
+            const params = buildReportQueryParams();
+            params.set('format', 'csv');
+            window.location.href = `/api/reports/leave-export?${params.toString()}`;
+            showToast('📥 กำลังดาวน์โหลดไฟล์รายงาน Excel / CSV...', 'success');
+        }
+
+        async function copyReportTableToClipboard() {
+            if (!currentReportRows || currentReportRows.length === 0) {
+                showToast('ไม่มีข้อมูลในตารางสำหรับคัดลอก', 'warning');
+                return;
+            }
+
+            const headers = [
+                'ลำดับ',
+                'เลขที่คำขอ',
+                'รหัสพนักงาน',
+                'ชื่อ-นามสกุล',
+                'แผนก',
+                'กะการทำงาน',
+                'ประเภทการลา',
+                'รูปแบบการลา',
+                'วันที่เริ่มลา',
+                'วันที่สิ้นสุด',
+                'ช่วงเวลา',
+                'จำนวนวันลา',
+                'จำนวนชั่วโมง',
+                'เหตุผลการลา',
+                'มีเอกสารแนบ',
+                'สถานะคำขอ',
+                'ผู้อนุมัติ',
+                'วันที่อนุมัติ'
+            ];
+
+            const lines = [headers.join('\t')];
+
+            currentReportRows.forEach((r, idx) => {
+                const norm = normalizeLeaveTypeKey(r.leave_type);
+                let typeThai = 'ลาพักร้อน';
+                if (norm === 'Sick') typeThai = 'ลาป่วย';
+                else if (norm === 'Personal') typeThai = 'ลากิจ';
+                else if (norm === 'Unpaid') typeThai = 'ลาไม่รับค่าจ้าง';
+
+                let statusThai = 'รออนุมัติ';
+                const st = (r.status || '').toUpperCase();
+                if (st === 'APPROVED') statusThai = 'อนุมัติแล้ว';
+                else if (st === 'REJECTED') statusThai = 'ปฏิเสธ';
+                else if (st === 'CANCELLED') statusThai = 'ยกเลิก';
+
+                const timeRange = (r.duration_type === 'HOURLY' && r.start_time) ? `${r.start_time} - ${r.end_time}` : '-';
+
+                const row = [
+                    idx + 1,
+                    `REQ-${r.id}`,
+                    r.employee_id,
+                    r.employee_name,
+                    r.department,
+                    r.shift || 'A',
+                    typeThai,
+                    r.duration_type === 'HOURLY' ? 'รายชั่วโมง' : 'เต็มวัน',
+                    r.start_date,
+                    r.end_date,
+                    timeRange,
+                    r.days_count,
+                    r.hours_count || 0,
+                    (r.reason || '').replace(/[\r\n\t]+/g, ' '),
+                    r.attachment_url ? 'มี' : 'ไม่มี',
+                    statusThai,
+                    r.reviewer_name || r.reviewed_by || '-',
+                    r.reviewed_at || '-'
+                ];
+                lines.push(row.join('\t'));
+            });
+
+            const tsvContent = lines.join('\n');
+            try {
+                await navigator.clipboard.writeText(tsvContent);
+                showToast('📋 คัดลอกตารางข้อมูลเรียบร้อยแล้ว! สามารถกด Ctrl + V วางใน Excel ได้ทันที', 'success');
+            } catch (err) {
+                const textarea = document.createElement('textarea');
+                textarea.value = tsvContent;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToast('📋 คัดลอกข้อมูลเรียบร้อยแล้ว! กด Ctrl + V วางใน Excel ได้ทันที', 'success');
+            }
+        }
+
+        function printLeaveReport() {
+            if (!currentReportRows || currentReportRows.length === 0) {
+                showToast('ไม่มีข้อมูลสำหรับพิมพ์รายงาน', 'warning');
+                return;
+            }
+
+            const printContainer = document.getElementById('print-report-container');
+            if (!printContainer) return;
+
+            const startDate = document.getElementById('report-filter-start-date')?.value || 'ทั้งหมด';
+            const endDate = document.getElementById('report-filter-end-date')?.value || 'ทั้งหมด';
+            const department = document.getElementById('report-filter-dept')?.value || 'ทุกแผนก';
+            const shift = document.getElementById('report-filter-shift')?.value || 'ทุกกะ';
+            const status = document.getElementById('report-filter-status')?.value || 'ทั้งหมด';
+            const todayThai = new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
+
+            let totalDays = 0;
+            let totalHours = 0;
+            currentReportRows.forEach(r => {
+                totalDays += parseFloat(r.days_count) || 0;
+                totalHours += parseFloat(r.hours_count) || 0;
+            });
+
+            let tableRowsHtml = currentReportRows.map((r, idx) => {
+                const norm = normalizeLeaveTypeKey(r.leave_type);
+                let typeThai = 'ลาพักร้อน';
+                if (norm === 'Sick') typeThai = 'ลาป่วย';
+                else if (norm === 'Personal') typeThai = 'ลากิจ';
+                else if (norm === 'Unpaid') typeThai = 'ลาไม่รับค่าจ้าง';
+
+                let statusThai = 'รออนุมัติ';
+                const st = (r.status || '').toUpperCase();
+                if (st === 'APPROVED') statusThai = 'อนุมัติแล้ว';
+                else if (st === 'REJECTED') statusThai = 'ปฏิเสธ';
+                else if (st === 'CANCELLED') statusThai = 'ยกเลิก';
+
+                const dateRangeText = (r.start_date === r.end_date) ? r.start_date : `${r.start_date} ถึง ${r.end_date}`;
+                const amountText = (r.duration_type === 'HOURLY') ? `${r.hours_count || 0} ชม.` : `${r.days_count} วัน`;
+
+                return `
+                    <tr>
+                        <td style="text-align: center;">${idx + 1}</td>
+                        <td style="text-align: center;">REQ-${r.id}</td>
+                        <td style="text-align: center; font-weight: bold;">${escapeHtml(r.employee_id)}</td>
+                        <td>${escapeHtml(r.employee_name)}</td>
+                        <td>${escapeHtml(r.department)}</td>
+                        <td style="text-align: center;">${escapeHtml(r.shift || 'A')}</td>
+                        <td>${typeThai}</td>
+                        <td style="text-align: center;">${dateRangeText}</td>
+                        <td style="text-align: center; font-weight: bold;">${amountText}</td>
+                        <td>${escapeHtml(r.reason || '-')}</td>
+                        <td style="text-align: center;">${statusThai}</td>
+                        <td>${escapeHtml(r.reviewer_name || r.reviewed_by || '-')}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            printContainer.innerHTML = `
+                <div style="text-align: center; margin-bottom: 15px; border-bottom: 2px solid #000; padding-bottom: 10px;">
+                    <h2 style="font-size: 16pt; font-weight: bold; margin: 0;">รายงานสรุปประวัติและการอนุมัติการลางานพนักงาน</h2>
+                    <h3 style="font-size: 12pt; margin: 5px 0 0 0; color: #444;">(Employee Leave & Attendance Report for HR & Payroll)</h3>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; font-size: 9.5pt; margin-bottom: 12px; line-height: 1.5;">
+                    <div>
+                        <b>ช่วงวันที่:</b> ${escapeHtml(startDate)} ถึง ${escapeHtml(endDate)}<br>
+                        <b>แผนก:</b> ${escapeHtml(department)} | <b>กะ:</b> ${escapeHtml(shift)} | <b>สถานะ:</b> ${escapeHtml(status)}
+                    </div>
+                    <div style="text-align: right;">
+                        <b>วันที่พิมพ์รายงาน:</b> ${todayThai}<br>
+                        <b>รวมทั้งหมด:</b> ${currentReportRows.length} รายการ (รวม ${totalDays.toFixed(1)} วัน / ${totalHours.toFixed(1)} ชม.)
+                    </div>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 30px;">#</th>
+                            <th>เลขที่</th>
+                            <th>รหัส</th>
+                            <th>ชื่อ - นามสกุล</th>
+                            <th>แผนก</th>
+                            <th>กะ</th>
+                            <th>ประเภทลา</th>
+                            <th>ช่วงวันที่ลา</th>
+                            <th>จำนวน</th>
+                            <th>เหตุผล</th>
+                            <th>สถานะ</th>
+                            <th>ผู้อนุมัติ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tableRowsHtml}
+                    </tbody>
+                </table>
+
+                <div style="display: flex; justify-content: space-between; margin-top: 40px; font-size: 10pt; padding: 0 40px;">
+                    <div style="text-align: center;">
+                        <p style="margin-bottom: 45px;">ลงชื่อ ................................................................</p>
+                        <p>( ................................................................ )</p>
+                        <p>ผู้จัดทำรายงาน (HR & Payroll)</p>
+                        <p>วันที่: ......./......./...........</p>
+                    </div>
+                    <div style="text-align: center;">
+                        <p style="margin-bottom: 45px;">ลงชื่อ ................................................................</p>
+                        <p>( ................................................................ )</p>
+                        <p>ผู้ตรวจสอบ / ผู้จัดการฝ่าย (Manager)</p>
+                        <p>วันที่: ......./......./...........</p>
+                    </div>
+                </div>
+            `;
+
+            window.print();
+        }
     </script>
+
+    <!-- Hidden Print Container for HR & Payroll Reports -->
+    <div id="print-report-container" class="hidden"></div>
 </body>
 </html>

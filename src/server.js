@@ -1665,6 +1665,377 @@ app.post('/api/google-sheets/sync', async (req, res) => {
   }
 });
 
+// ==========================================
+// 14. Leave Reports & Export API (Excel / CSV / JSON)
+// Designed for HR, Payroll, and Supervisor Auditing
+// ==========================================
+app.get('/api/reports/leave-export', async (req, res) => {
+  try {
+    const {
+      startDate,
+      endDate,
+      department,
+      shift,
+      leaveType,
+      status,
+      search,
+      format = 'json'
+    } = req.query;
+
+    let rows = [];
+
+    if (!pool) {
+      // Demo mock data for offline / demo mode
+      rows = [
+        {
+          id: 101,
+          employee_id: '051057',
+          employee_name: 'พรทิพย์ ดวงมณี',
+          department: 'Crimping 1',
+          shift: 'A',
+          leave_type: 'Vacation',
+          duration_type: 'FULL_DAY',
+          start_date: '2026-09-15',
+          end_date: '2026-09-16',
+          days_count: 2,
+          start_time: null,
+          end_time: null,
+          hours_count: null,
+          reason: 'พักผ่อนประจำปี',
+          status: 'APPROVED',
+          attachment_url: null,
+          reviewed_by: 'SUP-001',
+          reviewer_name: 'สมศักดิ์ คุมงาน (หัวหน้า)',
+          reviewed_at: '2026-09-14 09:30:00',
+          rejection_reason: null,
+          created_at: '2026-09-13 14:00:00'
+        },
+        {
+          id: 102,
+          employee_id: '031838',
+          employee_name: 'วีระพล สว่างจิต',
+          department: 'Crimping 1',
+          shift: 'A',
+          leave_type: 'Sick',
+          duration_type: 'HOURLY',
+          start_date: '2026-09-18',
+          end_date: '2026-09-18',
+          days_count: 0.25,
+          start_time: '13:00',
+          end_time: '15:00',
+          hours_count: 2.0,
+          reason: 'ไปพบแพทย์ตามนัด',
+          status: 'APPROVED',
+          attachment_url: '/uploads/cert-sample.jpg',
+          reviewed_by: 'SUP-001',
+          reviewer_name: 'สมศักดิ์ คุมงาน (หัวหน้า)',
+          reviewed_at: '2026-09-17 11:00:00',
+          rejection_reason: null,
+          created_at: '2026-09-17 08:30:00'
+        },
+        {
+          id: 103,
+          employee_id: 'EMP-001',
+          employee_name: 'สมชาย ใจดี',
+          department: 'Assembly',
+          shift: 'A',
+          leave_type: 'Personal',
+          duration_type: 'FULL_DAY',
+          start_date: '2026-09-20',
+          end_date: '2026-09-20',
+          days_count: 1,
+          start_time: null,
+          end_time: null,
+          hours_count: null,
+          reason: 'ทำธุระต่อใบขับขี่',
+          status: 'PENDING',
+          attachment_url: null,
+          reviewed_by: null,
+          reviewer_name: null,
+          reviewed_at: null,
+          rejection_reason: null,
+          created_at: '2026-09-19 10:15:00'
+        }
+      ];
+
+      // Filter demo data in memory
+      if (startDate) rows = rows.filter(r => r.end_date >= startDate);
+      if (endDate) rows = rows.filter(r => r.start_date <= endDate);
+      if (department && department.toUpperCase() !== 'ALL') {
+        rows = rows.filter(r => (r.department || '').toUpperCase() === department.toUpperCase());
+      }
+      if (shift && shift.toUpperCase() !== 'ALL') {
+        rows = rows.filter(r => (r.shift || '').toUpperCase() === shift.toUpperCase());
+      }
+      if (leaveType && leaveType.toUpperCase() !== 'ALL') {
+        const norm = normalizeLeaveType(leaveType);
+        rows = rows.filter(r => normalizeLeaveType(r.leave_type) === norm);
+      }
+      if (status && status.toUpperCase() !== 'ALL') {
+        rows = rows.filter(r => (r.status || '').toUpperCase() === status.toUpperCase());
+      }
+      if (search && search.trim()) {
+        const q = search.trim().toLowerCase();
+        rows = rows.filter(r => 
+          (r.employee_id || '').toLowerCase().includes(q) ||
+          (r.employee_name || '').toLowerCase().includes(q) ||
+          (r.reason || '').toLowerCase().includes(q)
+        );
+      }
+    } else {
+      let sql = `
+        SELECT 
+          lr.id,
+          lr.employee_id,
+          COALESCE(e.name, lr.employee_id) AS employee_name,
+          COALESCE(e.department, 'Assembly') AS department,
+          COALESCE(e.shift, 'A') AS shift,
+          lr.leave_type,
+          TO_CHAR(lr.start_date, 'YYYY-MM-DD') AS start_date,
+          TO_CHAR(lr.end_date, 'YYYY-MM-DD') AS end_date,
+          lr.days_count,
+          lr.duration_type,
+          lr.start_time,
+          lr.end_time,
+          lr.hours_count,
+          lr.reason,
+          lr.status,
+          lr.attachment_url,
+          lr.reviewed_by,
+          COALESCE(rev.name, lr.reviewed_by) AS reviewer_name,
+          TO_CHAR(lr.reviewed_at, 'YYYY-MM-DD HH24:MI:SS') AS reviewed_at,
+          lr.rejection_reason,
+          TO_CHAR(lr.created_at, 'YYYY-MM-DD HH24:MI:SS') AS created_at
+        FROM leave_requests lr
+        LEFT JOIN employees e ON UPPER(lr.employee_id) = UPPER(e.id)
+        LEFT JOIN employees rev ON UPPER(lr.reviewed_by) = UPPER(rev.id)
+        WHERE 1=1
+      `;
+      const params = [];
+
+      if (startDate && startDate.trim()) {
+        params.push(startDate.trim());
+        sql += ` AND lr.end_date >= $${params.length}::date`;
+      }
+
+      if (endDate && endDate.trim()) {
+        params.push(endDate.trim());
+        sql += ` AND lr.start_date <= $${params.length}::date`;
+      }
+
+      if (department && department.trim() && department.toUpperCase() !== 'ALL') {
+        params.push(department.trim().toUpperCase());
+        sql += ` AND UPPER(COALESCE(e.department, '')) = $${params.length}`;
+      }
+
+      if (shift && shift.trim() && shift.toUpperCase() !== 'ALL') {
+        params.push(shift.trim().toUpperCase());
+        sql += ` AND UPPER(COALESCE(e.shift, 'A')) = $${params.length}`;
+      }
+
+      if (leaveType && leaveType.trim() && leaveType.toUpperCase() !== 'ALL') {
+        const normType = normalizeLeaveType(leaveType);
+        params.push(normType.toUpperCase());
+        sql += ` AND UPPER(lr.leave_type) = $${params.length}`;
+      }
+
+      if (status && status.trim() && status.toUpperCase() !== 'ALL') {
+        params.push(status.trim().toUpperCase());
+        sql += ` AND UPPER(lr.status) = $${params.length}`;
+      }
+
+      if (search && search.trim()) {
+        params.push(`%${search.trim().toUpperCase()}%`);
+        const pIndex = params.length;
+        sql += ` AND (
+          UPPER(lr.employee_id) LIKE $${pIndex}
+          OR UPPER(COALESCE(e.name, '')) LIKE $${pIndex}
+          OR UPPER(COALESCE(lr.reason, '')) LIKE $${pIndex}
+        )`;
+      }
+
+      sql += ' ORDER BY lr.start_date DESC, lr.id DESC';
+
+      const result = await query(sql, params);
+      rows = result.rows;
+    }
+
+    // Calculate Summary Statistics
+    let totalRecords = rows.length;
+    let totalDays = 0;
+    let totalHours = 0;
+    let approvedRecords = 0;
+    let approvedDays = 0;
+
+    const byType = {
+      Vacation: { count: 0, days: 0 },
+      Personal: { count: 0, days: 0 },
+      Sick: { count: 0, days: 0 },
+      Unpaid: { count: 0, days: 0 },
+      Other: { count: 0, days: 0 }
+    };
+
+    const byStatus = {
+      APPROVED: 0,
+      PENDING: 0,
+      REJECTED: 0,
+      CANCELLED: 0
+    };
+
+    rows.forEach(r => {
+      const dCount = parseFloat(r.days_count) || 0;
+      const hCount = parseFloat(r.hours_count) || 0;
+      totalDays += dCount;
+      totalHours += hCount;
+
+      const st = (r.status || '').toUpperCase();
+      if (byStatus[st] !== undefined) {
+        byStatus[st]++;
+      } else {
+        byStatus[st] = 1;
+      }
+
+      if (st === 'APPROVED') {
+        approvedRecords++;
+        approvedDays += dCount;
+      }
+
+      const lt = normalizeLeaveType(r.leave_type);
+      if (byType[lt]) {
+        byType[lt].count++;
+        byType[lt].days += dCount;
+      } else {
+        byType.Other.count++;
+        byType.Other.days += dCount;
+      }
+    });
+
+    const summary = {
+      totalRecords,
+      totalDays: Number(totalDays.toFixed(2)),
+      totalHours: Number(totalHours.toFixed(2)),
+      approvedRecords,
+      approvedDays: Number(approvedDays.toFixed(2)),
+      byType,
+      byStatus
+    };
+
+    // If CSV export format requested
+    if (format.toLowerCase() === 'csv') {
+      const csvHeaders = [
+        'ลำดับ',
+        'เลขที่คำขอ',
+        'วันที่ยื่นคำขอ',
+        'รหัสพนักงาน',
+        'ชื่อ-นามสกุล',
+        'แผนก',
+        'กะการทำงาน',
+        'ประเภทการลา',
+        'รูปแบบการลา',
+        'วันที่เริ่มลา',
+        'วันที่สิ้นสุด',
+        'ช่วงเวลา',
+        'จำนวนวันลา (วัน)',
+        'จำนวนชั่วโมง (ชม.)',
+        'เหตุผลการลา',
+        'มีเอกสารแนบ',
+        'สถานะคำขอ',
+        'ผู้อนุมัติ/ตรวจสอบ',
+        'วันที่อนุมัติ/พิจารณา',
+        'หมายเหตุ/เหตุผลที่ปฏิเสธ'
+      ];
+
+      const csvEscape = (val, isEmpId = false) => {
+        if (val === null || val === undefined) return '""';
+        let str = String(val).trim();
+        // If employee ID and consists of digits, format as ="051057" to preserve leading zeros in Excel
+        if (isEmpId && /^\d+$/.test(str)) {
+          return `="${str}"`;
+        }
+        return `"${str.replace(/"/g, '""')}"`;
+      };
+
+      const formatLeaveTypeThai = (type) => {
+        const norm = normalizeLeaveType(type);
+        switch (norm) {
+          case 'Vacation': return 'ลาพักร้อน (Vacation)';
+          case 'Personal': return 'ลากิจ (Personal)';
+          case 'Sick': return 'ลาป่วย (Sick)';
+          case 'Unpaid': return 'ลาไม่รับค่าจ้าง (Unpaid)';
+          default: return type || 'อื่นๆ';
+        }
+      };
+
+      const formatStatusThai = (status) => {
+        const s = (status || '').toUpperCase();
+        switch (s) {
+          case 'APPROVED': return 'อนุมัติแล้ว (Approved)';
+          case 'PENDING': return 'รออนุมัติ (Pending)';
+          case 'REJECTED': return 'ปฏิเสธ (Rejected)';
+          case 'CANCELLED': return 'ยกเลิก (Cancelled)';
+          default: return status || '-';
+        }
+      };
+
+      const csvLines = [
+        csvHeaders.map(h => csvEscape(h)).join(',')
+      ];
+
+      rows.forEach((r, idx) => {
+        const rowData = [
+          idx + 1,
+          `REQ-${r.id}`,
+          r.created_at || '',
+          csvEscape(r.employee_id, true),
+          csvEscape(r.employee_name),
+          csvEscape(r.department),
+          csvEscape(r.shift),
+          csvEscape(formatLeaveTypeThai(r.leave_type)),
+          csvEscape(r.duration_type === 'HOURLY' ? 'รายชั่วโมง (Hourly)' : 'เต็มวัน (Full Day)'),
+          csvEscape(r.start_date),
+          csvEscape(r.end_date),
+          csvEscape(r.duration_type === 'HOURLY' && r.start_time ? `${r.start_time} - ${r.end_time}` : '-'),
+          r.days_count,
+          r.hours_count || 0,
+          csvEscape(r.reason),
+          csvEscape(r.attachment_url ? 'มี' : 'ไม่มี'),
+          csvEscape(formatStatusThai(r.status)),
+          csvEscape(r.reviewer_name || r.reviewed_by || '-'),
+          csvEscape(r.reviewed_at || '-'),
+          csvEscape(r.rejection_reason || '-')
+        ];
+
+        const line = rowData.map((val, colIdx) => {
+          if (colIdx === 3) return val; // already handled with ="..."
+          if (typeof val === 'string' && val.startsWith('"') && val.endsWith('"')) return val;
+          return csvEscape(val);
+        }).join(',');
+
+        csvLines.push(line);
+      });
+
+      const todayStr = new Date().toISOString().split('T')[0];
+      const filename = `leave_report_${startDate || 'all'}_to_${endDate || todayStr}.csv`;
+
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      // Prepend UTF-8 BOM (\uFEFF) so Excel on Windows & Mac renders Thai characters properly
+      return res.status(200).send('\uFEFF' + csvLines.join('\r\n'));
+    }
+
+    // Default JSON response
+    res.json({
+      success: true,
+      summary,
+      rows
+    });
+  } catch (err) {
+    console.error('Leave export report error:', err);
+    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการดึงรายงาน: ' + err.message });
+  }
+});
+
+
 
 // Start Server
 app.listen(PORT, () => {
