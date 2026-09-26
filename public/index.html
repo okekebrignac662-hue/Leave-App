@@ -19,9 +19,10 @@
     <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/app-style.css">
     <style>
-        body { font-family: 'Prompt', sans-serif; background-color: #f3f4f6; }
+        body { font-family: 'Plus Jakarta Sans', 'Prompt', sans-serif; }
         .hidden-view { display: none !important; }
         .toast-slide { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         @keyframes fadeInUp {
@@ -147,41 +148,47 @@
 
     <div>
         <!-- Navbar -->
-        <nav id="navbar" class="bg-slate-900/95 backdrop-blur-md text-white p-3.5 px-4 sm:px-6 shadow-md flex justify-between items-center hidden-view sticky top-0 z-40 border-b border-slate-800">
+        <nav id="navbar" class="bg-slate-900/90 backdrop-blur-xl text-white p-3.5 px-4 sm:px-6 shadow-xl flex justify-between items-center hidden-view sticky top-0 z-40 border-b border-slate-800/80">
             <div class="flex items-center space-x-3">
-                <div class="bg-gradient-to-tr from-blue-600 to-indigo-600 p-2 rounded-xl shadow-md text-white">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                    </svg>
+                <div class="relative group">
+                    <div class="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl blur-xs opacity-70 group-hover:opacity-100 transition duration-300"></div>
+                    <div class="relative bg-gradient-to-tr from-blue-600 to-indigo-600 p-2.5 rounded-2xl shadow-md text-white flex items-center justify-center">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
                 </div>
                 <div>
-                    <h1 class="text-base sm:text-lg font-bold tracking-tight">Online Leave App</h1>
-                    <p class="text-[10px] text-slate-400 font-light hidden sm:block">ระบบบริหารการลางานประจำแผนก</p>
+                    <h1 class="text-base sm:text-lg font-bold tracking-tight text-white flex items-center space-x-2">
+                        <span>Online Leave App</span>
+                        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    </h1>
+                    <p class="text-[11px] text-slate-400 font-normal hidden sm:block">ระบบบริหารจัดการและอนุมัติการลางานประจำแผนก</p>
                 </div>
             </div>
-            <div class="flex items-center space-x-3">
+            <div class="flex items-center space-x-2.5 sm:space-x-3">
                 <!-- Admin Add Employee Action Button -->
-                <button id="btn-admin-add-emp" type="button" onclick="openAddEmployeeModal()" class="hidden-view bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-3 py-1.5 rounded-xl transition text-xs font-semibold shadow-md flex items-center space-x-1.5 transform active:scale-95">
+                <button id="btn-admin-add-emp" type="button" onclick="openAddEmployeeModal()" class="hidden-view btn-emerald text-white px-3 py-1.5 rounded-xl transition text-xs font-semibold shadow-md flex items-center space-x-1.5 transform active:scale-95">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
                     </svg>
                     <span>➕ เพิ่มพนักงาน</span>
                 </button>
-                <div class="flex items-center space-x-2.5 bg-slate-800/80 border border-slate-700/60 px-3 py-1.5 rounded-xl text-xs">
-                    <div id="user-avatar-badge" class="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-inner">
+                <div class="flex items-center space-x-2.5 bg-slate-800/90 border border-slate-700/80 px-3 py-1.5 rounded-2xl text-xs shadow-inner">
+                    <div id="user-avatar-badge" class="w-7 h-7 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-xs shadow-md">
                         -
                     </div>
                     <div class="flex flex-col text-left">
                         <span id="user-name-display" class="font-semibold text-slate-100 text-xs leading-none"></span>
-                        <span id="user-role-display" class="text-[10px] text-blue-300 font-medium leading-none mt-1"></span>
+                        <span id="user-role-display" class="text-[10px] text-indigo-300 font-semibold leading-none mt-1"></span>
                     </div>
                 </div>
                 <!-- Personal Leave Toggle Button for HR / Supervisor / Admin -->
-                <button id="btn-toggle-hr-emp-view" type="button" onclick="toggleHrEmployeeView()" class="hidden bg-purple-600/30 hover:bg-purple-600 border border-purple-400/40 text-purple-200 hover:text-white px-2.5 py-1.5 rounded-xl transition text-xs font-semibold shadow-xs flex items-center space-x-1.5" title="สลับมุมมองยื่นคำขอลางานส่วนตัว">
+                <button id="btn-toggle-hr-emp-view" type="button" onclick="toggleHrEmployeeView()" class="hidden bg-purple-500/20 hover:bg-purple-600 border border-purple-400/40 text-purple-200 hover:text-white px-3 py-1.5 rounded-xl transition text-xs font-semibold shadow-xs flex items-center space-x-1.5" title="สลับมุมมองยื่นคำขอลางานส่วนตัว">
                     <span id="btn-toggle-hr-emp-view-text">📝 ยื่นขอลางานส่วนตัว</span>
                 </button>
                 <!-- PWA Install Button in Navbar -->
-                <button id="btn-pwa-install-nav" type="button" onclick="triggerPwaInstall()" class="hidden bg-indigo-600/30 hover:bg-indigo-600 border border-indigo-400/40 text-indigo-200 hover:text-white px-2.5 py-1.5 rounded-xl transition text-xs font-semibold shadow-xs flex items-center space-x-1.5" title="ติดตั้งแอปลงบนหน้าจอมือถือ">
+                <button id="btn-pwa-install-nav" type="button" onclick="triggerPwaInstall()" class="hidden bg-indigo-500/20 hover:bg-indigo-600 border border-indigo-400/40 text-indigo-200 hover:text-white px-2.5 py-1.5 rounded-xl transition text-xs font-semibold shadow-xs flex items-center space-x-1.5" title="ติดตั้งแอปลงบนหน้าจอมือถือ">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                     <span class="hidden sm:inline">📲 ติดตั้งแอป</span>
                 </button>
@@ -194,34 +201,34 @@
             </div>
         </nav>
 
-        <div class="max-w-md sm:max-w-xl md:max-w-2xl mx-auto mt-4 sm:mt-6 p-4 transition-all duration-300">
+        <div class="max-w-md sm:max-w-xl md:max-w-3xl mx-auto mt-4 sm:mt-6 p-4 transition-all duration-300">
 
             <!-- 1. LOGIN VIEW -->
             <div id="login-view" class="relative flex flex-col items-center justify-center min-h-[78vh] py-6">
                 <!-- Background Ambient Glow Blobs -->
-                <div class="absolute -top-6 -left-10 w-72 h-72 bg-blue-400/20 rounded-full blur-3xl pointer-events-none -z-10"></div>
-                <div class="absolute -bottom-8 -right-10 w-72 h-72 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none -z-10"></div>
+                <div class="absolute -top-12 -left-12 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl pointer-events-none -z-10 animate-float-1"></div>
+                <div class="absolute -bottom-12 -right-12 w-80 h-80 bg-indigo-500/25 rounded-full blur-3xl pointer-events-none -z-10 animate-float-2"></div>
 
-                <div class="bg-white/95 backdrop-blur-xl p-8 sm:p-9 rounded-3xl shadow-[0_20px_50px_-15px_rgba(30,58,138,0.14)] border border-white/80 w-full relative">
+                <div class="glass-card p-8 sm:p-10 rounded-3xl w-full relative">
                     <div class="text-center mb-6">
                         <!-- Portal Status Badge -->
-                        <div class="inline-flex items-center space-x-2 bg-blue-50/90 border border-blue-100/80 px-3 py-1 rounded-full text-blue-700 text-xs font-medium mb-4 shadow-xs">
+                        <div class="inline-flex items-center space-x-2 bg-indigo-50/90 border border-indigo-100/90 px-3.5 py-1.5 rounded-full text-indigo-700 text-xs font-semibold mb-4 shadow-xs">
                             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                             <span>ระบบบริการลางานออนไลน์ • Department Portal</span>
                         </div>
 
                         <!-- Brand Icon with Gradient & Glow -->
-                        <div class="relative w-16 h-16 mx-auto mb-3">
-                            <div class="absolute inset-0 bg-blue-600 rounded-2xl blur-md opacity-30"></div>
-                            <div class="relative bg-gradient-to-tr from-blue-600 to-indigo-600 text-white w-16 h-16 rounded-2xl flex items-center justify-center shadow-md transform hover:scale-105 transition duration-300">
+                        <div class="relative w-18 h-18 mx-auto mb-3 flex items-center justify-center">
+                            <div class="absolute inset-0 bg-indigo-600 rounded-3xl blur-lg opacity-40"></div>
+                            <div class="relative bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 text-white w-16 h-16 rounded-3xl flex items-center justify-center shadow-lg transform hover:scale-105 transition duration-300">
                                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"></path>
                                 </svg>
                             </div>
                         </div>
 
-                        <h2 class="text-2xl font-bold text-gray-900 tracking-tight">เข้าสู่ระบบลางาน</h2>
-                        <p class="text-xs text-gray-500 mt-1">กรุณากรอกรหัสพนักงานและรหัสผ่านเพื่อเข้าใช้งาน</p>
+                        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight font-heading">เข้าสู่ระบบลางาน</h2>
+                        <p class="text-xs text-gray-500 mt-1.5">กรุณากรอกรหัสพนักงานและรหัสผ่านเพื่อเข้าใช้งาน</p>
                     </div>
                     
                     <form onsubmit="event.preventDefault(); handleLogin();" class="space-y-4">
@@ -230,7 +237,7 @@
                                 <span>รหัสพนักงาน (Employee ID)</span>
                             </label>
                             <div class="relative">
-                                <input type="text" id="emp-id" required class="w-full bg-gray-50/50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 focus:outline-none transition uppercase placeholder:text-gray-400" placeholder="กรอกรหัสพนักงาน (เช่น EMP-001, HR-001, SUP-001)" autocomplete="username">
+                                <input type="text" id="emp-id" required class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition uppercase placeholder:text-gray-400 font-medium" placeholder="กรอกรหัสพนักงาน (เช่น EMP-001, HR-001, SUP-001)" autocomplete="username">
                             </div>
                         </div>
 
@@ -239,9 +246,9 @@
                                 <span>รหัสผ่าน (PIN)</span>
                             </label>
                             <div class="relative">
-                                <input type="password" id="emp-pin" required class="w-full bg-gray-50/50 border border-gray-200 rounded-xl pl-3.5 pr-10 py-2.5 text-sm focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 focus:outline-none transition tracking-wider placeholder:text-gray-400" placeholder="••••••••" autocomplete="current-password">
+                                <input type="password" id="emp-pin" required class="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-4 pr-11 py-3 text-sm focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition tracking-wider placeholder:text-gray-400" placeholder="••••••••" autocomplete="current-password">
                                 <!-- Eye Toggle Button -->
-                                <button type="button" onclick="togglePinVisibility()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition focus:outline-none" title="ดูรหัสผ่าน">
+                                <button type="button" onclick="togglePinVisibility()" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 transition focus:outline-none" title="ดูรหัสผ่าน">
                                     <svg id="eye-icon-show" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
@@ -256,28 +263,28 @@
                         <!-- Remember Me Checkbox -->
                         <div class="flex items-center justify-between pt-1">
                             <label class="flex items-center space-x-2 text-xs text-gray-600 cursor-pointer select-none">
-                                <input type="checkbox" id="remember-me" class="w-3.5 h-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                <input type="checkbox" id="remember-me" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
                                 <span>จดจำรหัสพนักงานในเครื่องนี้</span>
                             </label>
                         </div>
 
                         <!-- Submit Button with Gradient -->
-                        <button type="submit" id="btn-login" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium py-3 rounded-xl shadow-md shadow-blue-500/25 hover:shadow-lg hover:shadow-blue-500/35 transition-all duration-200 transform active:scale-[0.98] flex items-center justify-center space-x-2">
+                        <button type="submit" id="btn-login" class="w-full btn-premium py-3.5 px-4 rounded-2xl flex items-center justify-center space-x-2 text-sm shadow-lg font-semibold">
                             <span>เข้าสู่ระบบ (Login)</span>
-                            <svg class="w-4 h-4 text-blue-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-4 h-4 text-indigo-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                             </svg>
                         </button>
                     </form>
 
                     <!-- PWA Mobile Install Banner Inside Login Card -->
-                    <div id="login-pwa-banner" class="mt-4 p-3 bg-gradient-to-r from-indigo-50/90 via-purple-50/90 to-blue-50/90 border border-indigo-200/80 rounded-2xl flex items-center justify-between shadow-xs">
-                        <div class="flex items-center space-x-2.5">
+                    <div id="login-pwa-banner" class="mt-5 p-3.5 bg-gradient-to-r from-indigo-50/90 via-purple-50/90 to-blue-50/90 border border-indigo-100 rounded-2xl flex items-center justify-between shadow-xs">
+                        <div class="flex items-center space-x-3">
                             <img src="/icons/icon-192.png" alt="Leave App" class="w-9 h-9 rounded-xl shadow-xs border border-indigo-200 object-cover flex-shrink-0">
                             <div>
                                 <p class="text-xs font-bold text-indigo-950 flex items-center space-x-1.5">
                                     <span>ติดตั้ง Leave App</span>
-                                    <span class="text-[9px] bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-1.5 py-0.5 rounded-full font-semibold">PWA</span>
+                                    <span class="text-[9px] bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-2 py-0.5 rounded-full font-semibold">PWA</span>
                                 </p>
                                 <p class="text-[11px] text-indigo-600 leading-tight">ติดตั้งลงหน้าจอมือถือ เปิดใช้ทันใจ</p>
                             </div>
@@ -301,129 +308,131 @@
 
             <!-- 2. EMPLOYEE VIEW -->
             <div id="employee-view" class="hidden-view space-y-6">
-                <!-- Quota Overview: 3 Metric Cards with Progress Gauges -->
+                <!-- Quota Overview: 4 Metric Cards with Progress Gauges -->
                 <div class="space-y-3">
                     <div class="flex justify-between items-center px-1">
-                        <h2 class="text-sm font-bold text-gray-800 flex items-center space-x-2">
-                            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                        <h2 class="text-sm font-bold text-gray-800 flex items-center space-x-2 font-heading">
+                            <span class="p-1.5 rounded-lg bg-indigo-50 text-indigo-600">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                            </span>
                             <span>โควตาวันลาของคุณ (My Quota Balance)</span>
                         </h2>
-                        <button onclick="loadEmployeeQuota()" class="text-xs text-blue-600 hover:text-blue-800 flex items-center space-x-1 font-medium transition">
+                        <button onclick="loadEmployeeQuota()" class="text-xs text-indigo-600 hover:text-indigo-800 flex items-center space-x-1 font-semibold transition bg-indigo-50/70 hover:bg-indigo-100/80 px-2.5 py-1 rounded-xl">
                             <span>🔄 รีเฟรช</span>
                         </button>
                     </div>
                     
-                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
                         <!-- Vacation Card -->
-                        <div class="bg-white p-4 rounded-2xl shadow-xs border border-emerald-100 hover:shadow-md transition">
-                            <div class="flex justify-between items-start mb-2">
-                                <span class="text-xs font-semibold text-gray-600">ลาพักร้อน (Vacation)</span>
-                                <span class="text-lg">🏖️</span>
+                        <div class="quota-card quota-card-vacation">
+                            <div class="flex justify-between items-start mb-2.5">
+                                <span class="text-xs font-semibold text-gray-700">ลาพักร้อน (Vacation)</span>
+                                <span class="text-base p-1.5 bg-emerald-50 rounded-xl">🏖️</span>
                             </div>
-                            <div class="flex items-baseline space-x-1">
-                                <span id="quota-vac-rem" class="text-2xl font-extrabold text-emerald-600">--</span>
-                                <span class="text-xs text-gray-400">/ <span id="quota-vac-tot">--</span> วัน</span>
+                            <div class="flex items-baseline space-x-1.5">
+                                <span id="quota-vac-rem" class="text-2xl sm:text-3xl font-extrabold text-emerald-600 tracking-tight">--</span>
+                                <span class="text-xs text-gray-400 font-medium">/ <span id="quota-vac-tot">--</span> วัน</span>
                             </div>
-                            <div class="w-full bg-emerald-50 rounded-full h-2 mt-3 overflow-hidden">
-                                <div id="quota-vac-bar" class="bg-emerald-500 h-full rounded-full transition-all duration-700" style="width: 0%"></div>
+                            <div class="w-full bg-emerald-100/70 rounded-full h-2 mt-3 overflow-hidden">
+                                <div id="quota-vac-bar" class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-700 quota-progress-bar" style="width: 0%"></div>
                             </div>
-                            <div class="flex justify-between text-[10px] text-gray-400 mt-1.5 font-medium">
+                            <div class="flex justify-between text-[11px] text-gray-500 mt-2 font-medium">
                                 <span>เหลือใช้งาน</span>
-                                <span id="quota-vac-pct">--%</span>
+                                <span id="quota-vac-pct" class="font-bold text-emerald-700">--%</span>
                             </div>
                         </div>
 
                         <!-- Personal Card -->
-                        <div class="bg-white p-4 rounded-2xl shadow-xs border border-amber-100 hover:shadow-md transition">
-                            <div class="flex justify-between items-start mb-2">
-                                <span class="text-xs font-semibold text-gray-600">ลากิจ (Personal)</span>
-                                <span class="text-lg">💼</span>
+                        <div class="quota-card quota-card-personal">
+                            <div class="flex justify-between items-start mb-2.5">
+                                <span class="text-xs font-semibold text-gray-700">ลากิจ (Personal)</span>
+                                <span class="text-base p-1.5 bg-amber-50 rounded-xl">💼</span>
                             </div>
-                            <div class="flex items-baseline space-x-1">
-                                <span id="quota-per-rem" class="text-2xl font-extrabold text-amber-600">--</span>
-                                <span class="text-xs text-gray-400">/ <span id="quota-per-tot">--</span> วัน</span>
+                            <div class="flex items-baseline space-x-1.5">
+                                <span id="quota-per-rem" class="text-2xl sm:text-3xl font-extrabold text-amber-600 tracking-tight">--</span>
+                                <span class="text-xs text-gray-400 font-medium">/ <span id="quota-per-tot">--</span> วัน</span>
                             </div>
-                            <div class="w-full bg-amber-50 rounded-full h-2 mt-3 overflow-hidden">
-                                <div id="quota-per-bar" class="bg-amber-500 h-full rounded-full transition-all duration-700" style="width: 0%"></div>
+                            <div class="w-full bg-amber-100/70 rounded-full h-2 mt-3 overflow-hidden">
+                                <div id="quota-per-bar" class="bg-gradient-to-r from-amber-500 to-yellow-400 h-full rounded-full transition-all duration-700 quota-progress-bar" style="width: 0%"></div>
                             </div>
-                            <div class="flex justify-between text-[10px] text-gray-400 mt-1.5 font-medium">
+                            <div class="flex justify-between text-[11px] text-gray-500 mt-2 font-medium">
                                 <span>เหลือใช้งาน</span>
-                                <span id="quota-per-pct">--%</span>
+                                <span id="quota-per-pct" class="font-bold text-amber-700">--%</span>
                             </div>
                         </div>
 
                         <!-- Sick Card -->
-                        <div class="bg-white p-4 rounded-2xl shadow-xs border border-blue-100 hover:shadow-md transition">
-                            <div class="flex justify-between items-start mb-2">
-                                <span class="text-xs font-semibold text-gray-600">ลาป่วย (Sick Leave)</span>
-                                <span class="text-lg">🏥</span>
+                        <div class="quota-card quota-card-sick">
+                            <div class="flex justify-between items-start mb-2.5">
+                                <span class="text-xs font-semibold text-gray-700">ลาป่วย (Sick Leave)</span>
+                                <span class="text-base p-1.5 bg-blue-50 rounded-xl">🏥</span>
                             </div>
-                            <div class="flex items-baseline space-x-1">
-                                <span id="quota-sic-rem" class="text-2xl font-extrabold text-blue-600">--</span>
-                                <span class="text-xs text-gray-400">/ <span id="quota-sic-tot">--</span> วัน</span>
+                            <div class="flex items-baseline space-x-1.5">
+                                <span id="quota-sic-rem" class="text-2xl sm:text-3xl font-extrabold text-blue-600 tracking-tight">--</span>
+                                <span class="text-xs text-gray-400 font-medium">/ <span id="quota-sic-tot">--</span> วัน</span>
                             </div>
-                            <div class="w-full bg-blue-50 rounded-full h-2 mt-3 overflow-hidden">
-                                <div id="quota-sic-bar" class="bg-blue-500 h-full rounded-full transition-all duration-700" style="width: 0%"></div>
+                            <div class="w-full bg-blue-100/70 rounded-full h-2 mt-3 overflow-hidden">
+                                <div id="quota-sic-bar" class="bg-gradient-to-r from-blue-500 to-indigo-500 h-full rounded-full transition-all duration-700 quota-progress-bar" style="width: 0%"></div>
                             </div>
-                            <div class="flex justify-between text-[10px] text-gray-400 mt-1.5 font-medium">
+                            <div class="flex justify-between text-[11px] text-gray-500 mt-2 font-medium">
                                 <span>เหลือใช้งาน</span>
-                                <span id="quota-sic-pct">--%</span>
+                                <span id="quota-sic-pct" class="font-bold text-blue-700">--%</span>
                             </div>
                         </div>
 
                         <!-- Unpaid Card -->
-                        <div class="bg-white p-4 rounded-2xl shadow-xs border border-purple-100 hover:shadow-md transition">
-                            <div class="flex justify-between items-start mb-2">
-                                <span class="text-xs font-semibold text-gray-600">ลาไม่รับค่าจ้าง (Unpaid)</span>
-                                <span class="text-lg">📋</span>
+                        <div class="quota-card quota-card-unpaid">
+                            <div class="flex justify-between items-start mb-2.5">
+                                <span class="text-xs font-semibold text-gray-700">ลาไม่รับค่าจ้าง (Unpaid)</span>
+                                <span class="text-base p-1.5 bg-purple-50 rounded-xl">📋</span>
                             </div>
-                            <div class="flex items-baseline space-x-1">
-                                <span id="quota-unpaid-rem" class="text-2xl font-extrabold text-purple-600">--</span>
-                                <span class="text-xs text-gray-400">/ <span id="quota-unpaid-tot">--</span> วัน</span>
+                            <div class="flex items-baseline space-x-1.5">
+                                <span id="quota-unpaid-rem" class="text-2xl sm:text-3xl font-extrabold text-purple-600 tracking-tight">--</span>
+                                <span class="text-xs text-gray-400 font-medium">/ <span id="quota-unpaid-tot">--</span> วัน</span>
                             </div>
-                            <div class="w-full bg-purple-50 rounded-full h-2 mt-3 overflow-hidden">
-                                <div id="quota-unpaid-bar" class="bg-purple-500 h-full rounded-full transition-all duration-700" style="width: 0%"></div>
+                            <div class="w-full bg-purple-100/70 rounded-full h-2 mt-3 overflow-hidden">
+                                <div id="quota-unpaid-bar" class="bg-gradient-to-r from-purple-500 to-pink-500 h-full rounded-full transition-all duration-700 quota-progress-bar" style="width: 0%"></div>
                             </div>
-                            <div class="flex justify-between text-[10px] text-gray-400 mt-1.5 font-medium">
+                            <div class="flex justify-between text-[11px] text-gray-500 mt-2 font-medium">
                                 <span>เหลือใช้งาน</span>
-                                <span id="quota-unpaid-pct">--%</span>
+                                <span id="quota-unpaid-pct" class="font-bold text-purple-700">--%</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Department Leave Calendar Card -->
-                <div class="bg-white p-3.5 sm:p-6 rounded-3xl shadow-xs border border-gray-100/90 space-y-4">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 pb-3">
+                <div class="glass-card p-4 sm:p-6 rounded-3xl space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100/90 pb-3.5">
                         <div>
-                            <h2 class="text-base font-bold text-gray-800 flex items-center space-x-2">
-                                <span class="text-lg">🗓️</span>
+                            <h2 class="text-base font-bold text-gray-900 flex items-center space-x-2 font-heading">
+                                <span class="text-xl">🗓️</span>
                                 <span>ปฏิทินวันลาของแผนก (Department Leave Calendar)</span>
                             </h2>
                             <div class="flex flex-wrap items-center gap-1.5 text-xs text-gray-500 mt-1">
-                                <span>แผนก: <b id="cal-dept-name" class="cal-dept-name text-blue-900">Assembly</b></span>
+                                <span>แผนก: <b id="cal-dept-name" class="cal-dept-name text-indigo-900 font-bold">Assembly</b></span>
                                 <span class="text-gray-300">•</span>
                                 <span class="font-medium text-gray-700">โควตาแยกตามกะ:</span>
                                 <div id="cal-shift-quotas-badge" class="cal-shift-quotas-badge inline-flex flex-wrap items-center gap-1.5 font-bold">
-                                    <span class="px-2 py-0.5 rounded-lg border text-[11px] bg-blue-50 text-blue-800 border-blue-200">กะ A: 3 คน/วัน</span>
-                                    <span class="px-2 py-0.5 rounded-lg border text-[11px] bg-purple-50 text-purple-800 border-purple-200">กะ B: 3 คน/วัน</span>
+                                    <span class="px-2.5 py-0.5 rounded-lg border text-[11px] bg-blue-50 text-blue-800 border-blue-200">กะ A: 3 คน/วัน</span>
+                                    <span class="px-2.5 py-0.5 rounded-lg border text-[11px] bg-purple-50 text-purple-800 border-purple-200">กะ B: 3 คน/วัน</span>
                                 </div>
                             </div>
                         </div>
                         <!-- Month Navigation -->
-                        <div class="flex items-center space-x-2 self-start sm:self-auto">
-                            <button type="button" onclick="changeCalendarMonth(-1)" class="w-8 h-8 rounded-xl border border-gray-200 hover:bg-gray-50 flex items-center justify-center text-gray-600 transition text-sm">◀</button>
-                            <span id="cal-month-label" class="cal-month-label text-xs font-bold text-gray-800 px-2 min-w-[120px] text-center">กำลังโหลด...</span>
-                            <button type="button" onclick="changeCalendarMonth(1)" class="w-8 h-8 rounded-xl border border-gray-200 hover:bg-gray-50 flex items-center justify-center text-gray-600 transition text-sm">▶</button>
+                        <div class="flex items-center space-x-2 self-start sm:self-auto bg-slate-50 p-1 rounded-2xl border border-slate-200/80">
+                            <button type="button" onclick="changeCalendarMonth(-1)" class="w-8 h-8 rounded-xl bg-white hover:bg-slate-100 flex items-center justify-center text-gray-700 transition shadow-2xs text-xs font-bold active:scale-95">◀</button>
+                            <span id="cal-month-label" class="cal-month-label text-xs font-bold text-gray-800 px-3 min-w-[130px] text-center">กำลังโหลด...</span>
+                            <button type="button" onclick="changeCalendarMonth(1)" class="w-8 h-8 rounded-xl bg-white hover:bg-slate-100 flex items-center justify-center text-gray-700 transition shadow-2xs text-xs font-bold active:scale-95">▶</button>
                         </div>
                     </div>
 
                     <!-- Legend -->
-                    <div class="flex flex-wrap items-center gap-3 text-[11px] text-gray-600 bg-gray-50/70 p-2.5 rounded-xl border border-gray-100">
+                    <div class="flex flex-wrap items-center gap-3 text-[11px] text-gray-600 bg-slate-50/90 p-3 rounded-2xl border border-slate-200/70">
                         <span class="font-semibold text-gray-700">สัญลักษณ์:</span>
-                        <span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span><span>ว่าง (0 คน)</span></span>
-                        <span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span><span>มีคนลาแล้ว (ยังมีที่ว่าง)</span></span>
-                        <span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span><span>เต็มโควตา (ลาไม่ได้ ยกเว้นป่วย)</span></span>
+                        <span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-xs"></span><span>ว่าง (0 คน)</span></span>
+                        <span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-xs"></span><span>มีคนลาแล้ว (ยังมีที่ว่าง)</span></span>
+                        <span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-xs"></span><span>เต็มโควตา (ลาไม่ได้ ยกเว้นป่วย)</span></span>
                     </div>
 
                     <!-- Calendar Grid -->
@@ -443,16 +452,16 @@
                     </div>
 
                     <!-- Selected Day Details Tooltip/Notice -->
-                    <div id="cal-selected-info" class="hidden text-xs p-3 rounded-2xl bg-blue-50 border border-blue-100 text-blue-900 transition">
+                    <div id="cal-selected-info" class="hidden text-xs p-3.5 rounded-2xl bg-indigo-50/90 border border-indigo-100 text-indigo-950 transition">
                         <!-- Populated on click of day cell -->
                     </div>
                 </div>
 
                 <!-- Request Leave Form -->
-                <div class="bg-white p-6 rounded-3xl shadow-xs border border-gray-100/90">
-                    <div class="flex items-center justify-between mb-4 border-b border-gray-100 pb-3">
-                        <h2 class="text-base font-bold text-gray-800 flex items-center space-x-2">
-                            <div class="w-7 h-7 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                <div class="glass-card p-6 sm:p-7 rounded-3xl space-y-4">
+                    <div class="flex items-center justify-between mb-4 border-b border-gray-100/90 pb-3">
+                        <h2 class="text-base font-bold text-gray-900 flex items-center space-x-2 font-heading">
+                            <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-blue-600 text-white flex items-center justify-center shadow-xs">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                             </div>
                             <span>ขอลางาน (Submit Leave Request)</span>
@@ -462,7 +471,7 @@
                     <form id="leave-form" onsubmit="event.preventDefault(); submitLeaveRequest();" class="space-y-4">
                         <div>
                             <label class="block text-xs font-semibold text-gray-700 mb-1.5">ประเภทการลา (Type of Leave)</label>
-                            <select id="req-leave-type" onchange="calculateRequestedDays(); checkMedicalCertificateRequirement();" class="w-full bg-gray-50/50 border border-gray-200 rounded-xl p-2.5 text-sm outline-none focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 transition">
+                            <select id="req-leave-type" onchange="calculateRequestedDays(); checkMedicalCertificateRequirement();" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-sm outline-none focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 transition font-medium">
                                 <option value="Vacation">🏖️ ลาพักร้อน (Vacation)</option>
                                 <option value="Personal">💼 ลากิจ (Personal Leave)</option>
                                 <option value="Sick">🏥 ลาป่วย (Sick Leave - ได้รับการยกเว้นโควตาแผนก)</option>
@@ -473,11 +482,11 @@
                         <!-- Duration Type Toggle (Full Day vs Hourly) -->
                         <div>
                             <label class="block text-xs font-semibold text-gray-700 mb-1.5">รูปแบบการลา (Leave Duration)</label>
-                            <div class="grid grid-cols-2 gap-2 p-1 bg-gray-100/80 rounded-2xl border border-gray-200/70">
-                                <button type="button" id="btn-mode-full" onclick="setLeaveDurationMode('FULL_DAY')" class="py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5 bg-white text-blue-700 shadow-xs border border-gray-200/60">
+                            <div class="grid grid-cols-2 gap-2 p-1.5 bg-slate-100/90 rounded-2xl border border-slate-200/80">
+                                <button type="button" id="btn-mode-full" onclick="setLeaveDurationMode('FULL_DAY')" class="py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5 bg-white text-indigo-700 shadow-sm border border-slate-200/60">
                                     <span>☀️ ลาเต็มวัน (Full Day)</span>
                                 </button>
-                                <button type="button" id="btn-mode-hourly" onclick="setLeaveDurationMode('HOURLY')" class="py-2 px-3 rounded-xl text-xs font-semibold text-gray-600 hover:text-gray-900 transition flex items-center justify-center space-x-1.5">
+                                <button type="button" id="btn-mode-hourly" onclick="setLeaveDurationMode('HOURLY')" class="py-2.5 px-3 rounded-xl text-xs font-semibold text-gray-600 hover:text-gray-900 transition flex items-center justify-center space-x-1.5">
                                     <span>⏰ ลารายชั่วโมง (Hourly)</span>
                                 </button>
                             </div>
@@ -487,51 +496,51 @@
                         <div id="date-range-container" class="grid grid-cols-2 gap-3.5">
                             <div>
                                 <label id="label-start-date" class="block text-xs font-semibold text-gray-700 mb-1.5">วันเริ่มต้น (Start)</label>
-                                <input type="date" id="req-start-date" required onchange="calculateRequestedDays()" class="w-full bg-gray-50/50 border border-gray-200 rounded-xl p-2.5 text-xs sm:text-sm outline-none focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 transition">
+                                <input type="date" id="req-start-date" required onchange="calculateRequestedDays()" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-xs sm:text-sm outline-none focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 transition">
                             </div>
                             <div id="container-end-date">
                                 <label class="block text-xs font-semibold text-gray-700 mb-1.5">วันสิ้นสุด (End)</label>
-                                <input type="date" id="req-end-date" required onchange="calculateRequestedDays()" class="w-full bg-gray-50/50 border border-gray-200 rounded-xl p-2.5 text-xs sm:text-sm outline-none focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 transition">
+                                <input type="date" id="req-end-date" required onchange="calculateRequestedDays()" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-xs sm:text-sm outline-none focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 transition">
                             </div>
                         </div>
 
                         <!-- Time inputs container (Visible in HOURLY mode) -->
-                        <div id="time-inputs-container" class="hidden space-y-2.5 bg-blue-50/60 border border-blue-200/60 p-3.5 rounded-2xl transition">
+                        <div id="time-inputs-container" class="hidden space-y-2.5 bg-indigo-50/80 border border-indigo-200/80 p-4 rounded-2xl transition">
                             <div class="flex items-center justify-between">
-                                <label class="block text-xs font-bold text-blue-950 flex items-center space-x-1">
+                                <label class="block text-xs font-bold text-indigo-950 flex items-center space-x-1">
                                     <span>⏰ ระบุช่วงเวลาที่ต้องการลา (เช่น 10:00 ถึง 11:00)</span>
                                 </label>
-                                <span class="text-[11px] text-blue-700 font-medium">คำนวณฐาน 8 ชม./วัน</span>
+                                <span class="text-[11px] text-indigo-700 font-semibold bg-white/80 px-2 py-0.5 rounded-lg">ฐาน 8 ชม./วัน</span>
                             </div>
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
                                     <label class="block text-[11px] font-semibold text-gray-600 mb-1">เวลาเริ่ม (Start Time)</label>
-                                    <input type="time" id="req-start-time" value="10:00" onchange="calculateRequestedDays()" class="w-full bg-white border border-gray-200 rounded-xl p-2 text-xs sm:text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 transition">
+                                    <input type="time" id="req-start-time" value="10:00" onchange="calculateRequestedDays()" class="w-full bg-white border border-gray-200 rounded-xl p-2.5 text-xs sm:text-sm outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/20 transition">
                                 </div>
                                 <div>
                                     <label class="block text-[11px] font-semibold text-gray-600 mb-1">เวลาสิ้นสุด (End Time)</label>
-                                    <input type="time" id="req-end-time" value="11:00" onchange="calculateRequestedDays()" class="w-full bg-white border border-gray-200 rounded-xl p-2 text-xs sm:text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 transition">
+                                    <input type="time" id="req-end-time" value="11:00" onchange="calculateRequestedDays()" class="w-full bg-white border border-gray-200 rounded-xl p-2.5 text-xs sm:text-sm outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/20 transition">
                                 </div>
                             </div>
                         </div>
 
                         <!-- Dynamic Days Calculation Chip -->
-                        <div id="date-calc-chip" class="hidden bg-blue-50/80 border border-blue-200/70 p-3 rounded-2xl flex items-center justify-between text-xs text-blue-900 transition-all duration-300">
+                        <div id="date-calc-chip" class="hidden bg-indigo-50/90 border border-indigo-200/80 p-3.5 rounded-2xl flex items-center justify-between text-xs text-indigo-950 transition-all duration-300">
                             <div class="flex items-center space-x-2">
                                 <span class="text-base">🗓️</span>
                                 <div>
                                     <span class="font-medium">รวมระยะเวลาที่ขอลา:</span>
-                                    <b id="date-calc-days" class="text-blue-700 font-bold ml-1">- วัน</b>
+                                    <b id="date-calc-days" class="text-indigo-700 font-bold ml-1">- วัน</b>
                                 </div>
                             </div>
-                            <span id="date-calc-status" class="text-[11px] px-2.5 py-0.5 rounded-full font-medium bg-blue-100 text-blue-800">
+                            <span id="date-calc-status" class="text-[11px] px-3 py-1 rounded-full font-bold bg-indigo-100 text-indigo-800 shadow-2xs">
                                 อยู่ในเกณฑ์
                             </span>
                         </div>
 
                         <div>
                             <label class="block text-xs font-semibold text-gray-700 mb-1.5">เหตุผลการลางาน (Reason)</label>
-                            <textarea id="req-reason" rows="2" class="w-full bg-gray-50/50 border border-gray-200 rounded-xl p-3 outline-none text-sm focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 transition placeholder:text-gray-400" placeholder="ระบุรายละเอียดเพิ่มเติม (ถ้ามี)..."></textarea>
+                            <textarea id="req-reason" rows="2" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3.5 outline-none text-sm focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 transition placeholder:text-gray-400" placeholder="ระบุรายละเอียดเพิ่มเติม (ถ้ามี)..."></textarea>
                         </div>
 
                         <!-- Attachment / Medical Certificate Upload Section -->
@@ -544,7 +553,7 @@
                             </div>
 
                             <!-- Sick leave rule reminder box (appears when sick leave >= 2 days) -->
-                            <div id="sick-leave-cert-notice" class="hidden bg-amber-50/90 border border-amber-200 p-2.5 rounded-xl text-[11px] text-amber-800 flex items-start space-x-2">
+                            <div id="sick-leave-cert-notice" class="hidden bg-amber-50/90 border border-amber-200 p-3 rounded-2xl text-[11px] text-amber-800 flex items-start space-x-2">
                                 <span class="text-sm">⚠️</span>
                                 <div>
                                     <span class="font-bold">คำแนะนำสำหรับการลาป่วย:</span>
@@ -553,12 +562,12 @@
                             </div>
 
                             <!-- Dropzone / File Picker -->
-                            <div id="attachment-dropzone" class="relative border-2 border-dashed border-gray-200 hover:border-indigo-400 rounded-2xl p-4 bg-gray-50/50 hover:bg-indigo-50/20 transition-all text-center cursor-pointer group">
+                            <div id="attachment-dropzone" class="relative border-2 border-dashed border-slate-200 hover:border-indigo-500 rounded-2xl p-5 bg-slate-50/60 hover:bg-indigo-50/30 transition-all text-center cursor-pointer group">
                                 <input type="file" id="req-attachment-file" accept="image/jpeg,image/png,image/webp,application/pdf" onchange="handleAttachmentFileSelect(event)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
                                 
                                 <!-- Empty State -->
                                 <div id="attachment-empty-state" class="flex flex-col items-center justify-center space-y-1.5 py-1 pointer-events-none">
-                                    <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg group-hover:scale-110 transition duration-200 shadow-xs">
+                                    <div class="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl group-hover:scale-110 transition duration-200 shadow-2xs">
                                         📸
                                     </div>
                                     <p class="text-xs font-semibold text-gray-700">แตะเพื่อถ่ายรูป หรือเลือกไฟล์รูปภาพ / PDF</p>
@@ -566,10 +575,10 @@
                                 </div>
 
                                 <!-- Preview State (Hidden by default) -->
-                                <div id="attachment-preview-state" class="hidden flex items-center justify-between bg-white p-2.5 rounded-xl border border-indigo-200 shadow-xs relative z-20">
+                                <div id="attachment-preview-state" class="hidden flex items-center justify-between bg-white p-3 rounded-2xl border border-indigo-200 shadow-xs relative z-20">
                                     <div class="flex items-center space-x-3 min-w-0">
-                                        <img id="attachment-preview-img" src="" alt="Preview" class="w-12 h-12 rounded-lg object-cover border border-gray-200 shrink-0 shadow-2xs">
-                                        <div id="attachment-preview-pdf" class="hidden w-12 h-12 rounded-lg bg-rose-50 text-rose-600 border border-rose-200 flex flex-col items-center justify-center shrink-0">
+                                        <img id="attachment-preview-img" src="" alt="Preview" class="w-12 h-12 rounded-xl object-cover border border-gray-200 shrink-0 shadow-2xs">
+                                        <div id="attachment-preview-pdf" class="hidden w-12 h-12 rounded-xl bg-rose-50 text-rose-600 border border-rose-200 flex flex-col items-center justify-center shrink-0">
                                             <span class="text-lg">📄</span>
                                             <span class="text-[9px] font-bold">PDF</span>
                                         </div>
@@ -579,10 +588,10 @@
                                         </div>
                                     </div>
                                     <div class="flex items-center space-x-1.5 shrink-0">
-                                        <button type="button" onclick="previewSelectedAttachment(event)" class="text-xs text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded-lg transition font-medium">
+                                        <button type="button" onclick="previewSelectedAttachment(event)" class="text-xs text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-xl transition font-medium">
                                             🔍 ดูภาพ
                                         </button>
-                                        <button type="button" onclick="removeSelectedAttachment(event)" class="text-xs text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1.5 rounded-lg transition" title="ลบไฟล์">
+                                        <button type="button" onclick="removeSelectedAttachment(event)" class="text-xs text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded-xl transition" title="ลบไฟล์">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                                         </button>
                                     </div>
@@ -590,9 +599,9 @@
                             </div>
                         </div>
 
-                        <button type="submit" id="btn-submit-req" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3 rounded-xl shadow-md shadow-blue-500/25 hover:shadow-lg hover:shadow-blue-500/35 transition-all duration-200 transform active:scale-[0.98] flex items-center justify-center space-x-2">
+                        <button type="submit" id="btn-submit-req" class="w-full btn-premium py-3.5 px-4 rounded-2xl flex items-center justify-center space-x-2 text-sm shadow-lg font-semibold">
                             <span>ส่งคำขอลางาน (Submit Request)</span>
-                            <svg class="w-4 h-4 text-blue-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-4 h-4 text-indigo-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                             </svg>
                         </button>
@@ -600,11 +609,11 @@
                 </div>
 
                 <!-- My Leave History -->
-                <div class="bg-white p-6 rounded-3xl shadow-xs border border-gray-100/90 space-y-3">
-                    <div class="flex justify-between items-center border-b border-gray-100 pb-3">
+                <div class="glass-card p-6 sm:p-7 rounded-3xl space-y-3">
+                    <div class="flex justify-between items-center border-b border-gray-100/90 pb-3">
                         <div class="flex items-center space-x-2">
-                            <h2 class="text-base font-bold text-gray-800">ประวัติการขอลา (My Leave History)</h2>
-                            <span id="history-count" class="bg-gray-100 text-gray-600 text-xs px-2.5 py-0.5 rounded-full font-semibold">0 รายการ</span>
+                            <h2 class="text-base font-bold text-gray-800 font-heading">ประวัติการขอลา (My Leave History)</h2>
+                            <span id="history-count" class="bg-indigo-50 text-indigo-700 text-xs px-2.5 py-0.5 rounded-full font-bold">0 รายการ</span>
                         </div>
                     </div>
                     <div id="my-requests-list" class="space-y-3 pt-1">
@@ -616,20 +625,20 @@
             <!-- 3. SUPERVISOR VIEW -->
             <div id="supervisor-view" class="hidden-view space-y-6">
                 <!-- Admin Management Banner (Visible only for ADMIN) -->
-                <div id="admin-banner-card" class="hidden-view bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-4 sm:p-5 rounded-3xl shadow-md border border-indigo-500/30 flex flex-col sm:flex-row items-center justify-between gap-3.5">
-                    <div class="flex items-center space-x-3 w-full sm:w-auto">
-                        <div class="w-10 h-10 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-xl shrink-0">
+                <div id="admin-banner-card" class="hidden-view bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950 text-white p-5 rounded-3xl shadow-xl border border-indigo-500/30 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center space-x-3.5 w-full sm:w-auto">
+                        <div class="w-11 h-11 rounded-2xl bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center text-2xl shadow-inner shrink-0">
                             🛡️
                         </div>
                         <div>
                             <div class="flex items-center space-x-2">
-                                <h3 class="text-sm font-bold text-white">ระบบจัดการพนักงาน (Admin Portal)</h3>
-                                <span class="bg-indigo-500/30 text-indigo-200 border border-indigo-400/30 text-[10px] px-2 py-0.5 rounded-full font-mono">ADMIN ONLY</span>
+                                <h3 class="text-sm sm:text-base font-bold text-white font-heading">ระบบจัดการพนักงาน (Admin Portal)</h3>
+                                <span class="bg-indigo-500/30 text-indigo-200 border border-indigo-400/30 text-[10px] px-2.5 py-0.5 rounded-full font-mono font-bold">ADMIN ONLY</span>
                             </div>
-                            <p class="text-[11px] text-slate-300 mt-0.5">เพิ่มข้อมูลพนักงานใหม่ กำหนดแผนก และโควตาวันลาเข้าสู่ระบบ</p>
+                            <p class="text-[11px] text-slate-300 mt-1">เพิ่มข้อมูลพนักงานใหม่ กำหนดแผนก กะการทำงาน และโควตาวันลาเริ่มต้น</p>
                         </div>
                     </div>
-                    <button type="button" onclick="openAddEmployeeModal()" class="w-full sm:w-auto bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-md transition flex items-center justify-center space-x-1.5 shrink-0 transform active:scale-95">
+                    <button type="button" onclick="openAddEmployeeModal()" class="w-full sm:w-auto btn-emerald text-white px-4 py-2.5 rounded-2xl text-xs font-semibold shadow-md transition flex items-center justify-center space-x-1.5 shrink-0 transform active:scale-95">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
                         </svg>
@@ -638,81 +647,84 @@
                 </div>
 
                 <!-- HR Portal Banner (Visible only for HR) -->
-                <div id="hr-banner-card" class="hidden-view bg-gradient-to-r from-purple-950 via-indigo-950 to-slate-900 text-white p-4 sm:p-5 rounded-3xl shadow-md border border-purple-500/30 flex flex-col sm:flex-row items-center justify-between gap-3.5">
-                    <div class="flex items-center space-x-3 w-full sm:w-auto">
-                        <div class="w-10 h-10 rounded-2xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center text-xl shrink-0">
+                <div id="hr-banner-card" class="hidden-view bg-gradient-to-r from-purple-950 via-slate-900 to-indigo-950 text-white p-5 rounded-3xl shadow-xl border border-purple-500/30 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center space-x-3.5 w-full sm:w-auto">
+                        <div class="w-11 h-11 rounded-2xl bg-purple-500/20 border border-purple-400/40 flex items-center justify-center text-2xl shadow-inner shrink-0">
                             💼
                         </div>
                         <div>
                             <div class="flex items-center space-x-2">
-                                <h3 class="text-sm font-bold text-white">ระบบงานฝ่ายบุคคลและเงินเดือน (HR & Payroll Portal)</h3>
-                                <span class="bg-purple-500/30 text-purple-200 border border-purple-400/30 text-[10px] px-2 py-0.5 rounded-full font-mono font-bold">HR ACCESS</span>
+                                <h3 class="text-sm sm:text-base font-bold text-white font-heading">ระบบงานฝ่ายบุคคลและเงินเดือน (HR & Payroll Portal)</h3>
+                                <span class="bg-purple-500/30 text-purple-200 border border-purple-400/30 text-[10px] px-2.5 py-0.5 rounded-full font-mono font-bold">HR ACCESS</span>
                             </div>
-                            <p class="text-[11px] text-purple-200/80 mt-0.5">ดูแลภาพรวมการลางานทุกแผนก ส่งออกรายงานสำหรับคิดเงินเดือน และตรวจสอบโควตาพนักงาน</p>
+                            <p class="text-[11px] text-purple-200/80 mt-1">ดูแลภาพรวมการลางานทุกแผนก ส่งออกรายงานสำหรับคิดเงินเดือน และตรวจสอบโควตาพนักงาน</p>
                         </div>
                     </div>
-                    <div class="flex items-center space-x-2 w-full sm:w-auto">
-                        <button type="button" onclick="switchSupervisorTab('reports')" class="flex-1 sm:flex-initial bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white px-3.5 py-2 rounded-xl text-xs font-semibold shadow-md transition flex items-center justify-center space-x-1.5 shrink-0 transform active:scale-95">
+                    <div class="flex items-center space-x-2.5 w-full sm:w-auto">
+                        <button type="button" onclick="switchSupervisorTab('reports')" class="flex-1 sm:flex-initial bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white px-4 py-2.5 rounded-2xl text-xs font-semibold shadow-md transition flex items-center justify-center space-x-1.5 shrink-0 transform active:scale-95">
                             <span>📊 ส่งออกรายงาน Excel / CSV</span>
                         </button>
-                        <button type="button" onclick="switchSupervisorTab('pending')" class="flex-1 sm:flex-initial bg-white/10 hover:bg-white/20 text-white border border-white/20 px-3 py-2 rounded-xl text-xs font-semibold transition flex items-center justify-center space-x-1 shrink-0">
+                        <button type="button" onclick="switchSupervisorTab('pending')" class="flex-1 sm:flex-initial bg-white/10 hover:bg-white/20 text-white border border-white/20 px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition flex items-center justify-center space-x-1 shrink-0">
                             <span>⏳ รายการรออนุมัติ</span>
                         </button>
                     </div>
                 </div>
 
                 <!-- Executive Summary Cards -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
-                    <div class="bg-white p-4 rounded-2xl shadow-xs border border-amber-100">
-                        <span class="text-[11px] font-semibold text-gray-500 block">รออนุมัติ (Pending)</span>
-                        <span id="sup-stat-pending" class="text-2xl font-extrabold text-amber-600 mt-0.5 block">0</span>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="glass-card p-4 sm:p-5 rounded-2xl border-l-4 border-l-amber-500">
+                        <span class="text-[11px] font-bold text-gray-500 uppercase tracking-wider block">รออนุมัติ (Pending)</span>
+                        <div class="flex items-baseline space-x-2 mt-1">
+                            <span id="sup-stat-pending" class="text-3xl font-extrabold text-amber-600 font-heading">0</span>
+                            <span class="text-xs text-amber-700/80 font-medium">รายการ</span>
+                        </div>
                     </div>
-                    <div class="bg-white p-4 rounded-2xl shadow-xs border border-blue-100">
-                        <span class="text-[11px] font-semibold text-gray-500 block">แผนก (Dept)</span>
-                        <span id="sup-stat-dept" class="text-base font-bold text-blue-900 mt-1 block truncate">Assembly</span>
+                    <div class="glass-card p-4 sm:p-5 rounded-2xl border-l-4 border-l-indigo-600">
+                        <span class="text-[11px] font-bold text-gray-500 uppercase tracking-wider block">แผนก (Department)</span>
+                        <span id="sup-stat-dept" class="text-xl sm:text-2xl font-bold text-indigo-950 mt-1 block truncate font-heading">Assembly</span>
                     </div>
-                    <div class="bg-white p-4 rounded-2xl shadow-xs border border-emerald-100">
-                        <span class="text-[11px] font-semibold text-gray-500 block">โควตาลารายวัน (แยกตามกะ)</span>
-                        <div id="sup-stat-quota" class="mt-1 flex flex-wrap gap-1.5 text-xs font-bold">
-                            <span class="px-2 py-0.5 rounded-lg bg-blue-50 text-blue-800 border border-blue-200">กะ A: 3 คน</span>
-                            <span class="px-2 py-0.5 rounded-lg bg-purple-50 text-purple-800 border border-purple-200">กะ B: 3 คน</span>
+                    <div class="glass-card p-4 sm:p-5 rounded-2xl border-l-4 border-l-emerald-500">
+                        <span class="text-[11px] font-bold text-gray-500 uppercase tracking-wider block">โควตาลารายวัน (แยกตามกะ)</span>
+                        <div id="sup-stat-quota" class="mt-1.5 flex flex-wrap gap-1.5 text-xs font-bold">
+                            <span class="px-2.5 py-0.5 rounded-xl bg-blue-50 text-blue-800 border border-blue-200 shadow-2xs">กะ A: 3 คน</span>
+                            <span class="px-2.5 py-0.5 rounded-xl bg-purple-50 text-purple-800 border border-purple-200 shadow-2xs">กะ B: 3 คน</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Supervisor & Admin Tab Switcher -->
-                <div class="bg-white p-3 sm:p-4 rounded-2xl shadow-xs border border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div class="flex flex-wrap gap-1.5 bg-gray-100/80 p-1 rounded-xl">
+                <div class="glass-card p-2.5 sm:p-3.5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="flex flex-wrap gap-1.5 bg-slate-100/90 p-1.5 rounded-xl">
                         <!-- Admin Only Tab -->
-                        <button id="tab-admin-employees" type="button" onclick="switchSupervisorTab('employees')" class="hidden-view px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 text-gray-600 hover:text-gray-900">
+                        <button id="tab-admin-employees" type="button" onclick="switchSupervisorTab('employees')" class="hidden-view px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 text-gray-600 hover:text-gray-900">
                             <span>👥 จัดการรายชื่อพนักงาน</span>
-                            <span id="admin-badge-emp-count" class="ml-1 bg-indigo-600 text-white px-1.5 py-0.2 rounded-full text-[10px] font-bold">0</span>
+                            <span id="admin-badge-emp-count" class="ml-1 bg-indigo-600 text-white px-2 py-0.2 rounded-full text-[10px] font-bold">0</span>
                         </button>
-                        <button id="tab-sup-pending" type="button" onclick="switchSupervisorTab('pending')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 bg-white text-blue-700 shadow-xs">
+                        <button id="tab-sup-pending" type="button" onclick="switchSupervisorTab('pending')" class="px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 bg-white text-indigo-700 shadow-xs">
                             <span>⏳ รออนุมัติ (Pending)</span>
-                            <span id="sup-badge-pending" class="ml-1 bg-amber-500 text-white px-1.5 py-0.2 rounded-full text-[10px] font-bold">0</span>
+                            <span id="sup-badge-pending" class="ml-1 bg-amber-500 text-white px-2 py-0.2 rounded-full text-[10px] font-bold">0</span>
                         </button>
-                        <button id="tab-sup-history" type="button" onclick="switchSupervisorTab('history')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-gray-600 hover:text-gray-900 transition flex items-center space-x-1.5">
+                        <button id="tab-sup-history" type="button" onclick="switchSupervisorTab('history')" class="px-3.5 py-2 rounded-lg text-xs font-semibold text-gray-600 hover:text-gray-900 transition flex items-center space-x-1.5">
                             <span>📋 ประวัติที่พิจารณาแล้ว (History)</span>
                         </button>
-                        <button id="tab-sup-reports" type="button" onclick="switchSupervisorTab('reports')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-gray-600 hover:text-gray-900 transition flex items-center space-x-1.5">
+                        <button id="tab-sup-reports" type="button" onclick="switchSupervisorTab('reports')" class="px-3.5 py-2 rounded-lg text-xs font-semibold text-gray-600 hover:text-gray-900 transition flex items-center space-x-1.5">
                             <span>📊 ส่งออกรายงาน (HR Export)</span>
                         </button>
                     </div>
-                    <button type="button" onclick="refreshSupervisorData()" class="bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 px-3.5 py-1.5 rounded-xl text-xs font-medium transition flex items-center justify-center space-x-1 shadow-2xs self-end sm:self-auto">
+                    <button type="button" onclick="refreshSupervisorData()" class="bg-white hover:bg-slate-50 border border-slate-200 text-gray-700 px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center justify-center space-x-1.5 shadow-2xs self-end sm:self-auto active:scale-95">
                         <span>🔄 รีเฟรช</span>
                     </button>
                 </div>
 
                 <!-- Admin Employees Directory Container (Admin Only) -->
                 <div id="admin-employees-container" class="hidden-view space-y-4">
-                    <div class="bg-white p-4 rounded-3xl shadow-xs border border-gray-100 space-y-3">
+                    <div class="glass-card p-4 sm:p-5 rounded-3xl space-y-3.5">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             <div class="relative flex-1">
-                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">🔍</span>
-                                <input type="text" id="admin-search-input" oninput="filterEmployeeTable()" placeholder="ค้นหาชื่อ หรือ รหัสพนักงาน..." class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-3.5 py-2 text-xs focus:bg-white focus:border-indigo-600 focus:outline-none transition">
+                                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">🔍</span>
+                                <input type="text" id="admin-search-input" oninput="filterEmployeeTable()" placeholder="ค้นหาชื่อ หรือ รหัสพนักงาน..." class="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-4 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:outline-none transition">
                             </div>
-                            <button type="button" onclick="openAddEmployeeModal()" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-md transition flex items-center justify-center space-x-1.5 shrink-0 transform active:scale-95">
+                            <button type="button" onclick="openAddEmployeeModal()" class="btn-emerald text-white px-4 py-2.5 rounded-2xl text-xs font-semibold shadow-md transition flex items-center justify-center space-x-1.5 shrink-0 transform active:scale-95">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
                                 </svg>
@@ -721,17 +733,17 @@
                         </div>
 
                         <!-- Department Filter Chips -->
-                        <div class="flex items-center space-x-1.5 overflow-x-auto pb-1 text-xs pt-1 border-t border-gray-100" id="admin-dept-filter-chips">
-                            <span class="text-[11px] text-gray-400 font-medium mr-1 shrink-0">แผนก:</span>
+                        <div class="flex items-center space-x-2 overflow-x-auto pb-1 text-xs pt-1.5 border-t border-gray-100" id="admin-dept-filter-chips">
+                            <span class="text-[11px] text-gray-400 font-bold mr-1 shrink-0 uppercase tracking-wider">แผนก:</span>
                             <!-- Populated dynamically -->
                         </div>
                     </div>
 
                     <!-- Employees List Table -->
-                    <div class="bg-white rounded-3xl shadow-xs border border-gray-100 overflow-hidden">
+                    <div class="glass-card rounded-3xl overflow-hidden">
                         <div class="overflow-x-auto">
                             <table class="w-full text-left text-xs">
-                                <thead class="bg-gray-50/80 text-gray-600 border-b border-gray-100 font-semibold">
+                                <thead class="bg-slate-50/90 text-slate-700 border-b border-slate-200/80 font-bold uppercase tracking-wider text-[11px]">
                                     <tr>
                                         <th class="p-3.5 pl-5">รหัสพนักงาน</th>
                                         <th class="p-3.5">ชื่อ - นามสกุล</th>
@@ -742,7 +754,7 @@
                                         <th class="p-3.5 text-center pr-5">จัดการ</th>
                                     </tr>
                                 </thead>
-                                <tbody id="admin-employees-tbody" class="divide-y divide-gray-100">
+                                <tbody id="admin-employees-tbody" class="divide-y divide-slate-100 font-medium text-slate-700">
                                     <tr>
                                         <td colspan="7" class="text-center py-8 text-gray-400">กำลังโหลดรายชื่อพนักงาน...</td>
                                     </tr>
@@ -754,21 +766,21 @@
 
                 <div id="supervisor-pending-container" class="space-y-3">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
-                        <p id="pending-subtitle" class="text-xs text-gray-500 font-medium">กำลังโหลดรายการรออนุมัติ...</p>
+                        <p id="pending-subtitle" class="text-xs text-gray-500 font-semibold">กำลังโหลดรายการรออนุมัติ...</p>
                         <!-- Department & Shift Filter for HR / Supervisor -->
                         <div class="flex items-center space-x-1.5 flex-wrap gap-1">
-                            <div id="hr-pending-dept-filter-wrap" class="hidden-view items-center space-x-1 bg-purple-50 border border-purple-200 p-1 rounded-xl text-xs">
-                                <span class="text-[11px] text-purple-700 font-bold px-1.5">🏢 แผนก:</span>
-                                <select id="hr-pending-dept-filter" onchange="filterHRPendingByDept(this.value)" class="bg-white border border-purple-200 text-purple-900 text-xs rounded-lg px-2 py-0.5 outline-none font-semibold">
+                            <div id="hr-pending-dept-filter-wrap" class="hidden-view items-center space-x-1 bg-purple-50/90 border border-purple-200/80 p-1 rounded-2xl text-xs">
+                                <span class="text-[11px] text-purple-700 font-bold px-2">🏢 แผนก:</span>
+                                <select id="hr-pending-dept-filter" onchange="filterHRPendingByDept(this.value)" class="bg-white border border-purple-200 text-purple-900 text-xs rounded-xl px-2.5 py-1 outline-none font-semibold">
                                     <option value="ALL">ทุกแผนก (All)</option>
                                 </select>
                             </div>
                             <!-- Shift Filter Tabs -->
-                            <div class="flex items-center space-x-1.5 bg-gray-100/80 p-1 rounded-xl text-xs shrink-0">
-                                <span class="text-[11px] text-gray-400 font-bold px-1.5">กะ:</span>
-                                <button type="button" onclick="filterSupervisorByShift('ALL')" id="filter-shift-all" class="px-2.5 py-1 rounded-lg font-bold bg-white text-blue-700 shadow-2xs transition">ทั้งหมด</button>
-                                <button type="button" onclick="filterSupervisorByShift('A')" id="filter-shift-a" class="px-2.5 py-1 rounded-lg font-semibold text-gray-600 hover:text-gray-900 transition">🅰️ กะ A</button>
-                                <button type="button" onclick="filterSupervisorByShift('B')" id="filter-shift-b" class="px-2.5 py-1 rounded-lg font-semibold text-gray-600 hover:text-gray-900 transition">🅱️ กะ B</button>
+                            <div class="flex items-center space-x-1 bg-slate-100/90 p-1 rounded-2xl text-xs shrink-0 border border-slate-200/60">
+                                <span class="text-[11px] text-gray-400 font-bold px-2">กะ:</span>
+                                <button type="button" onclick="filterSupervisorByShift('ALL')" id="filter-shift-all" class="px-3 py-1 rounded-xl font-bold bg-white text-indigo-700 shadow-2xs transition">ทั้งหมด</button>
+                                <button type="button" onclick="filterSupervisorByShift('A')" id="filter-shift-a" class="px-3 py-1 rounded-xl font-semibold text-gray-600 hover:text-gray-900 transition">🅰️ กะ A</button>
+                                <button type="button" onclick="filterSupervisorByShift('B')" id="filter-shift-b" class="px-3 py-1 rounded-xl font-semibold text-gray-600 hover:text-gray-900 transition">🅱️ กะ B</button>
                             </div>
                         </div>
                     </div>
@@ -779,21 +791,21 @@
 
                 <div id="supervisor-history-container" class="hidden-view space-y-3">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
-                        <p id="history-subtitle" class="text-xs text-gray-500 font-medium">ประวัติคำขอที่ได้รับการอนุมัติ / ปฏิเสธทั้งหมด</p>
+                        <p id="history-subtitle" class="text-xs text-gray-500 font-semibold">ประวัติคำขอที่ได้รับการอนุมัติ / ปฏิเสธทั้งหมด</p>
                         <!-- Department & Shift Filter for HR / Supervisor -->
                         <div class="flex items-center space-x-1.5 flex-wrap gap-1">
-                            <div id="hr-history-dept-filter-wrap" class="hidden-view items-center space-x-1 bg-purple-50 border border-purple-200 p-1 rounded-xl text-xs">
-                                <span class="text-[11px] text-purple-700 font-bold px-1.5">🏢 แผนก:</span>
-                                <select id="hr-history-dept-filter" onchange="filterHRHistoryByDept(this.value)" class="bg-white border border-purple-200 text-purple-900 text-xs rounded-lg px-2 py-0.5 outline-none font-semibold">
+                            <div id="hr-history-dept-filter-wrap" class="hidden-view items-center space-x-1 bg-purple-50/90 border border-purple-200/80 p-1 rounded-2xl text-xs">
+                                <span class="text-[11px] text-purple-700 font-bold px-2">🏢 แผนก:</span>
+                                <select id="hr-history-dept-filter" onchange="filterHRHistoryByDept(this.value)" class="bg-white border border-purple-200 text-purple-900 text-xs rounded-xl px-2.5 py-1 outline-none font-semibold">
                                     <option value="ALL">ทุกแผนก (All)</option>
                                 </select>
                             </div>
                             <!-- Shift Filter Tabs -->
-                            <div class="flex items-center space-x-1.5 bg-gray-100/80 p-1 rounded-xl text-xs shrink-0">
-                                <span class="text-[11px] text-gray-400 font-bold px-1.5">กะ:</span>
-                                <button type="button" onclick="filterSupervisorHistoryByShift('ALL')" id="hist-filter-shift-all" class="px-2.5 py-1 rounded-lg font-bold bg-white text-blue-700 shadow-2xs transition">ทั้งหมด</button>
-                                <button type="button" onclick="filterSupervisorHistoryByShift('A')" id="hist-filter-shift-a" class="px-2.5 py-1 rounded-lg font-semibold text-gray-600 hover:text-gray-900 transition">🅰️ กะ A</button>
-                                <button type="button" onclick="filterSupervisorHistoryByShift('B')" id="hist-filter-shift-b" class="px-2.5 py-1 rounded-lg font-semibold text-gray-600 hover:text-gray-900 transition">🅱️ กะ B</button>
+                            <div class="flex items-center space-x-1 bg-slate-100/90 p-1 rounded-2xl text-xs shrink-0 border border-slate-200/60">
+                                <span class="text-[11px] text-gray-400 font-bold px-2">กะ:</span>
+                                <button type="button" onclick="filterSupervisorHistoryByShift('ALL')" id="hist-filter-shift-all" class="px-3 py-1 rounded-xl font-bold bg-white text-indigo-700 shadow-2xs transition">ทั้งหมด</button>
+                                <button type="button" onclick="filterSupervisorHistoryByShift('A')" id="hist-filter-shift-a" class="px-3 py-1 rounded-xl font-semibold text-gray-600 hover:text-gray-900 transition">🅰️ กะ A</button>
+                                <button type="button" onclick="filterSupervisorHistoryByShift('B')" id="hist-filter-shift-b" class="px-3 py-1 rounded-xl font-semibold text-gray-600 hover:text-gray-900 transition">🅱️ กะ B</button>
                             </div>
                         </div>
                     </div>
@@ -1025,7 +1037,7 @@
                 <!-- HR & Payroll Report Export Container -->
                 <div id="supervisor-reports-container" class="hidden-view space-y-4">
                     <!-- Header Card -->
-                    <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-900 text-white p-5 sm:p-6 rounded-3xl shadow-lg border border-indigo-500/30">
+                    <div class="bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950 text-white p-5 sm:p-6 rounded-3xl shadow-xl border border-indigo-500/30">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                             <div class="flex items-center space-x-3.5">
                                 <div class="w-12 h-12 rounded-2xl bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center text-2xl shadow-inner shrink-0">
@@ -1033,8 +1045,8 @@
                                 </div>
                                 <div>
                                     <div class="flex items-center space-x-2">
-                                        <h3 class="text-base sm:text-lg font-bold text-white">ระบบส่งออกรายงานการลา (HR & Payroll Export)</h3>
-                                        <span class="bg-indigo-400/20 text-indigo-300 border border-indigo-400/30 text-[10px] px-2.5 py-0.5 rounded-full font-semibold">
+                                        <h3 class="text-base sm:text-lg font-bold text-white font-heading">ระบบส่งออกรายงานการลา (HR & Payroll Export)</h3>
+                                        <span class="bg-indigo-400/20 text-indigo-300 border border-indigo-400/30 text-[10px] px-2.5 py-0.5 rounded-full font-bold font-mono">
                                             EXCEL & CSV READY
                                         </span>
                                     </div>
@@ -1045,13 +1057,13 @@
                             </div>
                             <!-- Export Actions Quick Buttons -->
                             <div class="flex flex-wrap items-center gap-2 self-start sm:self-auto">
-                                <button type="button" onclick="downloadLeaveReportCsv()" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-3.5 py-2 rounded-xl text-xs font-semibold shadow-md transition flex items-center space-x-1.5 shrink-0 transform active:scale-95">
+                                <button type="button" onclick="downloadLeaveReportCsv()" class="btn-emerald text-white px-4 py-2.5 rounded-2xl text-xs font-semibold shadow-md transition flex items-center space-x-1.5 shrink-0 transform active:scale-95">
                                     <span>📥 ดาวน์โหลด Excel / CSV</span>
                                 </button>
-                                <button type="button" onclick="copyReportTableToClipboard()" class="bg-white/10 hover:bg-white/20 text-white border border-white/20 px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 shrink-0">
+                                <button type="button" onclick="copyReportTableToClipboard()" class="bg-white/10 hover:bg-white/20 text-white border border-white/20 px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition flex items-center space-x-1.5 shrink-0">
                                     <span>📋 คัดลอกตาราง (Copy)</span>
                                 </button>
-                                <button type="button" onclick="printLeaveReport()" class="bg-white/10 hover:bg-white/20 text-white border border-white/20 px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 shrink-0">
+                                <button type="button" onclick="printLeaveReport()" class="bg-white/10 hover:bg-white/20 text-white border border-white/20 px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition flex items-center space-x-1.5 shrink-0">
                                     <span>🖨️ พิมพ์รายงาน / PDF</span>
                                 </button>
                             </div>
@@ -1059,84 +1071,84 @@
 
                         <!-- Summary KPI Cards Bar -->
                         <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5 mt-5 pt-4 border-t border-indigo-500/20 text-xs">
-                            <div class="bg-slate-950/40 rounded-xl p-2.5 border border-white/5">
-                                <span class="text-slate-300 text-[11px] block">รายการทั้งหมด</span>
-                                <span id="report-stat-total-records" class="font-bold text-lg text-white">0</span>
+                            <div class="bg-slate-900/60 rounded-2xl p-3 border border-white/10 shadow-inner">
+                                <span class="text-slate-400 text-[11px] block font-medium">รายการทั้งหมด</span>
+                                <span id="report-stat-total-records" class="font-bold text-xl text-white font-heading">0</span>
                                 <span class="text-[10px] text-slate-400">คำขอ</span>
                             </div>
-                            <div class="bg-slate-950/40 rounded-xl p-2.5 border border-white/5">
-                                <span class="text-slate-300 text-[11px] block">รวมวันลา</span>
-                                <span id="report-stat-total-days" class="font-bold text-lg text-emerald-400">0.0</span>
+                            <div class="bg-slate-900/60 rounded-2xl p-3 border border-white/10 shadow-inner">
+                                <span class="text-slate-400 text-[11px] block font-medium">รวมวันลา</span>
+                                <span id="report-stat-total-days" class="font-bold text-xl text-emerald-400 font-heading">0.0</span>
                                 <span class="text-[10px] text-slate-400">วัน</span>
                             </div>
-                            <div class="bg-slate-950/40 rounded-xl p-2.5 border border-white/5">
-                                <span class="text-slate-300 text-[11px] block">รวมชั่วโมงลา</span>
-                                <span id="report-stat-total-hours" class="font-bold text-lg text-teal-400">0.0</span>
+                            <div class="bg-slate-900/60 rounded-2xl p-3 border border-white/10 shadow-inner">
+                                <span class="text-slate-400 text-[11px] block font-medium">รวมชั่วโมงลา</span>
+                                <span id="report-stat-total-hours" class="font-bold text-xl text-teal-400 font-heading">0.0</span>
                                 <span class="text-[10px] text-slate-400">ชั่วโมง</span>
                             </div>
-                            <div class="bg-slate-950/40 rounded-xl p-2.5 border border-white/5">
-                                <span class="text-slate-300 text-[11px] block">พักร้อน</span>
-                                <span id="report-stat-vacation-days" class="font-bold text-base text-blue-300">0.0</span>
+                            <div class="bg-slate-900/60 rounded-2xl p-3 border border-white/10 shadow-inner">
+                                <span class="text-slate-400 text-[11px] block font-medium">พักร้อน</span>
+                                <span id="report-stat-vacation-days" class="font-bold text-lg text-blue-300 font-heading">0.0</span>
                                 <span class="text-[10px] text-slate-400">วัน</span>
                             </div>
-                            <div class="bg-slate-950/40 rounded-xl p-2.5 border border-white/5">
-                                <span class="text-slate-300 text-[11px] block">ลากิจ</span>
-                                <span id="report-stat-personal-days" class="font-bold text-base text-amber-300">0.0</span>
+                            <div class="bg-slate-900/60 rounded-2xl p-3 border border-white/10 shadow-inner">
+                                <span class="text-slate-400 text-[11px] block font-medium">ลากิจ</span>
+                                <span id="report-stat-personal-days" class="font-bold text-lg text-amber-300 font-heading">0.0</span>
                                 <span class="text-[10px] text-slate-400">วัน</span>
                             </div>
-                            <div class="bg-slate-950/40 rounded-xl p-2.5 border border-white/5">
-                                <span class="text-slate-300 text-[11px] block">ลาป่วย</span>
-                                <span id="report-stat-sick-days" class="font-bold text-base text-rose-300">0.0</span>
+                            <div class="bg-slate-900/60 rounded-2xl p-3 border border-white/10 shadow-inner">
+                                <span class="text-slate-400 text-[11px] block font-medium">ลาป่วย</span>
+                                <span id="report-stat-sick-days" class="font-bold text-lg text-rose-300 font-heading">0.0</span>
                                 <span class="text-[10px] text-slate-400">วัน</span>
                             </div>
-                            <div class="bg-slate-950/40 rounded-xl p-2.5 border border-white/5">
-                                <span class="text-slate-300 text-[11px] block">ไม่รับค่าจ้าง</span>
-                                <span id="report-stat-unpaid-days" class="font-bold text-base text-purple-300">0.0</span>
+                            <div class="bg-slate-900/60 rounded-2xl p-3 border border-white/10 shadow-inner">
+                                <span class="text-slate-400 text-[11px] block font-medium">ไม่รับค่าจ้าง</span>
+                                <span id="report-stat-unpaid-days" class="font-bold text-lg text-purple-300 font-heading">0.0</span>
                                 <span class="text-[10px] text-slate-400">วัน</span>
                             </div>
                         </div>
                     </div>
 
                     <!-- Comprehensive Filter Controls Card -->
-                    <div class="bg-white p-4 sm:p-5 rounded-3xl shadow-xs border border-gray-100 space-y-4">
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 pb-3">
+                    <div class="glass-card p-5 sm:p-6 rounded-3xl space-y-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100/90 pb-3.5">
                             <div class="flex items-center space-x-2">
-                                <span class="text-base">🔍</span>
-                                <h4 class="text-xs sm:text-sm font-bold text-gray-800">ตัวกรองรายงานสำหรับฝ่ายบุคคล (HR & Payroll Filters)</h4>
+                                <span class="text-lg">🔍</span>
+                                <h4 class="text-xs sm:text-sm font-bold text-gray-900 font-heading">ตัวกรองรายงานสำหรับฝ่ายบุคคล (HR & Payroll Filters)</h4>
                             </div>
                             <!-- Date Range Presets -->
                             <div class="flex flex-wrap items-center gap-1.5 text-xs">
-                                <span class="text-[11px] text-gray-400 font-medium mr-1">ช่วงเวลา:</span>
-                                <button type="button" id="btn-preset-this-month" onclick="setReportDatePreset('THIS_MONTH')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-600 text-white transition shadow-2xs">เดือนนี้</button>
-                                <button type="button" id="btn-preset-last-month" onclick="setReportDatePreset('LAST_MONTH')" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition">เดือนที่แล้ว</button>
-                                <button type="button" id="btn-preset-this-year" onclick="setReportDatePreset('THIS_YEAR')" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition">ปีนี้</button>
-                                <button type="button" id="btn-preset-all" onclick="setReportDatePreset('ALL')" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition">ทั้งหมด</button>
+                                <span class="text-[11px] text-gray-400 font-bold mr-1 uppercase tracking-wider">ช่วงเวลา:</span>
+                                <button type="button" id="btn-preset-this-month" onclick="setReportDatePreset('THIS_MONTH')" class="px-3 py-1 rounded-xl text-xs font-semibold bg-indigo-600 text-white transition shadow-2xs">เดือนนี้</button>
+                                <button type="button" id="btn-preset-last-month" onclick="setReportDatePreset('LAST_MONTH')" class="px-3 py-1 rounded-xl text-xs font-medium bg-slate-100 text-gray-600 hover:bg-slate-200 transition">เดือนที่แล้ว</button>
+                                <button type="button" id="btn-preset-this-year" onclick="setReportDatePreset('THIS_YEAR')" class="px-3 py-1 rounded-xl text-xs font-medium bg-slate-100 text-gray-600 hover:bg-slate-200 transition">ปีนี้</button>
+                                <button type="button" id="btn-preset-all" onclick="setReportDatePreset('ALL')" class="px-3 py-1 rounded-xl text-xs font-medium bg-slate-100 text-gray-600 hover:bg-slate-200 transition">ทั้งหมด</button>
                             </div>
                         </div>
 
                         <!-- Filter Fields Grid -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 text-xs">
                             <!-- Start Date -->
                             <div>
                                 <label class="block font-semibold text-gray-700 mb-1">วันที่เริ่มต้น (Start Date):</label>
-                                <input type="date" id="report-filter-start-date" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:bg-white focus:border-indigo-600 focus:outline-none transition">
+                                <input type="date" id="report-filter-start-date" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:outline-none transition">
                             </div>
                             <!-- End Date -->
                             <div>
                                 <label class="block font-semibold text-gray-700 mb-1">วันที่สิ้นสุด (End Date):</label>
-                                <input type="date" id="report-filter-end-date" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:bg-white focus:border-indigo-600 focus:outline-none transition">
+                                <input type="date" id="report-filter-end-date" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:outline-none transition">
                             </div>
                             <!-- Department -->
                             <div>
                                 <label class="block font-semibold text-gray-700 mb-1">แผนก (Department):</label>
-                                <select id="report-filter-dept" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:bg-white focus:border-indigo-600 focus:outline-none transition">
+                                <select id="report-filter-dept" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:outline-none transition font-medium">
                                     <option value="ALL">ทุกแผนก (All Departments)</option>
                                 </select>
                             </div>
                             <!-- Shift -->
                             <div>
                                 <label class="block font-semibold text-gray-700 mb-1">กะการทำงาน (Shift):</label>
-                                <select id="report-filter-shift" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:bg-white focus:border-indigo-600 focus:outline-none transition">
+                                <select id="report-filter-shift" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:outline-none transition font-medium">
                                     <option value="ALL">ทุกกะ (All Shifts)</option>
                                     <option value="A">กะ A</option>
                                     <option value="B">กะ B</option>
@@ -1146,7 +1158,7 @@
                             <!-- Leave Type -->
                             <div>
                                 <label class="block font-semibold text-gray-700 mb-1">ประเภทการลา (Leave Type):</label>
-                                <select id="report-filter-type" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:bg-white focus:border-indigo-600 focus:outline-none transition">
+                                <select id="report-filter-type" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:outline-none transition font-medium">
                                     <option value="ALL">ทุกประเภทการลา (All Types)</option>
                                     <option value="Vacation">ลาพักร้อน (Vacation)</option>
                                     <option value="Personal">ลากิจ (Personal)</option>
@@ -1157,7 +1169,7 @@
                             <!-- Status -->
                             <div>
                                 <label class="block font-semibold text-gray-700 mb-1">สถานะคำขอ (Status):</label>
-                                <select id="report-filter-status" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:bg-white focus:border-indigo-600 focus:outline-none transition">
+                                <select id="report-filter-status" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:outline-none transition font-medium">
                                     <option value="ALL">ทุกสถานะ (All Statuses)</option>
                                     <option value="APPROVED" selected>เฉพาะอนุมัติแล้ว (Approved Only - แนะนำสำหรับคิดค่าจ้าง)</option>
                                     <option value="PENDING">รออนุมัติ (Pending)</option>
@@ -1169,22 +1181,22 @@
                             <div class="sm:col-span-2">
                                 <label class="block font-semibold text-gray-700 mb-1">ค้นหารายการ (Search):</label>
                                 <div class="relative">
-                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">🔍</span>
-                                    <input type="text" id="report-filter-search" placeholder="ค้นหาชื่อพนักงาน, รหัส หรือเหตุผลการลา..." class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-3.5 py-2 text-xs focus:bg-white focus:border-indigo-600 focus:outline-none transition">
+                                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">🔍</span>
+                                    <input type="text" id="report-filter-search" placeholder="ค้นหาชื่อพนักงาน, รหัส หรือเหตุผลการลา..." class="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-4 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:outline-none transition">
                                 </div>
                             </div>
                         </div>
 
                         <!-- Apply / Reset Button Row -->
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-gray-100">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2.5 border-t border-gray-100">
                             <span class="text-[11px] text-gray-400">
                                 💡 ไฟล์ CSV ที่ส่งออกใช้รหัส UTF-8 BOM และสูตร Text เพื่อป้องกันรหัสพนักงานขึ้นหน้าด้วยศูนย์ (เช่น 051057) ไม่ให้ถูกตัดใน Excel
                             </span>
                             <div class="flex items-center space-x-2 shrink-0">
-                                <button type="button" onclick="resetReportFilters()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition">
+                                <button type="button" onclick="resetReportFilters()" class="bg-slate-100 hover:bg-slate-200 text-gray-700 px-3.5 py-2 rounded-xl text-xs font-semibold transition active:scale-95">
                                     <span>🔄 ล้างค่าตัวกรอง</span>
                                 </button>
-                                <button type="button" onclick="loadLeaveReportData()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-xl text-xs font-semibold shadow-xs transition flex items-center space-x-1.5">
+                                <button type="button" onclick="loadLeaveReportData()" class="btn-premium px-4 py-2 rounded-xl text-xs font-semibold shadow-xs transition flex items-center space-x-1.5 active:scale-95">
                                     <span>🔍 กรองข้อมูลรายงาน</span>
                                 </button>
                             </div>
@@ -1192,22 +1204,22 @@
                     </div>
 
                     <!-- Report Preview Table Card -->
-                    <div class="bg-white rounded-3xl shadow-xs border border-gray-100 overflow-hidden space-y-0">
-                        <div class="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100">
+                    <div class="glass-card rounded-3xl overflow-hidden space-y-0">
+                        <div class="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100">
                             <div class="flex items-center space-x-2.5">
                                 <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                <h4 class="text-xs sm:text-sm font-bold text-gray-800">
+                                <h4 class="text-xs sm:text-sm font-bold text-gray-800 font-heading">
                                     ตารางพรีวิวข้อมูลรายงาน (Live Data Preview)
                                 </h4>
-                                <span id="report-table-count-badge" class="bg-indigo-50 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-indigo-200">
+                                <span id="report-table-count-badge" class="bg-indigo-50 text-indigo-700 text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-indigo-200">
                                     0 รายการ
                                 </span>
                             </div>
                             <div class="flex items-center space-x-2">
-                                <button type="button" onclick="downloadLeaveReportCsv()" class="bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center space-x-1">
+                                <button type="button" onclick="downloadLeaveReportCsv()" class="bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-1 shadow-2xs">
                                     <span>📥 ดาวน์โหลด Excel (.csv)</span>
                                 </button>
-                                <button type="button" onclick="copyReportTableToClipboard()" class="bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 px-3 py-1.5 rounded-xl text-xs font-medium transition flex items-center space-x-1">
+                                <button type="button" onclick="copyReportTableToClipboard()" class="bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-1 shadow-2xs">
                                     <span>📋 คัดลอกตาราง</span>
                                 </button>
                             </div>
@@ -1216,7 +1228,7 @@
                         <!-- Responsive Table -->
                         <div class="overflow-x-auto max-h-[550px] overflow-y-auto">
                             <table id="report-preview-table" class="w-full text-left text-xs">
-                                <thead class="bg-gray-50/90 text-gray-600 border-b border-gray-100 font-semibold sticky top-0 backdrop-blur-xs z-10">
+                                <thead class="bg-slate-50/95 text-slate-700 border-b border-slate-200 font-bold uppercase tracking-wider text-[11px] sticky top-0 backdrop-blur-md z-10">
                                     <tr>
                                         <th class="p-3 pl-4 text-center">#</th>
                                         <th class="p-3">เลขที่คำขอ</th>
@@ -1234,7 +1246,7 @@
                                         <th class="p-3 pr-4">วันที่พิจารณา</th>
                                     </tr>
                                 </thead>
-                                <tbody id="report-preview-tbody" class="divide-y divide-gray-100 text-gray-700">
+                                <tbody id="report-preview-tbody" class="divide-y divide-slate-100 text-slate-700 font-medium">
                                     <tr>
                                         <td colspan="14" class="text-center py-10 text-gray-400">
                                             กำลังโหลดข้อมูลรายงาน...
@@ -1247,37 +1259,37 @@
                 </div>
 
                 <!-- Supervisor Department Leave Calendar Card -->
-                <div class="bg-white p-3.5 sm:p-6 rounded-3xl shadow-xs border border-gray-100/90 space-y-4">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 pb-3">
+                <div class="glass-card p-4 sm:p-6 rounded-3xl space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100/90 pb-3.5">
                         <div>
-                            <h2 class="text-base font-bold text-gray-800 flex items-center space-x-2">
-                                <span class="text-lg">🗓️</span>
+                            <h2 class="text-base font-bold text-gray-900 flex items-center space-x-2 font-heading">
+                                <span class="text-xl">🗓️</span>
                                 <span>ปฏิทินภาพรวมการลาของแผนก (Department Leave Calendar)</span>
                             </h2>
                             <div class="flex flex-wrap items-center gap-1.5 text-xs text-gray-500 mt-1">
-                                <span>แผนก: <b class="cal-dept-name text-blue-900">Assembly</b></span>
+                                <span>แผนก: <b class="cal-dept-name text-indigo-900 font-bold">Assembly</b></span>
                                 <span class="text-gray-300">•</span>
                                 <span class="font-medium text-gray-700">โควตาแยกตามกะ:</span>
                                 <div class="cal-shift-quotas-badge inline-flex flex-wrap items-center gap-1.5 font-bold">
-                                    <span class="px-2 py-0.5 rounded-lg border text-[11px] bg-blue-50 text-blue-800 border-blue-200">กะ A: 3 คน/วัน</span>
-                                    <span class="px-2 py-0.5 rounded-lg border text-[11px] bg-purple-50 text-purple-800 border-purple-200">กะ B: 3 คน/วัน</span>
+                                    <span class="px-2.5 py-0.5 rounded-lg border text-[11px] bg-blue-50 text-blue-800 border-blue-200">กะ A: 3 คน/วัน</span>
+                                    <span class="px-2.5 py-0.5 rounded-lg border text-[11px] bg-purple-50 text-purple-800 border-purple-200">กะ B: 3 คน/วัน</span>
                                 </div>
                             </div>
                         </div>
                         <!-- Month Navigation -->
-                        <div class="flex items-center space-x-2 self-start sm:self-auto">
-                            <button type="button" onclick="changeCalendarMonth(-1)" class="w-8 h-8 rounded-xl border border-gray-200 hover:bg-gray-50 flex items-center justify-center text-gray-600 transition text-sm">◀</button>
-                            <span class="cal-month-label text-xs font-bold text-gray-800 px-2 min-w-[120px] text-center">กำลังโหลด...</span>
-                            <button type="button" onclick="changeCalendarMonth(1)" class="w-8 h-8 rounded-xl border border-gray-200 hover:bg-gray-50 flex items-center justify-center text-gray-600 transition text-sm">▶</button>
+                        <div class="flex items-center space-x-2 self-start sm:self-auto bg-slate-50 p-1 rounded-2xl border border-slate-200/80">
+                            <button type="button" onclick="changeCalendarMonth(-1)" class="w-8 h-8 rounded-xl bg-white hover:bg-slate-100 flex items-center justify-center text-gray-700 transition shadow-2xs text-xs font-bold active:scale-95">◀</button>
+                            <span class="cal-month-label text-xs font-bold text-gray-800 px-3 min-w-[130px] text-center">กำลังโหลด...</span>
+                            <button type="button" onclick="changeCalendarMonth(1)" class="w-8 h-8 rounded-xl bg-white hover:bg-slate-100 flex items-center justify-center text-gray-700 transition shadow-2xs text-xs font-bold active:scale-95">▶</button>
                         </div>
                     </div>
 
                     <!-- Legend -->
-                    <div class="flex flex-wrap items-center gap-3 text-[11px] text-gray-600 bg-gray-50/70 p-2.5 rounded-xl border border-gray-100">
+                    <div class="flex flex-wrap items-center gap-3 text-[11px] text-gray-600 bg-slate-50/90 p-3 rounded-2xl border border-slate-200/70">
                         <span class="font-semibold text-gray-700">สัญลักษณ์:</span>
-                        <span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span><span>ว่าง (0 คน)</span></span>
-                        <span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span><span>มีคนลาแล้ว (ยังมีที่ว่าง)</span></span>
-                        <span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span><span>เต็มโควตา (2/2 คน)</span></span>
+                        <span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-xs"></span><span>ว่าง (0 คน)</span></span>
+                        <span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-xs"></span><span>มีคนลาแล้ว (ยังมีที่ว่าง)</span></span>
+                        <span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-xs"></span><span>เต็มโควตา (2/2 คน)</span></span>
                     </div>
 
                     <!-- Calendar Grid -->
@@ -1297,7 +1309,7 @@
                     </div>
 
                     <!-- Selected Day Details Tooltip/Notice -->
-                    <div id="sup-cal-selected-info" class="hidden text-xs p-3 rounded-2xl bg-blue-50 border border-blue-100 text-blue-900 transition">
+                    <div id="sup-cal-selected-info" class="hidden text-xs p-3.5 rounded-2xl bg-indigo-50/90 border border-indigo-100 text-indigo-950 transition">
                         <!-- Populated on click of day cell -->
                     </div>
                 </div>
@@ -1307,36 +1319,36 @@
     </div>
 
     <!-- Rejection Reason Modal -->
-    <div id="reject-modal" class="hidden-view fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-gray-100 transform transition-all animate-in fade-in zoom-in duration-200">
-            <div class="flex items-center justify-between pb-3 border-b border-gray-100">
-                <div class="flex items-center space-x-2 text-rose-600">
-                    <span class="text-xl">🛑</span>
-                    <h3 class="text-base font-bold text-gray-900">ระบุเหตุผลที่ไม่อนุมัติ (Reject)</h3>
+    <div id="reject-modal" class="hidden-view fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-white/95 backdrop-blur-xl rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-white/80 transform transition-all animate-fade-in-up">
+            <div class="flex items-center justify-between pb-3.5 border-b border-gray-100">
+                <div class="flex items-center space-x-2.5 text-rose-600">
+                    <span class="text-2xl">🛑</span>
+                    <h3 class="text-base font-bold text-gray-900 font-heading">ระบุเหตุผลที่ไม่อนุมัติ (Reject)</h3>
                 </div>
-                <button type="button" onclick="closeRejectModal()" class="text-gray-400 hover:text-gray-600 text-base p-1">✕</button>
+                <button type="button" onclick="closeRejectModal()" class="text-gray-400 hover:text-gray-600 text-sm p-1.5 rounded-xl hover:bg-gray-100 transition">✕</button>
             </div>
 
-            <div class="py-3">
-                <div id="reject-modal-info" class="text-xs text-gray-700 mb-3 bg-rose-50/60 p-3 rounded-2xl border border-rose-100">
+            <div class="py-3.5">
+                <div id="reject-modal-info" class="text-xs text-gray-700 mb-3.5 bg-rose-50/80 p-3.5 rounded-2xl border border-rose-100 leading-relaxed font-medium">
                     <!-- Populated dynamically -->
                 </div>
 
                 <label class="block text-xs font-semibold text-gray-700 mb-1.5">เลือกเหตุผลด่วน (Quick Presets):</label>
-                <div class="flex flex-wrap gap-1.5 mb-3">
-                    <button type="button" onclick="setRejectPreset('กำลังคนในไลน์ผลิตไม่เพียงพอ')" class="text-[11px] bg-gray-50 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 border border-gray-200 px-2.5 py-1 rounded-lg transition">คนในไลน์ไม่พอ</button>
-                    <button type="button" onclick="setRejectPreset('ติดช่วงส่งมอบงานด่วนให้ลูกค้า')" class="text-[11px] bg-gray-50 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 border border-gray-200 px-2.5 py-1 rounded-lg transition">ติดงานด่วนส่งมอบ</button>
-                    <button type="button" onclick="setRejectPreset('โควตาลางานของแผนกเต็มแล้ว')" class="text-[11px] bg-gray-50 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 border border-gray-200 px-2.5 py-1 rounded-lg transition">โควตาแผนกเต็ม</button>
-                    <button type="button" onclick="setRejectPreset('กรุณาระบุช่วงเวลาการลาให้ถูกต้อง')" class="text-[11px] bg-gray-50 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 border border-gray-200 px-2.5 py-1 rounded-lg transition">ระบุเวลาไม่ถูกต้อง</button>
+                <div class="flex flex-wrap gap-1.5 mb-3.5">
+                    <button type="button" onclick="setRejectPreset('กำลังคนในไลน์ผลิตไม่เพียงพอ')" class="text-[11px] bg-slate-50 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 border border-slate-200 px-3 py-1.5 rounded-xl transition font-medium">คนในไลน์ไม่พอ</button>
+                    <button type="button" onclick="setRejectPreset('ติดช่วงส่งมอบงานด่วนให้ลูกค้า')" class="text-[11px] bg-slate-50 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 border border-slate-200 px-3 py-1.5 rounded-xl transition font-medium">ติดงานด่วนส่งมอบ</button>
+                    <button type="button" onclick="setRejectPreset('โควตาลางานของแผนกเต็มแล้ว')" class="text-[11px] bg-slate-50 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 border border-slate-200 px-3 py-1.5 rounded-xl transition font-medium">โควตาแผนกเต็ม</button>
+                    <button type="button" onclick="setRejectPreset('กรุณาระบุช่วงเวลาการลาให้ถูกต้อง')" class="text-[11px] bg-slate-50 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 border border-slate-200 px-3 py-1.5 rounded-xl transition font-medium">ระบุเวลาไม่ถูกต้อง</button>
                 </div>
 
                 <label class="block text-xs font-semibold text-gray-700 mb-1.5">รายละเอียดเหตุผล:</label>
-                <textarea id="reject-reason-input" rows="3" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 outline-none text-xs focus:bg-white focus:border-rose-500 focus:ring-4 focus:ring-rose-500/15 transition placeholder:text-gray-400" placeholder="พิมพ์เหตุผลที่ไม่อนุมัติ เพื่อแจ้งให้พนักงานทราบ..."></textarea>
+                <textarea id="reject-reason-input" rows="3" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3.5 outline-none text-xs focus:bg-white focus:border-rose-500 focus:ring-4 focus:ring-rose-500/15 transition placeholder:text-gray-400" placeholder="พิมพ์เหตุผลที่ไม่อนุมัติ เพื่อแจ้งให้พนักงานทราบ..."></textarea>
             </div>
 
-            <div class="flex space-x-2 pt-2">
-                <button type="button" onclick="closeRejectModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2.5 rounded-xl font-semibold text-xs transition">ยกเลิก</button>
-                <button type="button" id="btn-confirm-reject" onclick="confirmRejectAction()" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white py-2.5 rounded-xl font-semibold text-xs shadow-md shadow-rose-500/25 transition">ยืนยันไม่อนุมัติ</button>
+            <div class="flex space-x-2.5 pt-2">
+                <button type="button" onclick="closeRejectModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-3 rounded-2xl font-semibold text-xs transition active:scale-95">ยกเลิก</button>
+                <button type="button" id="btn-confirm-reject" onclick="confirmRejectAction()" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white py-3 rounded-2xl font-semibold text-xs shadow-md shadow-rose-600/25 transition active:scale-95">ยืนยันไม่อนุมัติ</button>
             </div>
         </div>
     </div>
@@ -1376,20 +1388,20 @@
     </div>
 
     <!-- Add Employee Modal (Admin Only) -->
-    <div id="add-employee-modal" class="hidden-view fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-gray-100 transform transition-all animate-in fade-in zoom-in duration-200">
+    <div id="add-employee-modal" class="hidden-view fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-white/95 backdrop-blur-xl rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-white/80 transform transition-all animate-fade-in-up">
             <!-- Modal Header -->
-            <div class="flex items-center justify-between pb-3.5 border-b border-gray-100">
-                <div class="flex items-center space-x-2.5">
-                    <div class="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl shadow-2xs">
+            <div class="flex items-center justify-between pb-4 border-b border-gray-100">
+                <div class="flex items-center space-x-3">
+                    <div class="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl shadow-2xs">
                         👤
                     </div>
                     <div>
-                        <h3 class="text-base font-bold text-gray-900">เพิ่มพนักงานใหม่เข้าสู่ระบบ</h3>
-                        <p class="text-[11px] text-gray-500">บันทึกข้อมูลพนักงาน กำหนดแผนก และโควตาวันลา</p>
+                        <h3 class="text-base sm:text-lg font-bold text-gray-900 font-heading">เพิ่มพนักงานใหม่เข้าสู่ระบบ</h3>
+                        <p class="text-[11px] text-gray-500 mt-0.5">บันทึกข้อมูลพนักงาน กำหนดแผนก และโควตาวันลาเริ่มต้น</p>
                     </div>
                 </div>
-                <button type="button" onclick="closeAddEmployeeModal()" class="text-gray-400 hover:text-gray-600 text-base p-1.5 rounded-xl hover:bg-gray-100 transition">✕</button>
+                <button type="button" onclick="closeAddEmployeeModal()" class="text-gray-400 hover:text-gray-600 text-sm p-1.5 rounded-xl hover:bg-gray-100 transition">✕</button>
             </div>
 
             <!-- Modal Form -->
@@ -1400,7 +1412,7 @@
                         <label class="block text-xs font-semibold text-gray-700 mb-1">
                             <span>รหัสพนักงาน (ID)</span> <span class="text-rose-500">*</span>
                         </label>
-                        <input type="text" id="new-emp-id" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition uppercase placeholder:text-gray-400" placeholder="เช่น EMP-004 หรือ 051058">
+                        <input type="text" id="new-emp-id" required class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition uppercase placeholder:text-gray-400 font-medium" placeholder="เช่น EMP-004 หรือ 051058">
                     </div>
 
                     <!-- Full Name -->
@@ -1408,7 +1420,7 @@
                         <label class="block text-xs font-semibold text-gray-700 mb-1">
                             <span>ชื่อ - นามสกุล</span> <span class="text-rose-500">*</span>
                         </label>
-                        <input type="text" id="new-emp-name" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition placeholder:text-gray-400" placeholder="เช่น นายสมใจ รักงาน">
+                        <input type="text" id="new-emp-name" required class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition placeholder:text-gray-400 font-medium" placeholder="เช่น นายสมใจ รักงาน">
                     </div>
                 </div>
 
@@ -1421,12 +1433,12 @@
                             </label>
                             <span class="text-[10px] text-indigo-600 font-semibold">Dropdown</span>
                         </div>
-                        <select id="new-emp-dept" onchange="handleDeptSelectChange(this.value)" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition font-medium text-gray-800">
+                        <select id="new-emp-dept" onchange="handleDeptSelectChange(this.value)" required class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition font-medium text-gray-800">
                             <option value="" disabled selected>-- กำลังโหลดรายชื่อแผนก --</option>
                         </select>
                         <!-- Custom new department input (hidden by default) -->
                         <div id="custom-dept-container" class="hidden mt-2">
-                            <input type="text" id="new-emp-dept-custom" class="w-full bg-indigo-50/50 border border-indigo-200 rounded-xl px-3 py-1.5 text-xs focus:bg-white focus:border-indigo-600 focus:outline-none transition placeholder:text-gray-400" placeholder="พิมพ์ชื่อแผนกใหม่ที่ต้องการ...">
+                            <input type="text" id="new-emp-dept-custom" class="w-full bg-indigo-50/50 border border-indigo-200 rounded-2xl px-3 py-2 text-xs focus:bg-white focus:border-indigo-600 focus:outline-none transition placeholder:text-gray-400" placeholder="พิมพ์ชื่อแผนกใหม่ที่ต้องการ...">
                         </div>
                     </div>
 
@@ -1435,7 +1447,7 @@
                         <label class="block text-xs font-semibold text-gray-700 mb-1">
                             <span>บทบาท (Role)</span> <span class="text-rose-500">*</span>
                         </label>
-                        <select id="new-emp-role" onchange="handleRoleSelectChange(this.value)" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition font-medium text-gray-800">
+                        <select id="new-emp-role" onchange="handleRoleSelectChange(this.value)" required class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition font-medium text-gray-800">
                             <option value="EMPLOYEE">พนักงานทั่วไป (EMPLOYEE)</option>
                             <option value="SUPERVISOR">หัวหน้างาน (SUPERVISOR)</option>
                             <option value="HR">💼 ฝ่ายบุคคล / คิดเงินเดือน (HR)</option>
@@ -1450,7 +1462,7 @@
                         <label class="block text-xs font-semibold text-gray-700 mb-1">
                             <span>กะการทำงาน (Shift)</span> <span class="text-rose-500">*</span>
                         </label>
-                        <select id="new-emp-shift" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition font-medium text-gray-800">
+                        <select id="new-emp-shift" required class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition font-medium text-gray-800">
                             <option value="A" selected>🅰️ กะ A (Shift A)</option>
                             <option value="B">🅱️ กะ B (Shift B)</option>
                             <option value="Morning">🌅 เช้าตลอด</option>
@@ -1465,39 +1477,39 @@
                             </label>
                             <span class="text-[10px] text-gray-400">เว้นว่างไว้จะใช้รหัสพนักงาน</span>
                         </div>
-                        <input type="text" id="new-emp-pin" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition placeholder:text-gray-400" placeholder="ค่าเริ่มต้น: รหัสพนักงาน">
+                        <input type="text" id="new-emp-pin" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition placeholder:text-gray-400" placeholder="ค่าเริ่มต้น: รหัสพนักงาน">
                     </div>
                 </div>
 
                 <!-- Initial Leave Quotas -->
-                <div class="border-t border-gray-100 pt-3">
+                <div class="border-t border-gray-100 pt-3.5">
                     <label class="block text-xs font-semibold text-gray-700 mb-2">
                         <span>โควตาวันลาเริ่มต้น (วัน/ปี):</span>
                     </label>
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                        <div class="bg-emerald-50/60 p-2.5 rounded-xl border border-emerald-100">
-                            <label class="block text-[11px] font-semibold text-emerald-800 mb-1 text-center">🏖️ พักร้อน</label>
-                            <input type="number" id="new-emp-vac-quota" value="6" min="0" max="90" required class="w-full bg-white border border-emerald-200 rounded-lg px-2 py-1 text-xs text-center font-bold text-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <div class="bg-emerald-50/70 p-3 rounded-2xl border border-emerald-100">
+                            <label class="block text-[11px] font-semibold text-emerald-800 mb-1.5 text-center">🏖️ พักร้อน</label>
+                            <input type="number" id="new-emp-vac-quota" value="6" min="0" max="90" required class="w-full bg-white border border-emerald-200 rounded-xl px-2 py-1 text-xs text-center font-bold text-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
                         </div>
-                        <div class="bg-amber-50/60 p-2.5 rounded-xl border border-amber-100">
-                            <label class="block text-[11px] font-semibold text-amber-800 mb-1 text-center">💼 ลากิจ</label>
-                            <input type="number" id="new-emp-per-quota" value="6" min="0" max="90" required class="w-full bg-white border border-amber-200 rounded-lg px-2 py-1 text-xs text-center font-bold text-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        <div class="bg-amber-50/70 p-3 rounded-2xl border border-amber-100">
+                            <label class="block text-[11px] font-semibold text-amber-800 mb-1.5 text-center">💼 ลากิจ</label>
+                            <input type="number" id="new-emp-per-quota" value="6" min="0" max="90" required class="w-full bg-white border border-amber-200 rounded-xl px-2 py-1 text-xs text-center font-bold text-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500">
                         </div>
-                        <div class="bg-blue-50/60 p-2.5 rounded-xl border border-blue-100">
-                            <label class="block text-[11px] font-semibold text-blue-800 mb-1 text-center">🏥 ลาป่วย</label>
-                            <input type="number" id="new-emp-sic-quota" value="30" min="0" max="90" required class="w-full bg-white border border-blue-200 rounded-lg px-2 py-1 text-xs text-center font-bold text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <div class="bg-blue-50/70 p-3 rounded-2xl border border-blue-100">
+                            <label class="block text-[11px] font-semibold text-blue-800 mb-1.5 text-center">🏥 ลาป่วย</label>
+                            <input type="number" id="new-emp-sic-quota" value="30" min="0" max="90" required class="w-full bg-white border border-blue-200 rounded-xl px-2 py-1 text-xs text-center font-bold text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
-                        <div class="bg-purple-50/60 p-2.5 rounded-xl border border-purple-100">
-                            <label class="block text-[11px] font-semibold text-purple-800 mb-1 text-center">📋 ไม่รับค่าจ้าง</label>
-                            <input type="number" id="new-emp-unp-quota" value="30" min="0" max="90" required class="w-full bg-white border border-purple-200 rounded-lg px-2 py-1 text-xs text-center font-bold text-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        <div class="bg-purple-50/70 p-3 rounded-2xl border border-purple-100">
+                            <label class="block text-[11px] font-semibold text-purple-800 mb-1.5 text-center">📋 ไม่รับค่าจ้าง</label>
+                            <input type="number" id="new-emp-unp-quota" value="30" min="0" max="90" required class="w-full bg-white border border-purple-200 rounded-xl px-2 py-1 text-xs text-center font-bold text-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500">
                         </div>
                     </div>
                 </div>
 
                 <!-- Action Buttons -->
-                <div class="flex space-x-2 pt-2">
-                    <button type="button" onclick="closeAddEmployeeModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2.5 rounded-xl font-semibold text-xs transition">ยกเลิก</button>
-                    <button type="submit" id="btn-submit-new-emp" class="flex-1 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white py-2.5 rounded-xl font-semibold text-xs transition shadow-md flex items-center justify-center space-x-1.5">
+                <div class="flex space-x-2.5 pt-2">
+                    <button type="button" onclick="closeAddEmployeeModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-3 rounded-2xl font-semibold text-xs transition active:scale-95">ยกเลิก</button>
+                    <button type="submit" id="btn-submit-new-emp" class="flex-1 btn-premium py-3 rounded-2xl font-semibold text-xs transition shadow-md flex items-center justify-center space-x-1.5 active:scale-95">
                         <span>บันทึกพนักงานใหม่</span>
                     </button>
                 </div>
@@ -1506,20 +1518,20 @@
     </div>
 
     <!-- Edit Employee Modal (Admin Only) -->
-    <div id="edit-employee-modal" class="hidden-view fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-gray-100 transform transition-all animate-in fade-in zoom-in duration-200">
+    <div id="edit-employee-modal" class="hidden-view fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-white/95 backdrop-blur-xl rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-white/80 transform transition-all animate-fade-in-up">
             <!-- Modal Header -->
-            <div class="flex items-center justify-between pb-3.5 border-b border-gray-100">
-                <div class="flex items-center space-x-2.5">
-                    <div class="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl shadow-2xs">
+            <div class="flex items-center justify-between pb-4 border-b border-gray-100">
+                <div class="flex items-center space-x-3">
+                    <div class="w-11 h-11 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl shadow-2xs">
                         ✏️
                     </div>
                     <div>
-                        <h3 class="text-base font-bold text-gray-900">แก้ไขข้อมูลพนักงาน</h3>
-                        <p class="text-[11px] text-gray-500">ปรับปรุงข้อมูล แผนก กะการทำงาน บทบาท และโควตาวันลา</p>
+                        <h3 class="text-base sm:text-lg font-bold text-gray-900 font-heading">แก้ไขข้อมูลพนักงาน</h3>
+                        <p class="text-[11px] text-gray-500 mt-0.5">ปรับปรุงข้อมูล แผนก กะการทำงาน บทบาท และโควตาวันลา</p>
                     </div>
                 </div>
-                <button type="button" onclick="closeEditEmployeeModal()" class="text-gray-400 hover:text-gray-600 text-base p-1.5 rounded-xl hover:bg-gray-100 transition">✕</button>
+                <button type="button" onclick="closeEditEmployeeModal()" class="text-gray-400 hover:text-gray-600 text-sm p-1.5 rounded-xl hover:bg-gray-100 transition">✕</button>
             </div>
 
             <!-- Modal Form -->
@@ -1530,7 +1542,7 @@
                         <label class="block text-xs font-semibold text-gray-700 mb-1">
                             <span>รหัสพนักงาน (ID)</span>
                         </label>
-                        <input type="text" id="edit-emp-id" readonly class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs text-gray-600 font-mono font-bold cursor-not-allowed uppercase">
+                        <input type="text" id="edit-emp-id" readonly class="w-full bg-slate-100 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs text-gray-600 font-mono font-bold cursor-not-allowed uppercase">
                     </div>
 
                     <!-- Full Name -->
@@ -1538,7 +1550,7 @@
                         <label class="block text-xs font-semibold text-gray-700 mb-1">
                             <span>ชื่อ - นามสกุล</span> <span class="text-rose-500">*</span>
                         </label>
-                        <input type="text" id="edit-emp-name" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition">
+                        <input type="text" id="edit-emp-name" required class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition font-medium">
                     </div>
                 </div>
 
@@ -1548,10 +1560,10 @@
                         <label class="block text-xs font-semibold text-gray-700 mb-1">
                             <span>แผนก (Department)</span> <span class="text-rose-500">*</span>
                         </label>
-                        <select id="edit-emp-dept" onchange="handleEditDeptChange(this.value)" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition font-medium text-gray-800">
+                        <select id="edit-emp-dept" onchange="handleEditDeptChange(this.value)" required class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition font-medium text-gray-800">
                         </select>
                         <div id="edit-custom-dept-container" class="hidden mt-2">
-                            <input type="text" id="edit-emp-dept-custom" class="w-full bg-indigo-50/50 border border-indigo-200 rounded-xl px-3 py-1.5 text-xs focus:bg-white focus:border-indigo-600 focus:outline-none transition placeholder:text-gray-400" placeholder="พิมพ์ชื่อแผนกใหม่...">
+                            <input type="text" id="edit-emp-dept-custom" class="w-full bg-indigo-50/50 border border-indigo-200 rounded-2xl px-3 py-2 text-xs focus:bg-white focus:border-indigo-600 focus:outline-none transition placeholder:text-gray-400" placeholder="พิมพ์ชื่อแผนกใหม่...">
                         </div>
                     </div>
 
@@ -1560,7 +1572,7 @@
                         <label class="block text-xs font-semibold text-gray-700 mb-1">
                             <span>บทบาท (Role)</span> <span class="text-rose-500">*</span>
                         </label>
-                        <select id="edit-emp-role" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition font-medium text-gray-800">
+                        <select id="edit-emp-role" required class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition font-medium text-gray-800">
                             <option value="EMPLOYEE">พนักงานทั่วไป (EMPLOYEE)</option>
                             <option value="SUPERVISOR">หัวหน้างาน (SUPERVISOR)</option>
                             <option value="HR">💼 ฝ่ายบุคคล / คิดเงินเดือน (HR)</option>
@@ -1575,7 +1587,7 @@
                         <label class="block text-xs font-semibold text-gray-700 mb-1">
                             <span>กะการทำงาน (Shift)</span> <span class="text-rose-500">*</span>
                         </label>
-                        <select id="edit-emp-shift" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition font-medium text-gray-800">
+                        <select id="edit-emp-shift" required class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition font-medium text-gray-800">
                             <option value="A">🅰️ กะ A (Shift A)</option>
                             <option value="B">🅱️ กะ B (Shift B)</option>
                             <option value="Morning">🌅 เช้าตลอด</option>
@@ -1590,39 +1602,39 @@
                             </label>
                             <span class="text-[10px] text-gray-400">เว้นว่างไว้หากไม่เปลี่ยน</span>
                         </div>
-                        <input type="text" id="edit-emp-pin" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition placeholder:text-gray-400" placeholder="คงรหัสเดิมไว้">
+                        <input type="text" id="edit-emp-pin" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition placeholder:text-gray-400" placeholder="คงรหัสเดิมไว้">
                     </div>
                 </div>
 
                 <!-- Leave Quotas -->
-                <div class="border-t border-gray-100 pt-3">
+                <div class="border-t border-gray-100 pt-3.5">
                     <label class="block text-xs font-semibold text-gray-700 mb-2">
                         <span>โควตาวันลา (วัน/ปี):</span>
                     </label>
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                        <div class="bg-emerald-50/60 p-2.5 rounded-xl border border-emerald-100">
-                            <label class="block text-[11px] font-semibold text-emerald-800 mb-1 text-center">🏖️ พักร้อน</label>
-                            <input type="number" id="edit-emp-vac-quota" min="0" max="90" required class="w-full bg-white border border-emerald-200 rounded-lg px-2 py-1 text-xs text-center font-bold text-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <div class="bg-emerald-50/70 p-3 rounded-2xl border border-emerald-100">
+                            <label class="block text-[11px] font-semibold text-emerald-800 mb-1.5 text-center">🏖️ พักร้อน</label>
+                            <input type="number" id="edit-emp-vac-quota" min="0" max="90" required class="w-full bg-white border border-emerald-200 rounded-xl px-2 py-1 text-xs text-center font-bold text-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
                         </div>
-                        <div class="bg-amber-50/60 p-2.5 rounded-xl border border-amber-100">
-                            <label class="block text-[11px] font-semibold text-amber-800 mb-1 text-center">💼 ลากิจ</label>
-                            <input type="number" id="edit-emp-per-quota" min="0" max="90" required class="w-full bg-white border border-amber-200 rounded-lg px-2 py-1 text-xs text-center font-bold text-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        <div class="bg-amber-50/70 p-3 rounded-2xl border border-amber-100">
+                            <label class="block text-[11px] font-semibold text-amber-800 mb-1.5 text-center">💼 ลากิจ</label>
+                            <input type="number" id="edit-emp-per-quota" min="0" max="90" required class="w-full bg-white border border-amber-200 rounded-xl px-2 py-1 text-xs text-center font-bold text-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500">
                         </div>
-                        <div class="bg-blue-50/60 p-2.5 rounded-xl border border-blue-100">
-                            <label class="block text-[11px] font-semibold text-blue-800 mb-1 text-center">🏥 ลาป่วย</label>
-                            <input type="number" id="edit-emp-sic-quota" min="0" max="90" required class="w-full bg-white border border-blue-200 rounded-lg px-2 py-1 text-xs text-center font-bold text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <div class="bg-blue-50/70 p-3 rounded-2xl border border-blue-100">
+                            <label class="block text-[11px] font-semibold text-blue-800 mb-1.5 text-center">🏥 ลาป่วย</label>
+                            <input type="number" id="edit-emp-sic-quota" min="0" max="90" required class="w-full bg-white border border-blue-200 rounded-xl px-2 py-1 text-xs text-center font-bold text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
-                        <div class="bg-purple-50/60 p-2.5 rounded-xl border border-purple-100">
-                            <label class="block text-[11px] font-semibold text-purple-800 mb-1 text-center">📋 ไม่รับค่าจ้าง</label>
-                            <input type="number" id="edit-emp-unp-quota" min="0" max="90" required class="w-full bg-white border border-purple-200 rounded-lg px-2 py-1 text-xs text-center font-bold text-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        <div class="bg-purple-50/70 p-3 rounded-2xl border border-purple-100">
+                            <label class="block text-[11px] font-semibold text-purple-800 mb-1.5 text-center">📋 ไม่รับค่าจ้าง</label>
+                            <input type="number" id="edit-emp-unp-quota" min="0" max="90" required class="w-full bg-white border border-purple-200 rounded-xl px-2 py-1 text-xs text-center font-bold text-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500">
                         </div>
                     </div>
                 </div>
 
                 <!-- Action Buttons -->
-                <div class="flex space-x-2 pt-2">
-                    <button type="button" onclick="closeEditEmployeeModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2.5 rounded-xl font-semibold text-xs transition">ยกเลิก</button>
-                    <button type="submit" id="btn-submit-edit-emp" class="flex-1 bg-gradient-to-r from-amber-600 to-indigo-600 hover:from-amber-700 hover:to-indigo-700 text-white py-2.5 rounded-xl font-semibold text-xs transition shadow-md flex items-center justify-center space-x-1.5">
+                <div class="flex space-x-2.5 pt-2">
+                    <button type="button" onclick="closeEditEmployeeModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-3 rounded-2xl font-semibold text-xs transition active:scale-95">ยกเลิก</button>
+                    <button type="submit" id="btn-submit-edit-emp" class="flex-1 btn-premium py-3 rounded-2xl font-semibold text-xs transition shadow-md flex items-center justify-center space-x-1.5 active:scale-95">
                         <span>บันทึกการแก้ไข</span>
                     </button>
                 </div>
@@ -1631,8 +1643,9 @@
     </div>
 
     <!-- Footer -->
-    <footer class="text-center py-4 text-xs text-gray-400">
-        Department Leave Management &copy; 2026
+    <footer class="text-center py-6 text-xs text-slate-400 font-medium border-t border-slate-200/50 mt-8 flex flex-col items-center justify-center space-y-1">
+        <div>Department Leave Management &copy; 2026</div>
+        <div class="text-[11px] text-slate-400/80">✨ Online Department Leave Portal • Fast, Secure & Offline Ready</div>
     </footer>
 
     <!-- Frontend Script -->

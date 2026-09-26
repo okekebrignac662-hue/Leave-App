@@ -22,9 +22,16 @@
  * ============================================================================
  */
 
+// ============================================================================
+// การตั้งค่า LINE Notify (ไม่บังคับ)
+// ============================================================================
+// ถ้านำ Token จาก https://notify-bot.line.me/ มาใส่ ระบบจะแจ้งเตือนเข้า LINE กลุ่มทันที
+const LINE_NOTIFY_TOKEN = '';
+
 // ชื่อแผ่นงาน (Sheet Names)
 const SHEET_LEAVES = 'รายการลางาน';
 const SHEET_EMPLOYEES = 'ข้อมูลพนักงาน';
+const SHEET_SUMMARY = 'สรุปโควตาวันลา';
 
 // ส่วนหัวคอลัมน์ของแผ่นงาน "รายการลางาน"
 const LEAVE_HEADERS = [
@@ -67,6 +74,23 @@ const EMPLOYEE_HEADERS = [
   'อัปเดตล่าสุด'
 ];
 
+// ส่วนหัวคอลัมน์ของแผ่นงาน "สรุปโควตาวันลา"
+const SUMMARY_HEADERS = [
+  'รหัสพนักงาน',
+  'ชื่อ-นามสกุล',
+  'แผนก',
+  'พักร้อนทั้งหมด',
+  'พักร้อนใช้ไป',
+  'พักร้อนคงเหลือ',
+  'ลากิจทั้งหมด',
+  'ลากิจใช้ไป',
+  'ลากิจคงเหลือ',
+  'ลาป่วยทั้งหมด',
+  'ลาป่วยใช้ไป',
+  'ลาป่วยคงเหลือ',
+  'อัปเดตล่าสุด'
+];
+
 /**
  * ฟังก์ชันสำหรับรับ HTTP POST จาก Leave App
  */
@@ -93,6 +117,7 @@ function doPost(e) {
       case 'TEST_CONNECTION':
         ensureSheetWithHeaders(ss, SHEET_LEAVES, LEAVE_HEADERS, '#1E3A8A');
         ensureSheetWithHeaders(ss, SHEET_EMPLOYEES, EMPLOYEE_HEADERS, '#065F46');
+        ensureSheetWithHeaders(ss, SHEET_SUMMARY, SUMMARY_HEADERS, '#9333EA');
         result = {
           success: true,
           message: 'เชื่อมต่อ Google Sheets สำเร็จเรียบร้อย!',
@@ -140,8 +165,27 @@ function doPost(e) {
         };
         break;
 
+      // 8. ลบข้อมูลคำขอลางาน (Delete Leave)
+      case 'DELETE_LEAVE':
+        result = handleDeleteLeave(ss, payload.data);
+        break;
+
+      // 9. ลบข้อมูลพนักงาน (Delete Employee)
+      case 'DELETE_EMPLOYEE':
+        result = handleDeleteEmployee(ss, payload.data);
+        break;
+
       default:
         result = { success: false, error: 'ไม่รู้จัก Action: ' + action };
+    }
+
+    // ทำการคำนวณและอัปเดต "สรุปโควตาวันลา" โดยอัตโนมัติเมื่อมีการเปลี่ยนแปลงข้อมูล
+    if (action !== 'TEST_CONNECTION' && result.success) {
+      try {
+        handleCalculateQuotaSummary(ss);
+      } catch (err) {
+        // หากเกิดข้อผิดพลาดตอนคำนวณโควตา จะไม่ให้กระทบกับการทำงานหลัก
+      }
     }
 
     return createJsonResponse(result);
@@ -272,12 +316,24 @@ function handleCreateLeave(ss, data) {
   if (existingRow > 0) {
     sheet.getRange(existingRow, 1, 1, rowValues.length).setValues([rowValues]);
     formatStatusCell(sheet.getRange(existingRow, 15), data.status || 'PENDING');
+    
+    // แจ้งเตือน LINE (กรณีแก้ไขคำขอ)
+    if (data.status !== 'CANCELLED') {
+      const msg = `\n📝 มีการแก้ไขคำขอลางาน\nพนักงาน: ${empName || empIdStr} (${dept || '-'}) \nประเภท: ${formatLeaveTypeText(data.leave_type)}\nวันที่: ${formatDateOnlyText(data.start_date)}\nสถานะ: ${formatStatusText(data.status || 'PENDING')}`;
+      sendLineNotify(msg);
+    }
+
     return { success: true, message: 'อัปเดตคำขอลางานเดิมสำเร็จ', id: data.id, row: existingRow };
   } else {
     sheet.appendRow(rowValues);
     const newRow = sheet.getLastRow();
     formatStatusCell(sheet.getRange(newRow, 15), data.status || 'PENDING');
     styleDataRow(sheet, newRow, LEAVE_HEADERS.length);
+
+    // แจ้งเตือน LINE (กรณีสร้างใหม่)
+    const msg = `\n🔔 มีคำขอลางานใหม่\nพนักงาน: ${empName || empIdStr} (${dept || '-'}) \nประเภท: ${formatLeaveTypeText(data.leave_type)}\nวันที่: ${formatDateOnlyText(data.start_date)}\nเหตุผล: ${data.reason || '-'}`;
+    sendLineNotify(msg);
+
     return { success: true, message: 'บันทึกคำขอลางานใหม่สำเร็จ', id: data.id, row: newRow };
   }
 }
@@ -319,6 +375,21 @@ function handleUpdateLeaveStatus(ss, data) {
     sheet.getRange(rowIndex, 18).setValue(data.rejection_reason || '-');
   }
   sheet.getRange(rowIndex, 21).setValue(now);
+
+  // แจ้งเตือน LINE (กรณีอนุมัติ หรือ ไม่อนุมัติ)
+  if (data.status && data.status !== 'PENDING') {
+    const empName = sheet.getRange(rowIndex, 3).getValue();
+    const leaveDate = sheet.getRange(rowIndex, 8).getValue();
+    const formattedDate = formatDateOnlyText(leaveDate);
+    
+    let emoji = 'ℹ️';
+    if (data.status === 'APPROVED') emoji = '✅';
+    if (data.status === 'REJECTED') emoji = '❌';
+    if (data.status === 'CANCELLED') emoji = '🚫';
+
+    const msg = `\n${emoji} อัปเดตสถานะการลา\nพนักงาน: ${empName}\nวันที่ลา: ${formattedDate}\nสถานะใหม่: ${formatStatusText(data.status)}\nผู้พิจารณา: ${data.reviewer_name || data.reviewed_by || '-'}`;
+    sendLineNotify(msg);
+  }
 
   return {
     success: true,
@@ -503,9 +574,143 @@ function handleSyncAllEmployees(ss, rows) {
   };
 }
 
+/**
+ * ลบข้อมูลคำขอลางาน (ลบแถวออกจาก Sheet)
+ */
+function handleDeleteLeave(ss, data) {
+  if (!data || !data.id) {
+    return { success: false, error: 'กรุณาระบุรหัสคำขอ (Request ID)' };
+  }
+  const sheet = ss.getSheetByName(SHEET_LEAVES);
+  if (!sheet) return { success: false, error: 'ไม่พบแผ่นงานรายการลางาน' };
+
+  const rowIndex = findRowIndexByColumnValue(sheet, 1, data.id.toString());
+  if (rowIndex > 0) {
+    sheet.deleteRow(rowIndex);
+    return { success: true, message: 'ลบข้อมูลคำขอลางานออกจาก Sheet เรียบร้อยแล้ว', id: data.id };
+  } else {
+    // ถ้าไม่เจอถือว่าสำเร็จ (เพราะโดนลบไปแล้วหรือไม่มีตั้งแต่ต้น)
+    return { success: true, message: 'ไม่พบข้อมูลคำขอลางานนี้ในระบบ (อาจถูกลบไปแล้ว)', id: data.id };
+  }
+}
+
+/**
+ * ลบข้อมูลพนักงาน (ลบแถวออกจาก Sheet)
+ */
+function handleDeleteEmployee(ss, data) {
+  if (!data || !data.id) {
+    return { success: false, error: 'กรุณาระบุรหัสพนักงาน (Employee ID)' };
+  }
+  const sheet = ss.getSheetByName(SHEET_EMPLOYEES);
+  if (!sheet) return { success: false, error: 'ไม่พบแผ่นงานข้อมูลพนักงาน' };
+
+  const cleanId = data.id.toString().trim().toUpperCase();
+  const rowIndex = findRowIndexByColumnValue(sheet, 1, cleanId);
+  if (rowIndex > 0) {
+    sheet.deleteRow(rowIndex);
+    return { success: true, message: 'ลบข้อมูลพนักงานออกจาก Sheet เรียบร้อยแล้ว', id: cleanId };
+  } else {
+    // ถ้าไม่เจอถือว่าสำเร็จ
+    return { success: true, message: 'ไม่พบข้อมูลพนักงานรายนี้ในระบบ (อาจถูกลบไปแล้ว)', id: cleanId };
+  }
+}
+
 // ============================================================================
 // ฟังก์ชันตัวช่วย (Helper Utilities)
 // ============================================================================
+
+/**
+ * คำนวณสรุปโควตาวันลาและอัปเดต Sheet "สรุปโควตาวันลา"
+ */
+function handleCalculateQuotaSummary(ss) {
+  const empSheet = ss.getSheetByName(SHEET_EMPLOYEES);
+  const leaveSheet = ss.getSheetByName(SHEET_LEAVES);
+  if (!empSheet || !leaveSheet) return;
+
+  const summarySheet = ensureSheetWithHeaders(ss, SHEET_SUMMARY, SUMMARY_HEADERS, '#9333EA'); // สีม่วง
+
+  // 1. ดึงข้อมูลพนักงาน
+  const lastEmpRow = empSheet.getLastRow();
+  const empData = lastEmpRow > 1 ? empSheet.getRange(2, 1, lastEmpRow - 1, 9).getValues() : [];
+  
+  // 2. ดึงข้อมูลการลา
+  const lastLeaveRow = leaveSheet.getLastRow();
+  const leaveData = lastLeaveRow > 1 ? leaveSheet.getRange(2, 1, lastLeaveRow - 1, 15).getValues() : [];
+
+  // สร้าง Map เก็บยอดการใช้ไป
+  const usedMap = {};
+  leaveData.forEach(row => {
+    const rawId = (row[1] || '').toString().trim().toUpperCase();
+    const empId = rawId.startsWith("'") ? rawId.substring(1) : rawId; // เอา single quote ออก
+    const leaveType = (row[5] || '').toString();
+    const days = parseFloat(row[9]) || 0;
+    const status = (row[14] || '').toString().toUpperCase();
+    
+    // นับเฉพาะรายการที่ได้รับอนุมัติแล้ว (APPROVED)
+    if (status === 'APPROVED' || status.includes('อนุมัติแล้ว')) {
+      if (!usedMap[empId]) usedMap[empId] = { vacation: 0, personal: 0, sick: 0 };
+      
+      if (leaveType.includes('พักร้อน') || leaveType.includes('VACATION')) usedMap[empId].vacation += days;
+      else if (leaveType.includes('กิจ') || leaveType.includes('PERSONAL')) usedMap[empId].personal += days;
+      else if (leaveType.includes('ป่วย') || leaveType.includes('SICK')) usedMap[empId].sick += days;
+    }
+  });
+
+  // 3. คำนวณและเตรียมข้อมูลสำหรับเขียนลง Sheet
+  const now = getBangkokTimestamp();
+  const summaryRows = empData.map(emp => {
+    const rawId = (emp[0] || '').toString().trim();
+    const empId = rawId.toUpperCase().replace(/^'/, '');
+    const displayId = rawId.startsWith('0') ? "'" + rawId : rawId;
+    
+    const used = usedMap[empId] || { vacation: 0, personal: 0, sick: 0 };
+    
+    const vacTotal = parseFloat(emp[6]) || 0;
+    const perTotal = parseFloat(emp[7]) || 0;
+    const sickTotal = parseFloat(emp[8]) || 0;
+
+    return [
+      displayId,
+      emp[1] || '',
+      emp[2] || '',
+      vacTotal,
+      used.vacation,
+      vacTotal - used.vacation,
+      perTotal,
+      used.personal,
+      perTotal - used.personal,
+      sickTotal,
+      used.sick,
+      sickTotal - used.sick,
+      now
+    ];
+  });
+
+  // 4. ล้างข้อมูลเก่าและเขียนข้อมูลใหม่
+  const lastRow = summarySheet.getLastRow();
+  if (lastRow > 1) {
+    summarySheet.deleteRows(2, lastRow - 1);
+  }
+  
+  if (summaryRows.length > 0) {
+    summarySheet.getRange(2, 1, summaryRows.length, SUMMARY_HEADERS.length).setValues(summaryRows);
+    
+    // จัดรูปแบบตารางทีเดียว
+    for (let i = 0; i < summaryRows.length; i++) {
+      const rowNum = i + 2;
+      styleDataRow(summarySheet, rowNum, SUMMARY_HEADERS.length);
+      
+      // ไฮไลต์ถ้าวันลาคงเหลือติดลบ หรือเหลือน้อย
+      const remainVac = summaryRows[i][5];
+      const remainPer = summaryRows[i][8];
+      const remainSick = summaryRows[i][11];
+      
+      if (remainVac <= 0) summarySheet.getRange(rowNum, 6).setFontColor('#DC2626').setFontWeight('bold');
+      if (remainPer <= 0) summarySheet.getRange(rowNum, 9).setFontColor('#DC2626').setFontWeight('bold');
+      if (remainSick <= 0) summarySheet.getRange(rowNum, 12).setFontColor('#DC2626').setFontWeight('bold');
+    }
+  }
+}
 
 /**
  * ตรวจสอบแผ่นงาน ถ้ายังไม่มีให้สร้างพร้อมจัดรูปแบบส่วนหัว (Header)
@@ -652,4 +857,25 @@ function getBangkokTimestamp() {
 function createJsonResponse(data) {
   return ContentService.createTextOutput(JSON.stringify(data))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+/**
+ * ส่งข้อความแจ้งเตือนผ่าน LINE Notify
+ */
+function sendLineNotify(message) {
+  if (!LINE_NOTIFY_TOKEN || LINE_NOTIFY_TOKEN.trim() === '') return;
+  
+  const url = 'https://notify-api.line.me/api/notify';
+  const options = {
+    method: 'post',
+    payload: { message: message },
+    headers: { 'Authorization': 'Bearer ' + LINE_NOTIFY_TOKEN.trim() },
+    muteHttpExceptions: true
+  };
+  
+  try {
+    UrlFetchApp.fetch(url, options);
+  } catch (err) {
+    // ป้องกันแอปพังถ้าส่ง LINE ไม่สำเร็จ
+  }
 }
