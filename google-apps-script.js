@@ -25,6 +25,7 @@
 // ชื่อแผ่นงาน (Sheet Names)
 const SHEET_LEAVES = 'รายการลางาน';
 const SHEET_EMPLOYEES = 'ข้อมูลพนักงาน';
+const SHEET_SUMMARY = 'สรุปโควตาวันลา';
 
 // ส่วนหัวคอลัมน์ของแผ่นงาน "รายการลางาน"
 const LEAVE_HEADERS = [
@@ -67,6 +68,23 @@ const EMPLOYEE_HEADERS = [
   'อัปเดตล่าสุด'
 ];
 
+// ส่วนหัวคอลัมน์ของแผ่นงาน "สรุปโควตาวันลา"
+const SUMMARY_HEADERS = [
+  'รหัสพนักงาน',
+  'ชื่อ-นามสกุล',
+  'แผนก',
+  'พักร้อนทั้งหมด',
+  'พักร้อนใช้ไป',
+  'พักร้อนคงเหลือ',
+  'ลากิจทั้งหมด',
+  'ลากิจใช้ไป',
+  'ลากิจคงเหลือ',
+  'ลาป่วยทั้งหมด',
+  'ลาป่วยใช้ไป',
+  'ลาป่วยคงเหลือ',
+  'อัปเดตล่าสุด'
+];
+
 /**
  * ฟังก์ชันสำหรับรับ HTTP POST จาก Leave App
  */
@@ -93,6 +111,7 @@ function doPost(e) {
       case 'TEST_CONNECTION':
         ensureSheetWithHeaders(ss, SHEET_LEAVES, LEAVE_HEADERS, '#1E3A8A');
         ensureSheetWithHeaders(ss, SHEET_EMPLOYEES, EMPLOYEE_HEADERS, '#065F46');
+        ensureSheetWithHeaders(ss, SHEET_SUMMARY, SUMMARY_HEADERS, '#9333EA');
         result = {
           success: true,
           message: 'เชื่อมต่อ Google Sheets สำเร็จเรียบร้อย!',
@@ -152,6 +171,15 @@ function doPost(e) {
 
       default:
         result = { success: false, error: 'ไม่รู้จัก Action: ' + action };
+    }
+
+    // ทำการคำนวณและอัปเดต "สรุปโควตาวันลา" โดยอัตโนมัติเมื่อมีการเปลี่ยนแปลงข้อมูล
+    if (action !== 'TEST_CONNECTION' && result.success) {
+      try {
+        handleCalculateQuotaSummary(ss);
+      } catch (err) {
+        // หากเกิดข้อผิดพลาดตอนคำนวณโควตา จะไม่ให้กระทบกับการทำงานหลัก
+      }
     }
 
     return createJsonResponse(result);
@@ -557,6 +585,99 @@ function handleDeleteEmployee(ss, data) {
 // ============================================================================
 // ฟังก์ชันตัวช่วย (Helper Utilities)
 // ============================================================================
+
+/**
+ * คำนวณสรุปโควตาวันลาและอัปเดต Sheet "สรุปโควตาวันลา"
+ */
+function handleCalculateQuotaSummary(ss) {
+  const empSheet = ss.getSheetByName(SHEET_EMPLOYEES);
+  const leaveSheet = ss.getSheetByName(SHEET_LEAVES);
+  if (!empSheet || !leaveSheet) return;
+
+  const summarySheet = ensureSheetWithHeaders(ss, SHEET_SUMMARY, SUMMARY_HEADERS, '#9333EA'); // สีม่วง
+
+  // 1. ดึงข้อมูลพนักงาน
+  const lastEmpRow = empSheet.getLastRow();
+  const empData = lastEmpRow > 1 ? empSheet.getRange(2, 1, lastEmpRow - 1, 9).getValues() : [];
+  
+  // 2. ดึงข้อมูลการลา
+  const lastLeaveRow = leaveSheet.getLastRow();
+  const leaveData = lastLeaveRow > 1 ? leaveSheet.getRange(2, 1, lastLeaveRow - 1, 15).getValues() : [];
+
+  // สร้าง Map เก็บยอดการใช้ไป
+  const usedMap = {};
+  leaveData.forEach(row => {
+    const rawId = (row[1] || '').toString().trim().toUpperCase();
+    const empId = rawId.startsWith("'") ? rawId.substring(1) : rawId; // เอา single quote ออก
+    const leaveType = (row[5] || '').toString();
+    const days = parseFloat(row[9]) || 0;
+    const status = (row[14] || '').toString().toUpperCase();
+    
+    // นับเฉพาะรายการที่ได้รับอนุมัติแล้ว (APPROVED)
+    if (status === 'APPROVED' || status.includes('อนุมัติแล้ว')) {
+      if (!usedMap[empId]) usedMap[empId] = { vacation: 0, personal: 0, sick: 0 };
+      
+      if (leaveType.includes('พักร้อน') || leaveType.includes('VACATION')) usedMap[empId].vacation += days;
+      else if (leaveType.includes('กิจ') || leaveType.includes('PERSONAL')) usedMap[empId].personal += days;
+      else if (leaveType.includes('ป่วย') || leaveType.includes('SICK')) usedMap[empId].sick += days;
+    }
+  });
+
+  // 3. คำนวณและเตรียมข้อมูลสำหรับเขียนลง Sheet
+  const now = getBangkokTimestamp();
+  const summaryRows = empData.map(emp => {
+    const rawId = (emp[0] || '').toString().trim();
+    const empId = rawId.toUpperCase().replace(/^'/, '');
+    const displayId = rawId.startsWith('0') ? "'" + rawId : rawId;
+    
+    const used = usedMap[empId] || { vacation: 0, personal: 0, sick: 0 };
+    
+    const vacTotal = parseFloat(emp[6]) || 0;
+    const perTotal = parseFloat(emp[7]) || 0;
+    const sickTotal = parseFloat(emp[8]) || 0;
+
+    return [
+      displayId,
+      emp[1] || '',
+      emp[2] || '',
+      vacTotal,
+      used.vacation,
+      vacTotal - used.vacation,
+      perTotal,
+      used.personal,
+      perTotal - used.personal,
+      sickTotal,
+      used.sick,
+      sickTotal - used.sick,
+      now
+    ];
+  });
+
+  // 4. ล้างข้อมูลเก่าและเขียนข้อมูลใหม่
+  const lastRow = summarySheet.getLastRow();
+  if (lastRow > 1) {
+    summarySheet.deleteRows(2, lastRow - 1);
+  }
+  
+  if (summaryRows.length > 0) {
+    summarySheet.getRange(2, 1, summaryRows.length, SUMMARY_HEADERS.length).setValues(summaryRows);
+    
+    // จัดรูปแบบตารางทีเดียว
+    for (let i = 0; i < summaryRows.length; i++) {
+      const rowNum = i + 2;
+      styleDataRow(summarySheet, rowNum, SUMMARY_HEADERS.length);
+      
+      // ไฮไลต์ถ้าวันลาคงเหลือติดลบ หรือเหลือน้อย
+      const remainVac = summaryRows[i][5];
+      const remainPer = summaryRows[i][8];
+      const remainSick = summaryRows[i][11];
+      
+      if (remainVac <= 0) summarySheet.getRange(rowNum, 6).setFontColor('#DC2626').setFontWeight('bold');
+      if (remainPer <= 0) summarySheet.getRange(rowNum, 9).setFontColor('#DC2626').setFontWeight('bold');
+      if (remainSick <= 0) summarySheet.getRange(rowNum, 12).setFontColor('#DC2626').setFontWeight('bold');
+    }
+  }
+}
 
 /**
  * ตรวจสอบแผ่นงาน ถ้ายังไม่มีให้สร้างพร้อมจัดรูปแบบส่วนหัว (Header)
