@@ -176,6 +176,10 @@
                         <span id="user-role-display" class="text-[10px] text-blue-300 font-medium leading-none mt-1"></span>
                     </div>
                 </div>
+                <!-- Personal Leave Toggle Button for HR / Supervisor / Admin -->
+                <button id="btn-toggle-hr-emp-view" type="button" onclick="toggleHrEmployeeView()" class="hidden bg-purple-600/30 hover:bg-purple-600 border border-purple-400/40 text-purple-200 hover:text-white px-2.5 py-1.5 rounded-xl transition text-xs font-semibold shadow-xs flex items-center space-x-1.5" title="สลับมุมมองยื่นคำขอลางานส่วนตัว">
+                    <span id="btn-toggle-hr-emp-view-text">📝 ยื่นขอลางานส่วนตัว</span>
+                </button>
                 <!-- PWA Install Button in Navbar -->
                 <button id="btn-pwa-install-nav" type="button" onclick="triggerPwaInstall()" class="hidden bg-indigo-600/30 hover:bg-indigo-600 border border-indigo-400/40 text-indigo-200 hover:text-white px-2.5 py-1.5 rounded-xl transition text-xs font-semibold shadow-xs flex items-center space-x-1.5" title="ติดตั้งแอปลงบนหน้าจอมือถือ">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
@@ -226,7 +230,7 @@
                                 <span>รหัสพนักงาน (Employee ID)</span>
                             </label>
                             <div class="relative">
-                                <input type="text" id="emp-id" required class="w-full bg-gray-50/50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 focus:outline-none transition uppercase placeholder:text-gray-400" placeholder="กรอกรหัสพนักงาน (เช่น EMP-001)" autocomplete="username">
+                                <input type="text" id="emp-id" required class="w-full bg-gray-50/50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 focus:outline-none transition uppercase placeholder:text-gray-400" placeholder="กรอกรหัสพนักงาน (เช่น EMP-001, HR-001, SUP-001)" autocomplete="username">
                             </div>
                         </div>
 
@@ -633,6 +637,30 @@
                     </button>
                 </div>
 
+                <!-- HR Portal Banner (Visible only for HR) -->
+                <div id="hr-banner-card" class="hidden-view bg-gradient-to-r from-purple-950 via-indigo-950 to-slate-900 text-white p-4 sm:p-5 rounded-3xl shadow-md border border-purple-500/30 flex flex-col sm:flex-row items-center justify-between gap-3.5">
+                    <div class="flex items-center space-x-3 w-full sm:w-auto">
+                        <div class="w-10 h-10 rounded-2xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center text-xl shrink-0">
+                            💼
+                        </div>
+                        <div>
+                            <div class="flex items-center space-x-2">
+                                <h3 class="text-sm font-bold text-white">ระบบงานฝ่ายบุคคลและเงินเดือน (HR & Payroll Portal)</h3>
+                                <span class="bg-purple-500/30 text-purple-200 border border-purple-400/30 text-[10px] px-2 py-0.5 rounded-full font-mono font-bold">HR ACCESS</span>
+                            </div>
+                            <p class="text-[11px] text-purple-200/80 mt-0.5">ดูแลภาพรวมการลางานทุกแผนก ส่งออกรายงานสำหรับคิดเงินเดือน และตรวจสอบโควตาพนักงาน</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2 w-full sm:w-auto">
+                        <button type="button" onclick="switchSupervisorTab('reports')" class="flex-1 sm:flex-initial bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white px-3.5 py-2 rounded-xl text-xs font-semibold shadow-md transition flex items-center justify-center space-x-1.5 shrink-0 transform active:scale-95">
+                            <span>📊 ส่งออกรายงาน Excel / CSV</span>
+                        </button>
+                        <button type="button" onclick="switchSupervisorTab('pending')" class="flex-1 sm:flex-initial bg-white/10 hover:bg-white/20 text-white border border-white/20 px-3 py-2 rounded-xl text-xs font-semibold transition flex items-center justify-center space-x-1 shrink-0">
+                            <span>⏳ รายการรออนุมัติ</span>
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Executive Summary Cards -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
                     <div class="bg-white p-4 rounded-2xl shadow-xs border border-amber-100">
@@ -727,12 +755,21 @@
                 <div id="supervisor-pending-container" class="space-y-3">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
                         <p id="pending-subtitle" class="text-xs text-gray-500 font-medium">กำลังโหลดรายการรออนุมัติ...</p>
-                        <!-- Shift Filter Tabs -->
-                        <div class="flex items-center space-x-1.5 bg-gray-100/80 p-1 rounded-xl text-xs shrink-0">
-                            <span class="text-[11px] text-gray-400 font-bold px-1.5">กะ:</span>
-                            <button type="button" onclick="filterSupervisorByShift('ALL')" id="filter-shift-all" class="px-2.5 py-1 rounded-lg font-bold bg-white text-blue-700 shadow-2xs transition">ทั้งหมด</button>
-                            <button type="button" onclick="filterSupervisorByShift('A')" id="filter-shift-a" class="px-2.5 py-1 rounded-lg font-semibold text-gray-600 hover:text-gray-900 transition">🅰️ กะ A</button>
-                            <button type="button" onclick="filterSupervisorByShift('B')" id="filter-shift-b" class="px-2.5 py-1 rounded-lg font-semibold text-gray-600 hover:text-gray-900 transition">🅱️ กะ B</button>
+                        <!-- Department & Shift Filter for HR / Supervisor -->
+                        <div class="flex items-center space-x-1.5 flex-wrap gap-1">
+                            <div id="hr-pending-dept-filter-wrap" class="hidden-view items-center space-x-1 bg-purple-50 border border-purple-200 p-1 rounded-xl text-xs">
+                                <span class="text-[11px] text-purple-700 font-bold px-1.5">🏢 แผนก:</span>
+                                <select id="hr-pending-dept-filter" onchange="filterHRPendingByDept(this.value)" class="bg-white border border-purple-200 text-purple-900 text-xs rounded-lg px-2 py-0.5 outline-none font-semibold">
+                                    <option value="ALL">ทุกแผนก (All)</option>
+                                </select>
+                            </div>
+                            <!-- Shift Filter Tabs -->
+                            <div class="flex items-center space-x-1.5 bg-gray-100/80 p-1 rounded-xl text-xs shrink-0">
+                                <span class="text-[11px] text-gray-400 font-bold px-1.5">กะ:</span>
+                                <button type="button" onclick="filterSupervisorByShift('ALL')" id="filter-shift-all" class="px-2.5 py-1 rounded-lg font-bold bg-white text-blue-700 shadow-2xs transition">ทั้งหมด</button>
+                                <button type="button" onclick="filterSupervisorByShift('A')" id="filter-shift-a" class="px-2.5 py-1 rounded-lg font-semibold text-gray-600 hover:text-gray-900 transition">🅰️ กะ A</button>
+                                <button type="button" onclick="filterSupervisorByShift('B')" id="filter-shift-b" class="px-2.5 py-1 rounded-lg font-semibold text-gray-600 hover:text-gray-900 transition">🅱️ กะ B</button>
+                            </div>
                         </div>
                     </div>
                     <div id="supervisor-pending-list" class="space-y-4">
@@ -743,12 +780,21 @@
                 <div id="supervisor-history-container" class="hidden-view space-y-3">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
                         <p id="history-subtitle" class="text-xs text-gray-500 font-medium">ประวัติคำขอที่ได้รับการอนุมัติ / ปฏิเสธทั้งหมด</p>
-                        <!-- Shift Filter Tabs -->
-                        <div class="flex items-center space-x-1.5 bg-gray-100/80 p-1 rounded-xl text-xs shrink-0">
-                            <span class="text-[11px] text-gray-400 font-bold px-1.5">กะ:</span>
-                            <button type="button" onclick="filterSupervisorHistoryByShift('ALL')" id="hist-filter-shift-all" class="px-2.5 py-1 rounded-lg font-bold bg-white text-blue-700 shadow-2xs transition">ทั้งหมด</button>
-                            <button type="button" onclick="filterSupervisorHistoryByShift('A')" id="hist-filter-shift-a" class="px-2.5 py-1 rounded-lg font-semibold text-gray-600 hover:text-gray-900 transition">🅰️ กะ A</button>
-                            <button type="button" onclick="filterSupervisorHistoryByShift('B')" id="hist-filter-shift-b" class="px-2.5 py-1 rounded-lg font-semibold text-gray-600 hover:text-gray-900 transition">🅱️ กะ B</button>
+                        <!-- Department & Shift Filter for HR / Supervisor -->
+                        <div class="flex items-center space-x-1.5 flex-wrap gap-1">
+                            <div id="hr-history-dept-filter-wrap" class="hidden-view items-center space-x-1 bg-purple-50 border border-purple-200 p-1 rounded-xl text-xs">
+                                <span class="text-[11px] text-purple-700 font-bold px-1.5">🏢 แผนก:</span>
+                                <select id="hr-history-dept-filter" onchange="filterHRHistoryByDept(this.value)" class="bg-white border border-purple-200 text-purple-900 text-xs rounded-lg px-2 py-0.5 outline-none font-semibold">
+                                    <option value="ALL">ทุกแผนก (All)</option>
+                                </select>
+                            </div>
+                            <!-- Shift Filter Tabs -->
+                            <div class="flex items-center space-x-1.5 bg-gray-100/80 p-1 rounded-xl text-xs shrink-0">
+                                <span class="text-[11px] text-gray-400 font-bold px-1.5">กะ:</span>
+                                <button type="button" onclick="filterSupervisorHistoryByShift('ALL')" id="hist-filter-shift-all" class="px-2.5 py-1 rounded-lg font-bold bg-white text-blue-700 shadow-2xs transition">ทั้งหมด</button>
+                                <button type="button" onclick="filterSupervisorHistoryByShift('A')" id="hist-filter-shift-a" class="px-2.5 py-1 rounded-lg font-semibold text-gray-600 hover:text-gray-900 transition">🅰️ กะ A</button>
+                                <button type="button" onclick="filterSupervisorHistoryByShift('B')" id="hist-filter-shift-b" class="px-2.5 py-1 rounded-lg font-semibold text-gray-600 hover:text-gray-900 transition">🅱️ กะ B</button>
+                            </div>
                         </div>
                     </div>
                     <div id="supervisor-history-list" class="space-y-4">
@@ -1392,6 +1438,7 @@
                         <select id="new-emp-role" onchange="handleRoleSelectChange(this.value)" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition font-medium text-gray-800">
                             <option value="EMPLOYEE">พนักงานทั่วไป (EMPLOYEE)</option>
                             <option value="SUPERVISOR">หัวหน้างาน (SUPERVISOR)</option>
+                            <option value="HR">💼 ฝ่ายบุคคล / คิดเงินเดือน (HR)</option>
                             <option value="ADMIN">ผู้ดูแลระบบ (ADMIN)</option>
                         </select>
                     </div>
@@ -1516,6 +1563,7 @@
                         <select id="edit-emp-role" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15 focus:outline-none transition font-medium text-gray-800">
                             <option value="EMPLOYEE">พนักงานทั่วไป (EMPLOYEE)</option>
                             <option value="SUPERVISOR">หัวหน้างาน (SUPERVISOR)</option>
+                            <option value="HR">💼 ฝ่ายบุคคล / คิดเงินเดือน (HR)</option>
                             <option value="ADMIN">ผู้ดูแลระบบ (ADMIN)</option>
                         </select>
                     </div>
@@ -2299,35 +2347,83 @@
                 // Navbar Profile Display
                 const initialLetter = (currentUser.name || currentUser.id).charAt(0);
                 const shiftLabel = formatShiftLabel(currentUser.shift);
-                document.getElementById('user-avatar-badge').innerText = initialLetter;
-                document.getElementById('user-name-display').innerText = currentUser.name;
-                document.getElementById('user-role-display').innerText = currentUser.isAdmin
-                    ? `🛡️ ผู้ดูแลระบบ (Admin) • แผนก ${currentUser.department} • ${shiftLabel}`
-                    : (currentUser.isSupervisor 
-                        ? `👑 หัวหน้างาน • แผนก ${currentUser.department} • ${shiftLabel}` 
-                        : `พนักงาน • แผนก ${currentUser.department} • ${shiftLabel}`);
+                const avatarEl = document.getElementById('user-avatar-badge');
+                if (currentUser.isHR) {
+                    if (avatarEl) {
+                        avatarEl.innerText = 'HR';
+                        avatarEl.className = 'w-6 h-6 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center font-bold text-[10px] shadow-inner';
+                    }
+                    document.getElementById('user-name-display').innerText = currentUser.name;
+                    document.getElementById('user-role-display').innerText = `💼 ฝ่ายบุคคล (HR) • สิทธิ์ภาพรวมทั้งบริษัท • ${shiftLabel}`;
+                } else {
+                    if (avatarEl) {
+                        avatarEl.innerText = initialLetter;
+                        avatarEl.className = 'w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-inner';
+                    }
+                    document.getElementById('user-name-display').innerText = currentUser.name;
+                    document.getElementById('user-role-display').innerText = currentUser.isAdmin
+                        ? `🛡️ ผู้ดูแลระบบ (Admin) • แผนก ${currentUser.department} • ${shiftLabel}`
+                        : (currentUser.isSupervisor 
+                            ? `👑 หัวหน้างาน • แผนก ${currentUser.department} • ${shiftLabel}` 
+                            : `พนักงาน • แผนก ${currentUser.department} • ${shiftLabel}`);
+                }
 
-                // Admin Controls Visibility
+                // Controls & Banners Visibility
                 const adminBtn = document.getElementById('btn-admin-add-emp');
                 const adminBanner = document.getElementById('admin-banner-card');
+                const hrBanner = document.getElementById('hr-banner-card');
+                const hrToggleBtn = document.getElementById('btn-toggle-hr-emp-view');
                 const adminTab = document.getElementById('tab-admin-employees');
+                const hrPendingFilterWrap = document.getElementById('hr-pending-dept-filter-wrap');
+                const hrHistoryFilterWrap = document.getElementById('hr-history-dept-filter-wrap');
+
                 if (currentUser.isAdmin) {
                     if (adminBtn) adminBtn.classList.remove('hidden-view');
                     if (adminBanner) adminBanner.classList.remove('hidden-view');
-                    if (adminTab) adminTab.classList.remove('hidden-view');
+                    if (hrBanner) hrBanner.classList.add('hidden-view');
+                    if (adminTab) {
+                        adminTab.classList.remove('hidden-view');
+                        const label = adminTab.querySelector('span:last-child');
+                        if (label) label.innerText = 'จัดการพนักงาน';
+                    }
+                    if (hrToggleBtn) hrToggleBtn.classList.add('hidden');
+                    if (hrPendingFilterWrap) hrPendingFilterWrap.classList.remove('hidden-view');
+                    if (hrHistoryFilterWrap) hrHistoryFilterWrap.classList.remove('hidden-view');
+                } else if (currentUser.isHR) {
+                    if (adminBtn) adminBtn.classList.add('hidden-view');
+                    if (adminBanner) adminBanner.classList.add('hidden-view');
+                    if (hrBanner) hrBanner.classList.remove('hidden-view');
+                    if (adminTab) {
+                        adminTab.classList.remove('hidden-view');
+                        const label = adminTab.querySelector('span:last-child');
+                        if (label) label.innerText = 'ตรวจสอบโควตาพนักงาน';
+                    }
+                    if (hrToggleBtn) hrToggleBtn.classList.remove('hidden');
+                    if (hrPendingFilterWrap) hrPendingFilterWrap.classList.remove('hidden-view');
+                    if (hrHistoryFilterWrap) hrHistoryFilterWrap.classList.remove('hidden-view');
                 } else {
                     if (adminBtn) adminBtn.classList.add('hidden-view');
                     if (adminBanner) adminBanner.classList.add('hidden-view');
+                    if (hrBanner) hrBanner.classList.add('hidden-view');
                     if (adminTab) adminTab.classList.add('hidden-view');
+                    if (hrToggleBtn) hrToggleBtn.classList.add('hidden');
+                    if (hrPendingFilterWrap) hrPendingFilterWrap.classList.add('hidden-view');
+                    if (hrHistoryFilterWrap) hrHistoryFilterWrap.classList.add('hidden-view');
                 }
 
                 if (currentUser.isSupervisor) {
                     document.getElementById('supervisor-view').classList.remove('hidden-view');
                     document.getElementById('employee-view').classList.add('hidden-view');
-                    document.getElementById('sup-stat-dept').innerText = currentUser.department;
-                    if (currentUser.isAdmin) {
+                    if (currentUser.isHR) {
+                        document.getElementById('sup-stat-dept').innerText = 'ทุกแผนก (Company Overview)';
+                        loadReportDepartments();
+                        switchSupervisorTab('reports');
+                    } else if (currentUser.isAdmin) {
+                        document.getElementById('sup-stat-dept').innerText = currentUser.department;
+                        loadReportDepartments();
                         switchSupervisorTab('employees');
                     } else {
+                        document.getElementById('sup-stat-dept').innerText = currentUser.department;
                         switchSupervisorTab('pending');
                     }
                     loadDepartmentCalendar();
@@ -2360,6 +2456,42 @@
             }
         }
 
+        // Toggle HR View between Management/Reports Portal and Personal Leave Submission
+        function toggleHrEmployeeView() {
+            if (!currentUser || !currentUser.isHR) return;
+            const supView = document.getElementById('supervisor-view');
+            const empView = document.getElementById('employee-view');
+            const btnText = document.getElementById('btn-toggle-hr-emp-view-text');
+
+            if (!supView.classList.contains('hidden-view')) {
+                // Switch to personal leave view
+                supView.classList.add('hidden-view');
+                empView.classList.remove('hidden-view');
+                if (btnText) btnText.innerText = '💼 กลับสู่หน้าระบบ HR';
+                
+                loadEmployeeQuota();
+                loadMyLeaveRequests();
+                loadDepartmentCalendar();
+                
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                const tomorrowStr = getLocalDateString(tomorrow);
+                document.getElementById('req-start-date').value = tomorrowStr;
+                document.getElementById('req-end-date').value = tomorrowStr;
+                document.getElementById('req-start-date').min = getLocalDateString(new Date());
+                document.getElementById('req-end-date').min = getLocalDateString(new Date());
+                calculateRequestedDays();
+                
+                showToast('สลับเข้าสู่มุมมองยื่นคำขอลางานส่วนตัว', 'info');
+            } else {
+                // Switch back to HR management view
+                empView.classList.add('hidden-view');
+                supView.classList.remove('hidden-view');
+                if (btnText) btnText.innerText = '📝 ยื่นขอลางานส่วนตัว';
+                showToast('กลับสู่ระบบพอร์ทัล HR', 'info');
+            }
+        }
+
         // Logout Handler
         function logout() {
             currentUser = null;
@@ -2370,8 +2502,21 @@
             
             const adminBtn = document.getElementById('btn-admin-add-emp');
             const adminBanner = document.getElementById('admin-banner-card');
+            const hrBanner = document.getElementById('hr-banner-card');
+            const hrToggleBtn = document.getElementById('btn-toggle-hr-emp-view');
+            const hrPendingFilterWrap = document.getElementById('hr-pending-dept-filter-wrap');
+            const hrHistoryFilterWrap = document.getElementById('hr-history-dept-filter-wrap');
+            
             if (adminBtn) adminBtn.classList.add('hidden-view');
             if (adminBanner) adminBanner.classList.add('hidden-view');
+            if (hrBanner) hrBanner.classList.add('hidden-view');
+            if (hrToggleBtn) {
+                hrToggleBtn.classList.add('hidden');
+                const btnText = document.getElementById('btn-toggle-hr-emp-view-text');
+                if (btnText) btnText.innerText = '📝 ยื่นขอลางานส่วนตัว';
+            }
+            if (hrPendingFilterWrap) hrPendingFilterWrap.classList.add('hidden-view');
+            if (hrHistoryFilterWrap) hrHistoryFilterWrap.classList.add('hidden-view');
             closeAddEmployeeModal();
 
             const savedId = localStorage.getItem('leave_app_remembered_emp_id');
@@ -2753,7 +2898,7 @@
                                         <h3 class="font-bold text-gray-900 text-base leading-tight">${escapeHtml(req.employee_name)}</h3>
                                         ${shiftBadge}
                                     </div>
-                                    <p class="text-xs text-gray-500 mt-1">${escapeHtml(req.department)} • <span class="font-mono">${escapeHtml(req.employee_id)}</span></p>
+                                    <p class="text-xs text-gray-500 mt-1"><span class="inline-flex items-center px-2 py-0.5 rounded-lg font-semibold text-[11px] bg-indigo-50 text-indigo-700 border border-indigo-200">${escapeHtml(req.department)}</span> • <span class="font-mono font-medium">${escapeHtml(req.employee_id)}</span></p>
                                 </div>
                             </div>
                             <span class="${typeColor} text-xs px-3 py-1 rounded-full font-semibold flex items-center space-x-1">
@@ -2809,7 +2954,14 @@
             listEl.innerHTML = '<div class="text-center py-8 text-gray-400 text-sm">กำลังโหลดรายการ...</div>';
 
             try {
-                const deptParam = currentUser && currentUser.department ? `&department=${encodeURIComponent(currentUser.department)}` : '';
+                let deptParam = '';
+                if (currentUser && (currentUser.isHR || currentUser.isAdmin)) {
+                    const hrFilterEl = document.getElementById('hr-pending-dept-filter');
+                    const selectedDept = hrFilterEl ? hrFilterEl.value : 'ALL';
+                    deptParam = (selectedDept && selectedDept !== 'ALL') ? `&department=${encodeURIComponent(selectedDept)}` : '&department=ALL';
+                } else if (currentUser && currentUser.department) {
+                    deptParam = `&department=${encodeURIComponent(currentUser.department)}`;
+                }
                 const supParam = currentUser && currentUser.id ? `&supervisor_id=${encodeURIComponent(currentUser.id)}` : '';
                 const res = await safeFetch(`/api/leave-requests?status=PENDING${deptParam}${supParam}`);
                 const data = await res.json();
@@ -2922,7 +3074,7 @@
                                     <h4 class="font-bold text-gray-900 text-sm">${escapeHtml(req.employee_name)} <span class="font-normal text-xs text-gray-500 font-mono">(${escapeHtml(req.employee_id)})</span></h4>
                                     ${shiftBadge}
                                 </div>
-                                <p class="text-[11px] text-gray-500 mt-1">${translateLeaveType(req.leave_type)} • ${escapeHtml(req.department)}</p>
+                                <p class="text-[11px] text-gray-500 mt-1">${translateLeaveType(req.leave_type)} • <span class="inline-flex items-center px-2 py-0.5 rounded-lg font-semibold text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-200">${escapeHtml(req.department)}</span></p>
                             </div>
                             <div class="flex items-center space-x-2">
                                 ${durationChip}
@@ -2955,13 +3107,30 @@
             }).join('');
         }
 
+        // Department Filter Callback for HR Pending Tab
+        function filterHRPendingByDept(dept) {
+            loadPendingRequests();
+        }
+
+        // Department Filter Callback for HR History Tab
+        function filterHRHistoryByDept(dept) {
+            loadSupervisorHistory();
+        }
+
         // Load Resolved Leave History for Supervisor
         async function loadSupervisorHistory() {
             const listEl = document.getElementById('supervisor-history-list');
             listEl.innerHTML = '<div class="text-center py-8 text-gray-400 text-sm">กำลังโหลดประวัติ...</div>';
 
             try {
-                const deptParam = currentUser && currentUser.department ? `&department=${encodeURIComponent(currentUser.department)}` : '';
+                let deptParam = '';
+                if (currentUser && (currentUser.isHR || currentUser.isAdmin)) {
+                    const hrHistFilterEl = document.getElementById('hr-history-dept-filter');
+                    const selectedDept = hrHistFilterEl ? hrHistFilterEl.value : 'ALL';
+                    deptParam = (selectedDept && selectedDept !== 'ALL') ? `&department=${encodeURIComponent(selectedDept)}` : '&department=ALL';
+                } else if (currentUser && currentUser.department) {
+                    deptParam = `&department=${encodeURIComponent(currentUser.department)}`;
+                }
                 const supParam = currentUser && currentUser.id ? `&supervisor_id=${encodeURIComponent(currentUser.id)}` : '';
                 const res = await safeFetch(`/api/leave-requests?status=HISTORY${deptParam}${supParam}`);
                 const data = await res.json();
@@ -3002,7 +3171,7 @@
             const inactiveClass = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold text-gray-600 hover:text-gray-900 transition flex items-center space-x-1.5';
             const activeClass = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 bg-white text-blue-700 shadow-xs';
             
-            if (btnEmployees) btnEmployees.className = (tab === 'employees' ? activeClass : inactiveClass) + (currentUser && currentUser.isAdmin ? '' : ' hidden-view');
+            if (btnEmployees) btnEmployees.className = (tab === 'employees' ? activeClass : inactiveClass) + ((currentUser && (currentUser.isAdmin || currentUser.isHR)) ? '' : ' hidden-view');
             if (btnPending) btnPending.className = tab === 'pending' ? activeClass : inactiveClass;
             if (btnHistory) btnHistory.className = tab === 'history' ? activeClass : inactiveClass;
             if (btnReports) btnReports.className = tab === 'reports' ? activeClass : inactiveClass;
@@ -3107,9 +3276,11 @@
 
                 const roleBadge = emp.role === 'ADMIN'
                     ? '<span class="bg-indigo-100 text-indigo-700 font-bold px-2.5 py-0.5 rounded-full text-[11px]">🛡️ ADMIN</span>'
-                    : (emp.role === 'SUPERVISOR'
-                        ? '<span class="bg-amber-100 text-amber-800 font-semibold px-2.5 py-0.5 rounded-full text-[11px]">👑 หัวหน้างาน</span>'
-                        : '<span class="bg-gray-100 text-gray-700 px-2.5 py-0.5 rounded-full text-[11px]">พนักงาน</span>');
+                    : (emp.role === 'HR'
+                        ? '<span class="bg-purple-100 text-purple-700 font-bold px-2.5 py-0.5 rounded-full text-[11px]">💼 ฝ่ายบุคคล (HR)</span>'
+                        : (emp.role === 'SUPERVISOR'
+                            ? '<span class="bg-amber-100 text-amber-800 font-semibold px-2.5 py-0.5 rounded-full text-[11px]">👑 หัวหน้างาน</span>'
+                            : '<span class="bg-gray-100 text-gray-700 px-2.5 py-0.5 rounded-full text-[11px]">พนักงาน</span>'));
 
                 return `
                     <tr class="hover:bg-indigo-50/30 transition">
@@ -3125,9 +3296,13 @@
                             <span class="text-purple-600 font-bold">${emp.unpaid_quota !== undefined ? emp.unpaid_quota : 30}</span> วัน
                         </td>
                         <td class="p-3.5 text-center pr-5">
-                            <button type="button" onclick="openEditEmployeeModal('${escapeHtml(emp.id)}')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 px-2.5 py-1 rounded-lg text-xs font-semibold transition shadow-2xs flex items-center justify-center space-x-1 mx-auto transform active:scale-95">
-                                <span>✏️ แก้ไข</span>
-                            </button>
+                            ${(currentUser && currentUser.isAdmin) ? `
+                                <button type="button" onclick="openEditEmployeeModal('${escapeHtml(emp.id)}')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 px-2.5 py-1 rounded-lg text-xs font-semibold transition shadow-2xs flex items-center justify-center space-x-1 mx-auto transform active:scale-95">
+                                    <span>✏️ แก้ไข</span>
+                                </button>
+                            ` : `
+                                <span class="text-[11px] text-gray-400 font-medium">สิทธิ์ดูเท่านั้น</span>
+                            `}
                         </td>
                     </tr>
                 `;
@@ -3135,7 +3310,7 @@
         }
 
         function refreshSupervisorData() {
-            if (currentUser && currentUser.isAdmin) {
+            if (currentUser && (currentUser.isAdmin || currentUser.isHR)) {
                 loadAdminEmployeesList();
             }
             loadPendingRequests();
@@ -3379,7 +3554,7 @@
         function handleRoleSelectChange(val) {
             const vacInput = document.getElementById('new-emp-vac-quota');
             const shiftSelect = document.getElementById('new-emp-shift');
-            if (val === 'SUPERVISOR' || val === 'ADMIN') {
+            if (val === 'SUPERVISOR' || val === 'ADMIN' || val === 'HR') {
                 if (vacInput && vacInput.value === '6') vacInput.value = '10';
                 if (shiftSelect && (shiftSelect.value === 'A' || shiftSelect.value === 'Day')) shiftSelect.value = 'Morning';
             } else {
@@ -4324,7 +4499,8 @@
 
         async function loadReportDepartments() {
             const selectEl = document.getElementById('report-filter-dept');
-            if (!selectEl) return;
+            const hrPendingFilter = document.getElementById('hr-pending-dept-filter');
+            const hrHistoryFilter = document.getElementById('hr-history-dept-filter');
             try {
                 const res = await safeFetch('/api/departments');
                 const data = await res.json();
@@ -4334,7 +4510,24 @@
                         const name = typeof d === 'string' ? d : d.name;
                         html += `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`;
                     });
-                    selectEl.innerHTML = html;
+                    if (selectEl) selectEl.innerHTML = html;
+
+                    const hrOptions = '<option value="ALL">ทุกแผนก (All)</option>' + data.departments.map(d => {
+                        const name = typeof d === 'string' ? d : d.name;
+                        return `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`;
+                    }).join('');
+
+                    if (hrPendingFilter) {
+                        const cur = hrPendingFilter.value || 'ALL';
+                        hrPendingFilter.innerHTML = hrOptions;
+                        hrPendingFilter.value = cur;
+                    }
+                    if (hrHistoryFilter) {
+                        const cur = hrHistoryFilter.value || 'ALL';
+                        hrHistoryFilter.innerHTML = hrOptions;
+                        hrHistoryFilter.value = cur;
+                    }
+
                     reportDeptsLoaded = true;
                 }
             } catch (err) {

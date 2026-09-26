@@ -4,6 +4,9 @@ const http = require('http');
 process.env.PORT = 3777;
 const app = require('../src/server');
 const { pool } = require('../src/db');
+const googleSheetsService = require('../src/googleSheetsService');
+googleSheetsService.syncEmployeeAsync = () => {};
+googleSheetsService.syncLeaveAsync = () => {};
 
 function request(options, postData = null) {
   return new Promise((resolve, reject) => {
@@ -128,10 +131,12 @@ async function runAdminEmployeeTest() {
     }
 
     console.log('\n🎉 ALL ADMIN & EMPLOYEE MANAGEMENT TESTS PASSED 100%!');
-    process.exit(0);
+    if (app && app.server) app.server.close();
+    setTimeout(() => process.exit(0), 100);
   } catch (err) {
     console.error('❌ Test failed:', err);
-    process.exit(1);
+    if (app && app.server) app.server.close();
+    setTimeout(() => process.exit(1), 100);
   }
 }
 

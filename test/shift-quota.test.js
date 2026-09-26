@@ -4,6 +4,9 @@ require('dotenv').config();
 
 process.env.PORT = 3666;
 const app = require('../src/server');
+const googleSheetsService = require('../src/googleSheetsService');
+googleSheetsService.syncEmployeeAsync = () => {};
+googleSheetsService.syncLeaveAsync = () => {};
 const BASE_URL = 'http://localhost:3666';
 
 function post(url, body) {
@@ -172,10 +175,12 @@ async function runTests() {
   console.log(`✅ [PASS] GET /api/department-calendar handles shift=B query param`);
 
   console.log('\n🎉 ALL SHIFT-BASED QUOTA TESTS PASSED 100%!\n');
-  process.exit(0);
+  if (app && app.server) app.server.close();
+  setTimeout(() => process.exit(0), 100);
 }
 
 runTests().catch(err => {
   console.error('❌ Test failed:', err);
-  process.exit(1);
+  if (app && app.server) app.server.close();
+  setTimeout(() => process.exit(1), 100);
 });

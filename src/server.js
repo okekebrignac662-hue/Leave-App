@@ -157,6 +157,12 @@ async function ensureDatabaseSchema() {
           value TEXT,
           updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         );
+        INSERT INTO quota_settings (department, shift, max_daily_leaves)
+        VALUES ('HR', 'Morning', 2)
+        ON CONFLICT (department, shift) DO NOTHING;
+        INSERT INTO employees (id, name, department, shift, pin, role, vacation_quota, personal_quota, sick_quota, unpaid_quota)
+        VALUES ('HR-001', 'เจ้าหน้าที่ฝ่ายบุคคล (HR)', 'HR', 'Morning', '1234', 'HR', 10, 6, 30, 30)
+        ON CONFLICT (id) DO NOTHING;
       `);
       await googleSheetsService.init(pool, query);
     } catch (err) {
@@ -238,6 +244,7 @@ app.post('/api/login', async (req, res) => {
     const cleanPin = pin.trim();
     const isSupPrefix = cleanEmpId.startsWith('SUP');
     const isAdminPrefix = cleanEmpId.startsWith('ADMIN');
+    const isHRPrefix = cleanEmpId.startsWith('HR');
 
     // If database is connected, query employee details
     if (pool) {
@@ -253,8 +260,9 @@ app.post('/api/login', async (req, res) => {
       }
 
       const isAdmin = isAdminPrefix || emp.role === 'ADMIN';
-      const isSupervisor = isSupPrefix || emp.role === 'SUPERVISOR' || isAdmin;
-      const userRole = isAdmin ? 'ADMIN' : (isSupervisor ? 'SUPERVISOR' : 'EMPLOYEE');
+      const isHR = isHRPrefix || emp.role === 'HR';
+      const isSupervisor = isSupPrefix || emp.role === 'SUPERVISOR' || isAdmin || isHR;
+      const userRole = isAdmin ? 'ADMIN' : (isHR ? 'HR' : (emp.role === 'SUPERVISOR' || isSupPrefix ? 'SUPERVISOR' : 'EMPLOYEE'));
       return res.json({
         success: true,
         user: {
@@ -264,7 +272,8 @@ app.post('/api/login', async (req, res) => {
           shift: emp.shift || 'A',
           role: userRole,
           isSupervisor,
-          isAdmin
+          isAdmin,
+          isHR
         }
       });
     }
@@ -274,7 +283,8 @@ app.post('/api/login', async (req, res) => {
       'EMP-001': { name: 'สมชาย ใจดี', department: 'Assembly', shift: 'A', role: 'EMPLOYEE', pin: '1234' },
       'EMP-002': { name: 'สมหญิง รักงาน', department: 'Assembly', shift: 'B', role: 'EMPLOYEE', pin: '1234' },
       'SUP-001': { name: 'สมศักดิ์ คุมงาน (หัวหน้า)', department: 'Assembly', shift: 'Morning', role: 'SUPERVISOR', pin: '1234' },
-      'ADMIN-001': { name: 'ผู้ดูแลระบบ (Admin)', department: 'Management', shift: 'Morning', role: 'ADMIN', pin: '1234' }
+      'ADMIN-001': { name: 'ผู้ดูแลระบบ (Admin)', department: 'Management', shift: 'Morning', role: 'ADMIN', pin: '1234' },
+      'HR-001': { name: 'เจ้าหน้าที่ฝ่ายบุคคล (HR)', department: 'HR', shift: 'Morning', role: 'HR', pin: '1234' }
     };
 
     const demoUser = validDemoUsers[cleanEmpId];
@@ -286,8 +296,9 @@ app.post('/api/login', async (req, res) => {
     }
 
     const isAdmin = isAdminPrefix || demoUser.role === 'ADMIN';
-    const isSupervisor = isSupPrefix || demoUser.role === 'SUPERVISOR' || isAdmin;
-    const userRole = isAdmin ? 'ADMIN' : (isSupervisor ? 'SUPERVISOR' : 'EMPLOYEE');
+    const isHR = isHRPrefix || demoUser.role === 'HR';
+    const isSupervisor = isSupPrefix || demoUser.role === 'SUPERVISOR' || isAdmin || isHR;
+    const userRole = isAdmin ? 'ADMIN' : (isHR ? 'HR' : (demoUser.role === 'SUPERVISOR' || isSupPrefix ? 'SUPERVISOR' : 'EMPLOYEE'));
     return res.json({
       success: true,
       user: {
@@ -297,7 +308,8 @@ app.post('/api/login', async (req, res) => {
         shift: demoUser.shift || 'A',
         role: userRole,
         isSupervisor,
-        isAdmin
+        isAdmin,
+        isHR
       }
     });
   } catch (error) {
@@ -958,9 +970,14 @@ app.get('/api/leave-requests', async (req, res) => {
 
     let targetDept = (department || '').trim();
     if (!targetDept && supervisor_id && pool) {
-      const supDeptRes = await query('SELECT department FROM employees WHERE UPPER(id) = $1', [supervisor_id.trim().toUpperCase()]);
+      const supDeptRes = await query('SELECT department, role FROM employees WHERE UPPER(id) = $1', [supervisor_id.trim().toUpperCase()]);
       if (supDeptRes.rows.length > 0) {
-        targetDept = supDeptRes.rows[0].department;
+        const sup = supDeptRes.rows[0];
+        const isHRUser = sup.role === 'HR' || supervisor_id.trim().toUpperCase().startsWith('HR');
+        const isAdminUser = sup.role === 'ADMIN' || supervisor_id.trim().toUpperCase().startsWith('ADMIN');
+        if (!isHRUser && !isAdminUser) {
+          targetDept = sup.department;
+        }
       }
     }
 
@@ -983,10 +1000,10 @@ app.get('/api/leave-requests', async (req, res) => {
           created_at: new Date().toISOString()
         }
       ];
-      if (targetDept) {
+      if (targetDept && targetDept.toUpperCase() !== 'ALL') {
         demoList = demoList.filter(r => r.department && r.department.toLowerCase() === targetDept.toLowerCase());
       }
-      if (shift) {
+      if (shift && shift.toUpperCase() !== 'ALL') {
         demoList = demoList.filter(r => r.shift && r.shift.toLowerCase() === shift.toLowerCase());
       }
       return res.json({ success: true, requests: demoList });
@@ -1037,7 +1054,7 @@ app.get('/api/leave-requests', async (req, res) => {
       sql += ` AND UPPER(lr.employee_id) = $${params.length}`;
     }
 
-    if (targetDept) {
+    if (targetDept && targetDept.toUpperCase() !== 'ALL') {
       params.push(targetDept.toUpperCase());
       sql += ` AND UPPER(e.department) = $${params.length}`;
     }
@@ -1080,16 +1097,16 @@ app.patch('/api/leave-requests/:id/status', async (req, res) => {
       return res.status(401).json({ error: 'ต้องระบุรหัสหัวหน้างาน (Supervisor ID) เพื่อดำเนินการ' });
     }
 
-    // Verify supervisor/admin authorization (starts with SUP/ADMIN or role is SUPERVISOR/ADMIN in DB)
-    let isAuthorizedSupervisor = supervisorId.startsWith('SUP') || supervisorId.startsWith('ADMIN');
+    // Verify supervisor/admin/HR authorization (starts with SUP/ADMIN/HR or role is SUPERVISOR/ADMIN/HR in DB)
+    let isAuthorizedSupervisor = supervisorId.startsWith('SUP') || supervisorId.startsWith('ADMIN') || supervisorId.startsWith('HR');
     if (!isAuthorizedSupervisor && pool) {
       const supCheck = await query('SELECT role FROM employees WHERE UPPER(id) = $1', [supervisorId]);
-      if (supCheck.rows.length > 0 && (supCheck.rows[0].role === 'SUPERVISOR' || supCheck.rows[0].role === 'ADMIN')) {
+      if (supCheck.rows.length > 0 && ['SUPERVISOR', 'ADMIN', 'HR'].includes(supCheck.rows[0].role)) {
         isAuthorizedSupervisor = true;
       }
     }
     if (!isAuthorizedSupervisor) {
-      return res.status(403).json({ error: 'เฉพาะหัวหน้างาน (Supervisor) หรือผู้ดูแลระบบเท่านั้นที่สามารถอนุมัติหรือปฏิเสธคำขอได้' });
+      return res.status(403).json({ error: 'เฉพาะหัวหน้างาน (Supervisor), ฝ่ายบุคคล (HR) หรือผู้ดูแลระบบเท่านั้นที่สามารถอนุมัติหรือปฏิเสธคำขอได้' });
     }
 
     if (!pool) {
@@ -1195,6 +1212,7 @@ app.get('/api/departments', async (req, res) => {
       departments: [
         { name: 'Assembly', maxDailyLeaves: 2 },
         { name: 'Crimping 1', maxDailyLeaves: 5 },
+        { name: 'HR', maxDailyLeaves: 2 },
         { name: 'QC', maxDailyLeaves: 1 }
       ]
     });
@@ -1213,6 +1231,7 @@ app.post('/api/employees', async (req, res) => {
     const { 
       adminId, 
       id, 
+      empId,
       name, 
       department, 
       shift,
@@ -1243,7 +1262,7 @@ app.post('/api/employees', async (req, res) => {
     }
 
     // Validation
-    const cleanEmpId = (id || '').trim().toUpperCase();
+    const cleanEmpId = (id || empId || '').trim().toUpperCase();
     const cleanName = (name || '').trim();
     const cleanDept = (department || '').trim();
     const cleanShift = normalizeShift(shift);
@@ -1254,13 +1273,13 @@ app.post('/api/employees', async (req, res) => {
       return res.status(400).json({ error: 'กรุณากรอกรหัสพนักงาน ชื่อ-นามสกุล และแผนกให้ครบถ้วน' });
     }
 
-    if (!['EMPLOYEE', 'SUPERVISOR', 'ADMIN'].includes(cleanRole)) {
-      return res.status(400).json({ error: 'บทบาทต้องเป็น EMPLOYEE, SUPERVISOR หรือ ADMIN' });
+    if (!['EMPLOYEE', 'SUPERVISOR', 'ADMIN', 'HR'].includes(cleanRole)) {
+      return res.status(400).json({ error: 'บทบาทต้องเป็น EMPLOYEE, SUPERVISOR, HR หรือ ADMIN' });
     }
 
     const vacQuota = Number.isInteger(Number(vacation_quota)) && Number(vacation_quota) >= 0 
       ? Number(vacation_quota) 
-      : (cleanRole === 'SUPERVISOR' || cleanRole === 'ADMIN' ? 10 : 6);
+      : (cleanRole === 'SUPERVISOR' || cleanRole === 'ADMIN' || cleanRole === 'HR' ? 10 : 6);
     const perQuota = Number.isInteger(Number(personal_quota)) && Number(personal_quota) >= 0 
       ? Number(personal_quota) 
       : 6;
