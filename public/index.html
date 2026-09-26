@@ -667,12 +667,8 @@
                         <button id="tab-sup-history" type="button" onclick="switchSupervisorTab('history')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-gray-600 hover:text-gray-900 transition flex items-center space-x-1.5">
                             <span>📋 ประวัติที่พิจารณาแล้ว (History)</span>
                         </button>
-                        <button id="tab-sup-sheets" type="button" onclick="switchSupervisorTab('sheets')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-gray-600 hover:text-gray-900 transition flex items-center space-x-1.5">
-                            <span>📊 Google Sheets</span>
-                            <span id="sheets-badge-status" class="w-2 h-2 rounded-full bg-amber-400"></span>
-                        </button>
                         <button id="tab-sup-reports" type="button" onclick="switchSupervisorTab('reports')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-gray-600 hover:text-gray-900 transition flex items-center space-x-1.5">
-                            <span>📑 ส่งออกรายงาน (HR Export)</span>
+                            <span>📊 ส่งออกรายงาน (HR Export)</span>
                         </button>
                     </div>
                     <button type="button" onclick="refreshSupervisorData()" class="bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 px-3.5 py-1.5 rounded-xl text-xs font-medium transition flex items-center justify-center space-x-1 shadow-2xs self-end sm:self-auto">
@@ -760,8 +756,8 @@
                     </div>
                 </div>
 
-                <!-- Google Sheets Sync Container -->
-                <div id="supervisor-sheets-container" class="hidden-view space-y-4">
+                <!-- Google Sheets Background Container (Hidden from UI, runs silently in background) -->
+                <div id="supervisor-sheets-container" style="display: none !important;">
                     <!-- Header Card -->
                     <div class="bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-900 text-white p-5 rounded-3xl shadow-lg border border-emerald-500/30">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -2335,7 +2331,6 @@
                         switchSupervisorTab('pending');
                     }
                     loadDepartmentCalendar();
-                    loadGoogleSheetsConfig();
                 } else {
                     document.getElementById('employee-view').classList.remove('hidden-view');
                     document.getElementById('supervisor-view').classList.add('hidden-view');
@@ -2991,18 +2986,16 @@
             }
         }
 
-        // Switch Supervisor / Admin Tabs (Employees vs Pending vs History vs Sheets vs Reports)
+        // Switch Supervisor / Admin Tabs (Employees vs Pending vs History vs Reports)
         function switchSupervisorTab(tab) {
             const btnEmployees = document.getElementById('tab-admin-employees');
             const btnPending = document.getElementById('tab-sup-pending');
             const btnHistory = document.getElementById('tab-sup-history');
-            const btnSheets = document.getElementById('tab-sup-sheets');
             const btnReports = document.getElementById('tab-sup-reports');
             
             const containerEmployees = document.getElementById('admin-employees-container');
             const containerPending = document.getElementById('supervisor-pending-container');
             const containerHistory = document.getElementById('supervisor-history-container');
-            const containerSheets = document.getElementById('supervisor-sheets-container');
             const containerReports = document.getElementById('supervisor-reports-container');
 
             // Reset tab styles
@@ -3012,13 +3005,11 @@
             if (btnEmployees) btnEmployees.className = (tab === 'employees' ? activeClass : inactiveClass) + (currentUser && currentUser.isAdmin ? '' : ' hidden-view');
             if (btnPending) btnPending.className = tab === 'pending' ? activeClass : inactiveClass;
             if (btnHistory) btnHistory.className = tab === 'history' ? activeClass : inactiveClass;
-            if (btnSheets) btnSheets.className = tab === 'sheets' ? activeClass : inactiveClass;
             if (btnReports) btnReports.className = tab === 'reports' ? activeClass : inactiveClass;
 
             if (containerEmployees) containerEmployees.classList.toggle('hidden-view', tab !== 'employees');
             if (containerPending) containerPending.classList.toggle('hidden-view', tab !== 'pending');
             if (containerHistory) containerHistory.classList.toggle('hidden-view', tab !== 'history');
-            if (containerSheets) containerSheets.classList.toggle('hidden-view', tab !== 'sheets');
             if (containerReports) containerReports.classList.toggle('hidden-view', tab !== 'reports');
 
             if (tab === 'employees') {
@@ -3027,8 +3018,6 @@
                 loadPendingRequests();
             } else if (tab === 'history') {
                 loadSupervisorHistory();
-            } else if (tab === 'sheets') {
-                loadGoogleSheetsConfig();
             } else if (tab === 'reports') {
                 initReportTab();
             }
@@ -3152,7 +3141,6 @@
             loadPendingRequests();
             loadSupervisorHistory();
             loadDepartmentCalendar();
-            loadGoogleSheetsConfig();
             const repCont = document.getElementById('supervisor-reports-container');
             if (repCont && !repCont.classList.contains('hidden-view')) {
                 loadLeaveReportData();
