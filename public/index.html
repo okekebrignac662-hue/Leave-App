@@ -214,6 +214,26 @@
                                 </button>
                             </div>
                         </div>
+
+                        <!-- Web Push Notification Status & Enable Banner -->
+                        <div id="push-notif-control-banner" class="p-2.5 px-3.5 bg-slate-800/90 border-b border-slate-700/60 flex items-center justify-between gap-2">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-sm">📱</span>
+                                <div>
+                                    <p class="text-[11px] font-bold text-slate-200">แจ้งเตือนบนมือถือ (Push)</p>
+                                    <p id="push-status-label" class="text-[9px] text-slate-400">รับแจ้งเตือนทันทีแม้ปิดหน้าจอ</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-1.5">
+                                <button id="btn-push-toggle" type="button" onclick="toggleWebPushSubscription()" class="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white shadow-2xs transition active:scale-95">
+                                    เปิดใช้งาน
+                                </button>
+                                <button id="btn-push-test" type="button" onclick="sendTestPushNotification()" class="hidden px-2 py-1 text-[10px] font-semibold rounded-lg bg-slate-700 hover:bg-slate-600 text-indigo-300 border border-slate-600 transition active:scale-95" title="ทดสอบส่งแจ้งเตือน">
+                                    🔔 ทดสอบ
+                                </button>
+                            </div>
+                        </div>
+
                         <!-- Notification Items List -->
                         <div id="notif-list-container" class="max-h-[380px] overflow-y-auto divide-y divide-slate-800/60 custom-scrollbar">
                             <div class="p-8 text-center text-xs text-slate-400">กำลังโหลด...</div>
@@ -2645,8 +2665,9 @@
                     calculateRequestedDays();
                 }
 
-                // Start in-app notification polling
+                // Start in-app notification polling & check Web Push support
                 startNotificationPolling();
+                checkPushNotificationSupport();
 
                 showToast(`ยินดีต้อนรับคุณ ${currentUser.name}`, 'success');
 
@@ -2708,6 +2729,7 @@
             if (isHidden) {
                 dropdown.classList.remove('hidden');
                 loadNotifications();
+                checkPushNotificationSupport();
             } else {
                 dropdown.classList.add('hidden');
             }
@@ -2919,6 +2941,157 @@
             lastUnreadNotificationCount = 0;
             const dropdown = document.getElementById('notif-dropdown');
             if (dropdown) dropdown.classList.add('hidden');
+        }
+
+        // ==========================================
+        // WEB PUSH NOTIFICATIONS CLIENT MODULE
+        // ==========================================
+        let isPushSubscribed = false;
+
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+            const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+            }
+            return outputArray;
+        }
+
+        async function checkPushNotificationSupport() {
+            const banner = document.getElementById('push-notif-control-banner');
+            const statusLabel = document.getElementById('push-status-label');
+            const toggleBtn = document.getElementById('btn-push-toggle');
+            const testBtn = document.getElementById('btn-push-test');
+
+            if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+                if (statusLabel) statusLabel.innerText = 'เบราว์เซอร์นี้ไม่รองรับ Web Push';
+                if (toggleBtn) {
+                    toggleBtn.innerText = 'ไม่รองรับ';
+                    toggleBtn.disabled = true;
+                    toggleBtn.className = 'px-2.5 py-1 text-[10px] font-bold rounded-lg bg-slate-700 text-slate-400 cursor-not-allowed';
+                }
+                return;
+            }
+
+            try {
+                const reg = await navigator.serviceWorker.ready;
+                const sub = await reg.pushManager.getSubscription();
+                isPushSubscribed = !(sub === null);
+
+                if (Notification.permission === 'denied') {
+                    if (statusLabel) statusLabel.innerText = 'ถูกบล็อกการแจ้งเตือน (กรุณาอนุญาตในเบราว์เซอร์)';
+                    if (toggleBtn) {
+                        toggleBtn.innerText = 'ถูกปิดกั้น';
+                        toggleBtn.className = 'px-2.5 py-1 text-[10px] font-bold rounded-lg bg-red-600/80 text-white';
+                    }
+                    if (testBtn) testBtn.classList.add('hidden');
+                } else if (isPushSubscribed) {
+                    if (statusLabel) statusLabel.innerText = 'เปิดใช้งานแล้ว (รับแจ้งเตือนบนอุปกรณ์นี้)';
+                    if (toggleBtn) {
+                        toggleBtn.innerText = 'ปิดใช้งาน';
+                        toggleBtn.className = 'px-2.5 py-1 text-[10px] font-bold rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition active:scale-95';
+                    }
+                    if (testBtn) testBtn.classList.remove('hidden');
+                } else {
+                    if (statusLabel) statusLabel.innerText = 'รับแจ้งเตือนทันทีแม้ปิดหน้าจอ';
+                    if (toggleBtn) {
+                        toggleBtn.innerText = 'เปิดใช้งาน';
+                        toggleBtn.className = 'px-2.5 py-1 text-[10px] font-bold rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white shadow-2xs transition active:scale-95';
+                    }
+                    if (testBtn) testBtn.classList.add('hidden');
+                }
+            } catch (err) {
+                console.warn('Check push support error:', err);
+            }
+        }
+
+        async function toggleWebPushSubscription() {
+            if (!currentUser) return;
+            const toggleBtn = document.getElementById('btn-push-toggle');
+            if (toggleBtn) toggleBtn.disabled = true;
+
+            try {
+                const reg = await navigator.serviceWorker.ready;
+                const existingSub = await reg.pushManager.getSubscription();
+
+                if (existingSub) {
+                    // Unsubscribe
+                    await existingSub.unsubscribe();
+                    await safeFetch('/api/push/unsubscribe', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userId: currentUser.id, endpoint: existingSub.endpoint })
+                    });
+                    showToast('🔕 ยกเลิกการแจ้งเตือนบนอุปกรณ์นี้เรียบร้อยแล้ว', 'info');
+                } else {
+                    // Subscribe
+                    const permission = await Notification.requestPermission();
+                    if (permission !== 'granted') {
+                        showToast('⚠️ คุณไม่อนุญาตการแจ้งเตือน กรุณาอนุญาตในการตั้งค่าเบราว์เซอร์', 'error');
+                        await checkPushNotificationSupport();
+                        return;
+                    }
+
+                    // Fetch VAPID key
+                    const keyRes = await safeFetch('/api/push/vapid-public-key');
+                    const keyData = await keyRes.json();
+                    if (!keyData.success || !keyData.publicKey) {
+                        throw new Error('Could not obtain VAPID public key');
+                    }
+
+                    const convertedKey = urlBase64ToUint8Array(keyData.publicKey);
+                    const newSub = await reg.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: convertedKey
+                    });
+
+                    // Send to server
+                    await safeFetch('/api/push/subscribe', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            userId: currentUser.id,
+                            subscription: newSub.toJSON(),
+                            userAgent: navigator.userAgent
+                        })
+                    });
+
+                    showToast('🔔 เปิดการแจ้งเตือนบนมือถือ (Web Push) สำเร็จ!', 'success');
+                }
+            } catch (err) {
+                console.error('Toggle push subscription error:', err);
+                showToast('❌ ไม่สามารถเปลี่ยนสถานะการแจ้งเตือนได้: ' + err.message, 'error');
+            } finally {
+                if (toggleBtn) toggleBtn.disabled = false;
+                await checkPushNotificationSupport();
+            }
+        }
+
+        async function sendTestPushNotification() {
+            if (!currentUser) return;
+            const testBtn = document.getElementById('btn-push-test');
+            if (testBtn) testBtn.disabled = true;
+
+            try {
+                const res = await safeFetch('/api/push/test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: currentUser.id })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('🚀 ส่งการแจ้งเตือนทดสอบแล้ว! รอรับข้อความเด้งบนจอครับ', 'success');
+                } else {
+                    showToast('❌ ' + (data.error || 'เกิดข้อผิดพลาด'), 'error');
+                }
+            } catch (err) {
+                console.error('Test push error:', err);
+                showToast('❌ เกิดข้อผิดพลาดในการส่งข้อความทดสอบ', 'error');
+            } finally {
+                if (testBtn) testBtn.disabled = false;
+            }
         }
 
         // Logout Handler

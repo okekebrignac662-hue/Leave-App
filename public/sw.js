@@ -129,3 +129,62 @@ self.addEventListener('message', (event) => {
     self.skipWaiting();
   }
 });
+
+// 5. Push Event: Handle background web push notification
+self.addEventListener('push', (event) => {
+  let data = {
+    title: 'ระบบแจ้งเตือนการลางาน',
+    body: 'คุณมีการแจ้งเตือนใหม่ในระบบ',
+    icon: '/icons/icon-192.png',
+    badge: '/icons/icon.svg',
+    url: '/'
+  };
+
+  if (event.data) {
+    try {
+      const parsed = event.data.json();
+      data = Object.assign(data, parsed);
+    } catch (e) {
+      data.body = event.data.text() || data.body;
+    }
+  }
+
+  const options = {
+    body: data.body,
+    icon: data.icon || '/icons/icon-192.png',
+    badge: data.badge || '/icons/icon.svg',
+    vibrate: [200, 100, 200, 100, 200],
+    data: {
+      url: data.url || (data.data && data.data.url) || '/'
+    },
+    actions: [
+      { action: 'open_app', title: '📱 เปิดดูในแอป' }
+    ]
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
+  );
+});
+
+// 6. Notification Click Event: Focus or open window
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = (event.notification.data && event.notification.data.url) ? event.notification.data.url : '/';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      // If already open, focus it
+      for (const client of windowClients) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      // Otherwise open new window
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
+      }
+    })
+  );
+});
+

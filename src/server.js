@@ -7,7 +7,19 @@ const path = require('path');
 const fs = require('fs');
 const { pool, query, getClient } = require('./db');
 const googleSheetsService = require('./googleSheetsService');
+const webpush = require('web-push');
 require('dotenv').config();
+
+// Web Push VAPID Configuration
+const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || 'BDcdkNHQweCBzSLmakxYhZrBdIaOeIXBC9KJHWPcajJkAwz76-l7zP4fSF9GylNrgn0MsyAA8m7FgjDvh1mPUME';
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || '995tWV0BYjiyOKbF-sPZDyDk3D04ZaGhvQevU2fz_qM';
+const VAPID_MAILTO = process.env.VAPID_MAILTO || 'mailto:admin@leaveapp.internal';
+
+try {
+  webpush.setVapidDetails(VAPID_MAILTO, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+} catch (err) {
+  console.warn('VAPID setup notice:', err.message);
+}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -136,6 +148,17 @@ async function ensureDatabaseSchema() {
           created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         );
         CREATE INDEX IF NOT EXISTS idx_notifications_user_unread ON notifications (user_id, is_read, created_at DESC);
+        CREATE TABLE IF NOT EXISTS push_subscriptions (
+          id SERIAL PRIMARY KEY,
+          user_id VARCHAR(50) NOT NULL,
+          endpoint TEXT NOT NULL UNIQUE,
+          p256dh TEXT NOT NULL,
+          auth TEXT NOT NULL,
+          user_agent TEXT,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE INDEX IF NOT EXISTS idx_push_sub_user_id ON push_subscriptions (user_id);
         INSERT INTO quota_settings (department, shift, max_daily_leaves)
         VALUES ('HR', 'Morning', 2)
         ON CONFLICT (department, shift) DO NOTHING;
@@ -156,13 +179,72 @@ ensureDatabaseSchema();
 // In-Memory Notifications store for fallback / testing without database connection
 let demoNotifications = [];
 let nextDemoNotifId = 1;
+let demoPushSubscriptions = [];
+let nextDemoPushSubId = 1;
+
+/**
+ * Send Web Push Notification to user's registered devices
+ */
+async function sendWebPushNotification(userId, payload = {}) {
+  if (!userId) return;
+  const cleanUserId = userId.toString().trim().toUpperCase();
+  const pushPayload = JSON.stringify({
+    title: payload.title || 'ระบบแจ้งเตือนการลางาน',
+    body: payload.body || payload.message || '',
+    icon: payload.icon || '/icons/icon-192.png',
+    badge: payload.badge || '/icons/icon.svg',
+    url: payload.url || '/',
+    data: {
+      url: payload.url || '/',
+      referenceId: payload.referenceId || null,
+      type: payload.type || 'SYSTEM'
+    }
+  });
+
+  let subs = [];
+  if (!pool) {
+    subs = demoPushSubscriptions.filter(s => s.user_id === cleanUserId);
+  } else {
+    try {
+      const res = await query('SELECT id, endpoint, p256dh, auth FROM push_subscriptions WHERE user_id = $1', [cleanUserId]);
+      subs = res.rows;
+    } catch (e) {
+      console.warn('Fetch push subscriptions error:', e.message);
+    }
+  }
+
+  for (const sub of subs) {
+    const pushSubscription = {
+      endpoint: sub.endpoint,
+      keys: {
+        p256dh: sub.p256dh,
+        auth: sub.auth
+      }
+    };
+    try {
+      await webpush.sendNotification(pushSubscription, pushPayload);
+    } catch (err) {
+      if (err.statusCode === 410 || err.statusCode === 404) {
+        if (!pool) {
+          demoPushSubscriptions = demoPushSubscriptions.filter(s => s.endpoint !== sub.endpoint);
+        } else {
+          query('DELETE FROM push_subscriptions WHERE endpoint = $1', [sub.endpoint]).catch(() => {});
+        }
+      } else {
+        console.warn('Push delivery notice:', err.message);
+      }
+    }
+  }
+}
 
 /**
  * Create In-App Notification (Database or In-Memory fallback)
+ * Automatically triggers Web Push to the user
  */
 async function createNotification(userId, title, message, type = 'SYSTEM', referenceId = null) {
   if (!userId) return null;
   const cleanUserId = userId.toString().trim().toUpperCase();
+  let createdRecord = null;
   try {
     if (!pool) {
       const notif = {
@@ -176,15 +258,28 @@ async function createNotification(userId, title, message, type = 'SYSTEM', refer
         created_at: new Date().toISOString()
       };
       demoNotifications.unshift(notif);
-      return notif;
+      createdRecord = notif;
+    } else {
+      const res = await query(
+        `INSERT INTO notifications (user_id, title, message, type, reference_id)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING *`,
+        [cleanUserId, title, message, type, referenceId]
+      );
+      createdRecord = res.rows[0];
     }
-    const res = await query(
-      `INSERT INTO notifications (user_id, title, message, type, reference_id)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING *`,
-      [cleanUserId, title, message, type, referenceId]
-    );
-    return res.rows[0];
+
+    // Automatically trigger Web Push to user's devices
+    sendWebPushNotification(cleanUserId, {
+      title,
+      body: message,
+      referenceId,
+      type
+    }).catch(e => {
+      console.warn('Push dispatch error:', e.message);
+    });
+
+    return createdRecord;
   } catch (err) {
     console.error('Failed to create in-app notification:', err.message);
     return null;
@@ -2555,9 +2650,124 @@ app.get('/api/analytics/summary', async (req, res) => {
   }
 });
 
+// ==========================================
+// WEB PUSH NOTIFICATIONS API
+// ==========================================
+
+// GET /api/push/vapid-public-key - Get VAPID Public Key for client subscription
+app.get('/api/push/vapid-public-key', (req, res) => {
+  res.json({
+    success: true,
+    publicKey: VAPID_PUBLIC_KEY
+  });
+});
+
+// POST /api/push/subscribe - Register or update a user's web push subscription
+app.post('/api/push/subscribe', async (req, res) => {
+  try {
+    const { userId, subscription, userAgent } = req.body;
+    if (!userId || !subscription || !subscription.endpoint || !subscription.keys) {
+      return res.status(400).json({ error: 'ข้อมูลการสมัครรับแจ้งเตือนไม่ครบถ้วน (userId and subscription required)' });
+    }
+
+    const cleanUserId = userId.toString().trim().toUpperCase();
+    const endpoint = subscription.endpoint;
+    const p256dh = subscription.keys.p256dh;
+    const auth = subscription.keys.auth;
+    const agent = userAgent || req.headers['user-agent'] || '';
+
+    if (!pool) {
+      const existingIdx = demoPushSubscriptions.findIndex(s => s.endpoint === endpoint);
+      if (existingIdx >= 0) {
+        demoPushSubscriptions[existingIdx] = {
+          ...demoPushSubscriptions[existingIdx],
+          user_id: cleanUserId,
+          p256dh,
+          auth,
+          user_agent: agent,
+          updated_at: new Date().toISOString()
+        };
+      } else {
+        demoPushSubscriptions.push({
+          id: nextDemoPushSubId++,
+          user_id: cleanUserId,
+          endpoint,
+          p256dh,
+          auth,
+          user_agent: agent,
+          created_at: new Date().toISOString()
+        });
+      }
+      return res.json({ success: true, message: 'ลงทะเบียนรับการแจ้งเตือนสำเร็จ (Demo)' });
+    }
+
+    await query(
+      `INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth, user_agent, updated_at)
+       VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+       ON CONFLICT (endpoint) DO UPDATE SET
+         user_id = EXCLUDED.user_id,
+         p256dh = EXCLUDED.p256dh,
+         auth = EXCLUDED.auth,
+         user_agent = EXCLUDED.user_agent,
+         updated_at = CURRENT_TIMESTAMP`,
+      [cleanUserId, endpoint, p256dh, auth, agent]
+    );
+
+    res.json({ success: true, message: 'ลงทะเบียนรับการแจ้งเตือนบนอุปกรณ์นี้สำเร็จ' });
+  } catch (error) {
+    console.error('Push subscribe error:', error);
+    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการลงทะเบียนการแจ้งเตือน: ' + error.message });
+  }
+});
+
+// POST /api/push/unsubscribe - Unregister a web push subscription
+app.post('/api/push/unsubscribe', async (req, res) => {
+  try {
+    const { userId, endpoint } = req.body;
+    if (!endpoint) {
+      return res.status(400).json({ error: 'ต้องระบุ endpoint ที่ต้องการยกเลิก' });
+    }
+
+    if (!pool) {
+      demoPushSubscriptions = demoPushSubscriptions.filter(s => s.endpoint !== endpoint);
+      return res.json({ success: true, message: 'ยกเลิกการแจ้งเตือนสำเร็จ' });
+    }
+
+    await query('DELETE FROM push_subscriptions WHERE endpoint = $1', [endpoint]);
+    res.json({ success: true, message: 'ยกเลิกการแจ้งเตือนบนอุปกรณ์นี้สำเร็จ' });
+  } catch (error) {
+    console.error('Push unsubscribe error:', error);
+    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการยกเลิกการแจ้งเตือน: ' + error.message });
+  }
+});
+
+// POST /api/push/test - Send a test push notification to user's registered devices
+app.post('/api/push/test', async (req, res) => {
+  try {
+    const { userId } = req.body;
+    if (!userId) {
+      return res.status(400).json({ error: 'ต้องระบุ userId สำหรับทดสอบ' });
+    }
+
+    const cleanUserId = userId.toString().trim().toUpperCase();
+    await sendWebPushNotification(cleanUserId, {
+      title: '🔔 ทดสอบการแจ้งเตือน Web Push สำเร็จ!',
+      body: 'อุปกรณ์ของคุณเชื่อมต่อกับระบบลางานเรียบร้อยแล้ว จะได้รับแจ้งเตือนทันทีเมื่อมีรายการใหม่',
+      url: '/'
+    });
+
+    res.json({ success: true, message: 'ส่งการแจ้งเตือนทดสอบเรียบร้อยแล้ว' });
+  } catch (error) {
+    console.error('Push test error:', error);
+    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการส่งข้อความทดสอบ: ' + error.message });
+  }
+});
+
 // Start Server
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Leave Management Server is running on http://localhost:${PORT}`);
 });
 
 module.exports = app;
+module.exports.app = app;
+module.exports.server = server;
