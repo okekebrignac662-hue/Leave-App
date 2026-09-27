@@ -618,21 +618,34 @@
                                 </div>
                             </div>
 
-                            <!-- Dropzone / File Picker -->
-                            <div id="attachment-dropzone" class="relative border-2 border-dashed border-slate-200 hover:border-indigo-500 rounded-2xl p-5 bg-slate-50/60 hover:bg-indigo-50/30 transition-all text-center cursor-pointer group">
-                                <input type="file" id="req-attachment-file" accept="image/jpeg,image/png,image/webp,application/pdf" onchange="handleAttachmentFileSelect(event)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
-                                
-                                <!-- Empty State -->
-                                <div id="attachment-empty-state" class="flex flex-col items-center justify-center space-y-1.5 py-1 pointer-events-none">
-                                    <div class="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl group-hover:scale-110 transition duration-200 shadow-2xs">
-                                        📸
+                            <!-- Attachment Container (Live Camera Snapshot & File Picker) -->
+                            <div id="attachment-dropzone" class="border border-slate-200/90 rounded-2xl p-4 bg-slate-50/70 hover:bg-slate-50 transition-all">
+                                <!-- Hidden inputs -->
+                                <input type="file" id="req-attachment-file" accept="image/jpeg,image/png,image/webp,application/pdf" onchange="handleAttachmentFileSelect(event)" class="hidden">
+                                <input type="file" id="req-camera-fallback-file" accept="image/*" capture="environment" onchange="handleAttachmentFileSelect(event)" class="hidden">
+
+                                <!-- Empty State: Dual Action Buttons -->
+                                <div id="attachment-empty-state" class="space-y-3">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                        <!-- Button 1: Camera Snapshot -->
+                                        <button type="button" onclick="openCameraModal()" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white p-3 rounded-xl transition shadow-xs flex items-center justify-center space-x-2 text-xs font-semibold active:scale-98">
+                                            <span class="text-base">📸</span>
+                                            <span>ถ่ายภาพด้วยกล้องทันที</span>
+                                        </button>
+                                        <!-- Button 2: File Picker -->
+                                        <button type="button" onclick="document.getElementById('req-attachment-file').click()" class="w-full bg-white hover:bg-slate-100 border border-slate-200 text-gray-700 p-3 rounded-xl transition shadow-2xs flex items-center justify-center space-x-2 text-xs font-semibold active:scale-98">
+                                            <span class="text-base">📁</span>
+                                            <span>เลือกจากคลังรูป / PDF</span>
+                                        </button>
                                     </div>
-                                    <p class="text-xs font-semibold text-gray-700">แตะเพื่อถ่ายรูป หรือเลือกไฟล์รูปภาพ / PDF</p>
-                                    <p class="text-[10px] text-gray-400">รองรับรูปถ่ายจากกล้องมือถือ, JPG, PNG, WEBP, PDF (ย่อขนาดอัตโนมัติ)</p>
+                                    <div class="flex items-center justify-center space-x-1.5 text-[11px] text-gray-500">
+                                        <span class="text-indigo-600 font-bold">⚡ ระบบบีบอัดภาพอัตโนมัติ (Auto-Compress):</span>
+                                        <span>ช่วยให้ไฟล์ขนาดเล็กลง โหลดไว และประหยัดเน็ตมือถือ</span>
+                                    </div>
                                 </div>
 
                                 <!-- Preview State (Hidden by default) -->
-                                <div id="attachment-preview-state" class="hidden flex items-center justify-between bg-white p-3 rounded-2xl border border-indigo-200 shadow-xs relative z-20">
+                                <div id="attachment-preview-state" class="hidden flex items-center justify-between bg-white p-3.5 rounded-xl border border-indigo-200 shadow-xs">
                                     <div class="flex items-center space-x-3 min-w-0">
                                         <img id="attachment-preview-img" src="" alt="Preview" class="w-12 h-12 rounded-xl object-cover border border-gray-200 shrink-0 shadow-2xs">
                                         <div id="attachment-preview-pdf" class="hidden w-12 h-12 rounded-xl bg-rose-50 text-rose-600 border border-rose-200 flex flex-col items-center justify-center shrink-0">
@@ -641,12 +654,15 @@
                                         </div>
                                         <div class="text-left min-w-0 flex-1">
                                             <p id="attachment-file-name" class="text-xs font-bold text-gray-800 truncate">medical_cert.jpg</p>
-                                            <p id="attachment-file-size" class="text-[10px] text-emerald-600 font-medium">185 KB • พร้อมส่ง</p>
+                                            <p id="attachment-file-size" class="text-[10px] text-emerald-600 font-medium">185 KB • บีบอัดเรียบร้อย</p>
                                         </div>
                                     </div>
                                     <div class="flex items-center space-x-1.5 shrink-0">
                                         <button type="button" onclick="previewSelectedAttachment(event)" class="text-xs text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-xl transition font-medium">
                                             🔍 ดูภาพ
+                                        </button>
+                                        <button type="button" onclick="openCameraModal()" class="text-xs text-purple-600 hover:text-purple-800 bg-purple-50 hover:bg-purple-100 px-2.5 py-1.5 rounded-xl transition font-medium" title="ถ่ายใหม่ด้วยกล้อง">
+                                            📸
                                         </button>
                                         <button type="button" onclick="removeSelectedAttachment(event)" class="text-xs text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded-xl transition" title="ลบไฟล์">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -1660,6 +1676,90 @@
             <div class="p-4 sm:p-6 flex-1 overflow-auto flex items-center justify-center bg-black/50 min-h-[320px]">
                 <img id="attachment-modal-img" src="" alt="Attachment Preview" class="max-w-full max-h-[72vh] rounded-2xl object-contain shadow-2xl border border-slate-800">
                 <iframe id="attachment-modal-iframe" src="" class="hidden w-full h-[70vh] rounded-2xl border border-slate-800 bg-white"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Document Camera Snapshot Modal -->
+    <div id="camera-modal" class="hidden-view fixed inset-0 z-50 overflow-y-auto bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-2 sm:p-4">
+        <div class="bg-slate-900 border border-slate-700/80 text-white rounded-3xl max-w-lg w-full flex flex-col overflow-hidden shadow-2xl animate-fade-in-up">
+            <!-- Camera Header -->
+            <div class="p-3.5 sm:p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/90">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center text-base">
+                        📸
+                    </div>
+                    <div>
+                        <h3 class="text-xs sm:text-sm font-bold text-white font-heading">กล้องถ่ายภาพใบรับรองแพทย์</h3>
+                        <p class="text-[10px] text-slate-400">จัดเอกสารให้อยู่ในกรอบสี่เหลี่ยม</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-1.5">
+                    <button type="button" id="btn-camera-flip" onclick="toggleCameraFacingMode()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 transition" title="สลับกล้องหน้า/หลัง">
+                        <span class="text-sm">🔄</span>
+                    </button>
+                    <button type="button" onclick="closeCameraModal()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 transition" title="ปิดกล้อง">
+                        ✕
+                    </button>
+                </div>
+            </div>
+
+            <!-- Viewfinder Area -->
+            <div class="relative bg-black flex items-center justify-center min-h-[360px] sm:min-h-[420px] overflow-hidden">
+                <!-- Video Stream Element -->
+                <video id="camera-video" autoplay playsinline muted class="w-full h-full object-cover"></video>
+
+                <!-- Captured Still Canvas / Image for Review -->
+                <canvas id="camera-capture-canvas" class="hidden"></canvas>
+                <img id="camera-preview-img" class="hidden w-full h-full object-contain max-h-[460px]" alt="Captured photo">
+
+                <!-- Document Framing Overlay Guide -->
+                <div id="camera-overlay-guide" class="absolute inset-0 pointer-events-none flex items-center justify-center p-6">
+                    <div class="w-full h-full max-w-[320px] max-h-[400px] border-2 border-indigo-400/80 rounded-2xl relative shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]">
+                        <!-- 4 Corner Accents -->
+                        <div class="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-indigo-400 rounded-tl-lg"></div>
+                        <div class="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-indigo-400 rounded-tr-lg"></div>
+                        <div class="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-indigo-400 rounded-bl-lg"></div>
+                        <div class="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-indigo-400 rounded-br-lg"></div>
+                        
+                        <!-- Hint in frame -->
+                        <div class="absolute inset-x-0 bottom-4 text-center">
+                            <span class="bg-black/60 backdrop-blur-xs text-[11px] text-white/90 px-3 py-1 rounded-full border border-white/20">
+                                วางใบรับรองแพทย์ในกรอบนี้
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Flash animation effect -->
+                <div id="camera-shutter-flash" class="absolute inset-0 bg-white opacity-0 pointer-events-none transition-opacity duration-150"></div>
+            </div>
+
+            <!-- Camera Controls Bottom Bar -->
+            <div class="p-4 bg-slate-900 border-t border-slate-800">
+                <!-- Live Capture Controls -->
+                <div id="camera-live-controls" class="flex items-center justify-around">
+                    <button type="button" onclick="closeCameraModal()" class="text-xs text-slate-400 hover:text-white px-3.5 py-2 rounded-xl hover:bg-slate-800 transition">
+                        ยกเลิก
+                    </button>
+                    <!-- Big Shutter Button -->
+                    <button type="button" id="btn-camera-snap" onclick="takeCameraSnapshot()" class="w-16 h-16 rounded-full bg-white text-slate-900 border-4 border-slate-700 hover:scale-105 active:scale-95 transition-all shadow-xl flex items-center justify-center group focus:outline-none">
+                        <div class="w-11 h-11 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 group-hover:from-indigo-500 group-hover:to-purple-500 transition shadow-inner"></div>
+                    </button>
+                    <button type="button" onclick="toggleCameraFacingMode()" class="text-xs text-slate-400 hover:text-white px-3.5 py-2 rounded-xl hover:bg-slate-800 transition flex items-center space-x-1">
+                        <span>🔄 สลับกล้อง</span>
+                    </button>
+                </div>
+
+                <!-- Review Captured Photo Controls (Hidden initially) -->
+                <div id="camera-review-controls" class="hidden flex items-center space-x-2.5">
+                    <button type="button" onclick="retakeCameraSnapshot()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 py-3 rounded-2xl font-semibold text-xs transition flex items-center justify-center space-x-1.5 active:scale-95">
+                        <span>🔄 ถ่ายใหม่</span>
+                    </button>
+                    <button type="button" onclick="confirmCameraSnapshot()" class="flex-1 btn-premium py-3 rounded-2xl font-semibold text-xs transition shadow-md flex items-center justify-center space-x-1.5 active:scale-95">
+                        <span>✓ ใช้ภาพนี้ (บีบอัดอัตโนมัติ)</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -5095,6 +5195,202 @@
             });
         }
 
+        // =========================================================================
+        // CAMERA SNAPSHOT & AUTO-COMPRESSION SYSTEM (กล้องถ่ายภาพใบรับรองแพทย์)
+        // =========================================================================
+        let cameraMediaStream = null;
+        let cameraFacingMode = 'environment'; // 'environment' (rear camera) or 'user' (front camera)
+        let capturedCameraDataUrl = null;
+
+        async function openCameraModal() {
+            // Check if MediaDevices and getUserMedia are supported in this browser context
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                // Graceful fallback to native mobile camera file input
+                const fallbackInput = document.getElementById('req-camera-fallback-file');
+                if (fallbackInput) {
+                    fallbackInput.click();
+                    return;
+                }
+            }
+
+            const modal = document.getElementById('camera-modal');
+            if (modal) modal.classList.remove('hidden-view');
+
+            resetCameraUIForLive();
+            await startCameraStream();
+        }
+
+        async function startCameraStream() {
+            const video = document.getElementById('camera-video');
+            if (!video) return;
+
+            stopCameraStream();
+
+            try {
+                const constraints = {
+                    audio: false,
+                    video: {
+                        facingMode: { ideal: cameraFacingMode },
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    }
+                };
+
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                cameraMediaStream = stream;
+                video.srcObject = stream;
+                await video.play().catch(() => {});
+            } catch (err) {
+                console.warn('getUserMedia failed or permission denied, using mobile camera fallback:', err);
+                closeCameraModal();
+                showToast('กำลังเปิดกล้องถ่ายภาพของอุปกรณ์...', 'info');
+                const fallbackInput = document.getElementById('req-camera-fallback-file');
+                if (fallbackInput) {
+                    fallbackInput.click();
+                } else {
+                    document.getElementById('req-attachment-file')?.click();
+                }
+            }
+        }
+
+        function stopCameraStream() {
+            if (cameraMediaStream) {
+                cameraMediaStream.getTracks().forEach(track => track.stop());
+                cameraMediaStream = null;
+            }
+            const video = document.getElementById('camera-video');
+            if (video) video.srcObject = null;
+        }
+
+        function closeCameraModal() {
+            stopCameraStream();
+            const modal = document.getElementById('camera-modal');
+            if (modal) modal.classList.add('hidden-view');
+            capturedCameraDataUrl = null;
+        }
+
+        async function toggleCameraFacingMode() {
+            cameraFacingMode = (cameraFacingMode === 'environment') ? 'user' : 'environment';
+            await startCameraStream();
+        }
+
+        function resetCameraUIForLive() {
+            const video = document.getElementById('camera-video');
+            const previewImg = document.getElementById('camera-preview-img');
+            const overlayGuide = document.getElementById('camera-overlay-guide');
+            const liveControls = document.getElementById('camera-live-controls');
+            const reviewControls = document.getElementById('camera-review-controls');
+
+            if (video) video.classList.remove('hidden');
+            if (previewImg) {
+                previewImg.classList.add('hidden');
+                previewImg.src = '';
+            }
+            if (overlayGuide) overlayGuide.classList.remove('hidden');
+            if (liveControls) liveControls.classList.remove('hidden');
+            if (reviewControls) reviewControls.classList.add('hidden');
+            capturedCameraDataUrl = null;
+        }
+
+        function takeCameraSnapshot() {
+            const video = document.getElementById('camera-video');
+            const canvas = document.getElementById('camera-capture-canvas');
+            const previewImg = document.getElementById('camera-preview-img');
+            const overlayGuide = document.getElementById('camera-overlay-guide');
+            const liveControls = document.getElementById('camera-live-controls');
+            const reviewControls = document.getElementById('camera-review-controls');
+            const flash = document.getElementById('camera-shutter-flash');
+
+            if (!video || !canvas) return;
+
+            // Trigger visual flash
+            if (flash) {
+                flash.style.opacity = '1';
+                setTimeout(() => { flash.style.opacity = '0'; }, 150);
+            }
+
+            // Haptic vibration feedback
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
+            }
+
+            const width = video.videoWidth || 1280;
+            const height = video.videoHeight || 720;
+            canvas.width = width;
+            canvas.height = height;
+
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, width, height);
+
+            capturedCameraDataUrl = canvas.toDataURL('image/jpeg', 0.95);
+
+            // Switch to review screen
+            if (video) video.classList.add('hidden');
+            if (previewImg) {
+                previewImg.src = capturedCameraDataUrl;
+                previewImg.classList.remove('hidden');
+            }
+            if (overlayGuide) overlayGuide.classList.add('hidden');
+            if (liveControls) liveControls.classList.add('hidden');
+            if (reviewControls) reviewControls.classList.remove('hidden');
+        }
+
+        function retakeCameraSnapshot() {
+            resetCameraUIForLive();
+        }
+
+        async function confirmCameraSnapshot() {
+            if (!capturedCameraDataUrl) return;
+
+            try {
+                showToast('กำลังบีบอัดรูปภาพใบรับรองแพทย์...', 'info');
+
+                const res = await fetch(capturedCameraDataUrl);
+                const blob = await res.blob();
+                const now = new Date();
+                const timeStamp = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+                const file = new File([blob], `medical_cert_${timeStamp}.jpg`, { type: 'image/jpeg' });
+
+                const { dataUrl, size } = await compressImageFile(file, 1600, 1600, 0.82);
+
+                currentSelectedAttachmentDataUrl = dataUrl;
+                currentSelectedAttachmentMeta = {
+                    name: file.name,
+                    size: size,
+                    isPdf: false,
+                    isCamera: true
+                };
+
+                const emptyState = document.getElementById('attachment-empty-state');
+                const previewState = document.getElementById('attachment-preview-state');
+                const previewImg = document.getElementById('attachment-preview-img');
+                const previewPdf = document.getElementById('attachment-preview-pdf');
+                const fileNameEl = document.getElementById('attachment-file-name');
+                const fileSizeEl = document.getElementById('attachment-file-size');
+
+                if (emptyState) emptyState.classList.add('hidden');
+                if (previewState) previewState.classList.remove('hidden');
+
+                if (fileNameEl) fileNameEl.textContent = file.name;
+                const sizeKb = Math.round(size / 1024);
+                if (fileSizeEl) {
+                    fileSizeEl.innerHTML = `<span class="text-emerald-600 font-bold">📸 ถ่ายจากกล้อง • ${sizeKb} KB</span> <span class="text-indigo-600 font-medium">(บีบอัดแล้ว)</span>`;
+                }
+
+                if (previewPdf) previewPdf.classList.add('hidden');
+                if (previewImg) {
+                    previewImg.classList.remove('hidden');
+                    previewImg.src = dataUrl;
+                }
+
+                closeCameraModal();
+                showToast(`ถ่ายภาพและบีบอัดเรียบร้อย (${sizeKb} KB)`, 'success');
+            } catch (err) {
+                console.error('Camera confirmation error:', err);
+                showToast('เกิดข้อผิดพลาดในการประมวลผลรูปภาพ กรุณาลองใหม่อีกครั้ง', 'error');
+            }
+        }
+
         // Handle attachment file selection from camera / file picker
         async function handleAttachmentFileSelect(event) {
             const file = event.target.files && event.target.files[0];
@@ -5108,7 +5404,8 @@
             }
 
             try {
-                showToast('กำลังประมวลผลเอกสารแนบ...', 'info');
+                showToast('กำลังประมวลผลและบีบอัดเอกสารแนบ...', 'info');
+                const originalSize = file.size;
                 const { dataUrl, size, isPdf } = await compressImageFile(file);
 
                 currentSelectedAttachmentDataUrl = dataUrl;
@@ -5134,7 +5431,14 @@
                     : `${Math.round(size / 1024)} KB`;
 
                 if (fileSizeEl) {
-                    fileSizeEl.textContent = isPdf ? `${sizeFormatted} • PDF พร้อมส่ง` : `${sizeFormatted} • ย่อขนาดเรียบร้อย`;
+                    if (isPdf) {
+                        fileSizeEl.textContent = `${sizeFormatted} • PDF พร้อมส่ง`;
+                    } else {
+                        const savings = originalSize > size ? Math.round(((originalSize - size) / originalSize) * 100) : 0;
+                        fileSizeEl.innerHTML = savings > 0 
+                            ? `<span class="text-emerald-600 font-bold">${sizeFormatted}</span> <span class="text-indigo-600 font-medium">(ประหยัดเนื้อที่ ${savings}%)</span>`
+                            : `${sizeFormatted} • บีบอัดเรียบร้อย`;
+                    }
                 }
 
                 if (isPdf) {
@@ -5148,7 +5452,7 @@
                     }
                 }
 
-                showToast('แนบไฟล์เรียบร้อยแล้ว', 'success');
+                showToast('แนบและบีบอัดไฟล์เรียบร้อยแล้ว', 'success');
             } catch (err) {
                 console.error('Error handling attachment file:', err);
                 showToast('เกิดข้อผิดพลาดในการอ่านไฟล์ กรุณาลองใหม่อีกครั้ง', 'error');
@@ -5164,6 +5468,8 @@
             }
             const fileInput = document.getElementById('req-attachment-file');
             if (fileInput) fileInput.value = '';
+            const fallbackInput = document.getElementById('req-camera-fallback-file');
+            if (fallbackInput) fallbackInput.value = '';
 
             currentSelectedAttachmentDataUrl = null;
             currentSelectedAttachmentMeta = null;
