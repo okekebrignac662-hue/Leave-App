@@ -80,11 +80,34 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 7. Create Shift Swap Requests Table
+CREATE TABLE IF NOT EXISTS shift_swap_requests (
+    id SERIAL PRIMARY KEY,
+    requester_id VARCHAR(20) NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+    target_employee_id VARCHAR(20) NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+    department VARCHAR(50) NOT NULL,
+    requester_date DATE NOT NULL,
+    requester_shift VARCHAR(20) NOT NULL,
+    target_date DATE NOT NULL,
+    target_shift VARCHAR(20) NOT NULL,
+    reason TEXT,
+    status VARCHAR(30) NOT NULL DEFAULT 'PENDING_PEER', -- 'PENDING_PEER', 'REJECTED_BY_PEER', 'PENDING_SUPERVISOR', 'APPROVED', 'REJECTED_BY_SUPERVISOR', 'CANCELLED'
+    peer_responded_at TIMESTAMP WITH TIME ZONE,
+    peer_rejection_reason TEXT,
+    reviewed_by VARCHAR(20) REFERENCES employees(id) ON DELETE SET NULL,
+    reviewed_at TIMESTAMP WITH TIME ZONE,
+    supervisor_rejection_reason TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Index for performance when checking daily overlapping leaves
 CREATE INDEX IF NOT EXISTS idx_leave_requests_dates ON leave_requests (start_date, end_date, status);
 CREATE INDEX IF NOT EXISTS idx_leave_requests_employee ON leave_requests (employee_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_user_unread ON notifications (user_id, is_read, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user_id ON push_subscriptions (user_id);
+CREATE INDEX IF NOT EXISTS idx_shift_swap_requester ON shift_swap_requests (requester_id);
+CREATE INDEX IF NOT EXISTS idx_shift_swap_target ON shift_swap_requests (target_employee_id);
+CREATE INDEX IF NOT EXISTS idx_shift_swap_dept_status ON shift_swap_requests (department, status);
 
 -- =======================================================
 -- Seed Demo Data

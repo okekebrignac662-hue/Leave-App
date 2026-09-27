@@ -159,6 +159,27 @@ async function ensureDatabaseSchema() {
           updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         );
         CREATE INDEX IF NOT EXISTS idx_push_sub_user_id ON push_subscriptions (user_id);
+        CREATE TABLE IF NOT EXISTS shift_swap_requests (
+          id SERIAL PRIMARY KEY,
+          requester_id VARCHAR(20) NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+          target_employee_id VARCHAR(20) NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+          department VARCHAR(50) NOT NULL,
+          requester_date DATE NOT NULL,
+          requester_shift VARCHAR(20) NOT NULL,
+          target_date DATE NOT NULL,
+          target_shift VARCHAR(20) NOT NULL,
+          reason TEXT,
+          status VARCHAR(30) NOT NULL DEFAULT 'PENDING_PEER',
+          peer_responded_at TIMESTAMP WITH TIME ZONE,
+          peer_rejection_reason TEXT,
+          reviewed_by VARCHAR(20) REFERENCES employees(id) ON DELETE SET NULL,
+          reviewed_at TIMESTAMP WITH TIME ZONE,
+          supervisor_rejection_reason TEXT,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE INDEX IF NOT EXISTS idx_shift_swap_requester ON shift_swap_requests (requester_id);
+        CREATE INDEX IF NOT EXISTS idx_shift_swap_target ON shift_swap_requests (target_employee_id);
+        CREATE INDEX IF NOT EXISTS idx_shift_swap_dept_status ON shift_swap_requests (department, status);
         INSERT INTO quota_settings (department, shift, max_daily_leaves)
         VALUES ('HR', 'Morning', 2)
         ON CONFLICT (department, shift) DO NOTHING;
@@ -181,6 +202,8 @@ let demoNotifications = [];
 let nextDemoNotifId = 1;
 let demoPushSubscriptions = [];
 let nextDemoPushSubId = 1;
+let demoShiftSwaps = [];
+let nextDemoShiftSwapId = 1;
 
 /**
  * Send Web Push Notification to user's registered devices
@@ -2760,6 +2783,446 @@ app.post('/api/push/test', async (req, res) => {
   } catch (error) {
     console.error('Push test error:', error);
     res.status(500).json({ error: 'เกิดข้อผิดพลาดในการส่งข้อความทดสอบ: ' + error.message });
+  }
+});
+
+// ==========================================
+// SHIFT SWAP REQUESTS API (ระบบสลับกะ/แลกกะการทำงาน)
+// ==========================================
+
+// GET /api/shift-swaps - List shift swap requests
+app.get('/api/shift-swaps', async (req, res) => {
+  try {
+    const { employeeId, department, status } = req.query;
+
+    if (!pool) {
+      let filtered = [...demoShiftSwaps];
+      if (employeeId) {
+        const cleanEmpId = employeeId.trim().toUpperCase();
+        filtered = filtered.filter(s => s.requester_id === cleanEmpId || s.target_employee_id === cleanEmpId);
+      }
+      if (department && department.toUpperCase() !== 'ALL') {
+        filtered = filtered.filter(s => (s.department || '').toUpperCase() === department.toUpperCase());
+      }
+      if (status && status.toUpperCase() !== 'ALL') {
+        filtered = filtered.filter(s => (s.status || '').toUpperCase() === status.toUpperCase());
+      }
+      return res.json({ success: true, swaps: filtered });
+    }
+
+    let sql = `
+      SELECT 
+        sw.id,
+        sw.requester_id,
+        req_emp.name AS requester_name,
+        req_emp.shift AS requester_current_shift,
+        sw.target_employee_id,
+        tar_emp.name AS target_employee_name,
+        tar_emp.shift AS target_current_shift,
+        sw.department,
+        TO_CHAR(sw.requester_date, 'YYYY-MM-DD') AS requester_date,
+        sw.requester_shift,
+        TO_CHAR(sw.target_date, 'YYYY-MM-DD') AS target_date,
+        sw.target_shift,
+        sw.reason,
+        sw.status,
+        sw.peer_responded_at,
+        sw.peer_rejection_reason,
+        sw.reviewed_by,
+        rev_emp.name AS reviewer_name,
+        sw.reviewed_at,
+        sw.supervisor_rejection_reason,
+        sw.created_at
+      FROM shift_swap_requests sw
+      LEFT JOIN employees req_emp ON sw.requester_id = req_emp.id
+      LEFT JOIN employees tar_emp ON sw.target_employee_id = tar_emp.id
+      LEFT JOIN employees rev_emp ON sw.reviewed_by = rev_emp.id
+      WHERE 1=1
+    `;
+    const params = [];
+
+    if (employeeId) {
+      params.push(employeeId.trim().toUpperCase());
+      sql += ` AND (sw.requester_id = $${params.length} OR sw.target_employee_id = $${params.length})`;
+    }
+
+    if (department && department.toUpperCase() !== 'ALL') {
+      params.push(department.trim().toUpperCase());
+      sql += ` AND UPPER(sw.department) = $${params.length}`;
+    }
+
+    if (status && status.toUpperCase() !== 'ALL') {
+      params.push(status.trim().toUpperCase());
+      sql += ` AND UPPER(sw.status) = $${params.length}`;
+    }
+
+    sql += ` ORDER BY sw.created_at DESC`;
+
+    const { rows } = await query(sql, params);
+    res.json({ success: true, swaps: rows });
+  } catch (error) {
+    console.error('Fetch shift swaps error:', error);
+    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการดึงข้อมูลการแลกกะ: ' + error.message });
+  }
+});
+
+// POST /api/shift-swaps - Submit a new shift swap request
+app.post('/api/shift-swaps', async (req, res) => {
+  try {
+    const { requesterId, targetEmployeeId, requesterDate, requesterShift, targetDate, targetShift, reason } = req.body;
+
+    if (!requesterId || !targetEmployeeId || !requesterDate || !requesterShift || !targetDate || !targetShift) {
+      return res.status(400).json({ error: 'กรุณากรอกข้อมูลการแลกกะให้ครบถ้วน' });
+    }
+
+    const cleanReqId = requesterId.trim().toUpperCase();
+    const cleanTarId = targetEmployeeId.trim().toUpperCase();
+
+    if (cleanReqId === cleanTarId) {
+      return res.status(400).json({ error: 'ไม่สามารถยื่นขอแลกกะกับตัวเองได้' });
+    }
+
+    // Check employees in database or demo
+    let reqEmp = null;
+    let tarEmp = null;
+
+    if (!pool) {
+      reqEmp = { id: cleanReqId, name: 'พนักงานผู้ขอ', department: 'Assembly' };
+      tarEmp = { id: cleanTarId, name: 'เพื่อนร่วมงาน', department: 'Assembly' };
+    } else {
+      const eRes = await query('SELECT id, name, department, shift FROM employees WHERE id IN ($1, $2)', [cleanReqId, cleanTarId]);
+      reqEmp = eRes.rows.find(r => r.id === cleanReqId);
+      tarEmp = eRes.rows.find(r => r.id === cleanTarId);
+    }
+
+    if (!reqEmp || !tarEmp) {
+      return res.status(404).json({ error: 'ไม่พบข้อมูลพนักงานผู้ขอ หรือเพื่อนร่วมงานในระบบ' });
+    }
+
+    if (reqEmp.department && tarEmp.department && reqEmp.department.toUpperCase() !== tarEmp.department.toUpperCase()) {
+      return res.status(400).json({ error: 'สามารถแลกกะได้เฉพาะเพื่อนร่วมงานในแผนกเดียวกันเท่านั้น' });
+    }
+
+    const dept = reqEmp.department || 'Assembly';
+
+    let createdSwap = null;
+    if (!pool) {
+      createdSwap = {
+        id: nextDemoShiftSwapId++,
+        requester_id: cleanReqId,
+        requester_name: reqEmp.name,
+        target_employee_id: cleanTarId,
+        target_employee_name: tarEmp.name,
+        department: dept,
+        requester_date: requesterDate,
+        requester_shift: requesterShift,
+        target_date: targetDate,
+        target_shift: targetShift,
+        reason: reason || '',
+        status: 'PENDING_PEER',
+        created_at: new Date().toISOString()
+      };
+      demoShiftSwaps.unshift(createdSwap);
+    } else {
+      const insRes = await query(
+        `INSERT INTO shift_swap_requests 
+         (requester_id, target_employee_id, department, requester_date, requester_shift, target_date, target_shift, reason, status)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'PENDING_PEER')
+         RETURNING *`,
+        [cleanReqId, cleanTarId, dept, requesterDate, requesterShift, targetDate, targetShift, reason || '']
+      );
+      createdSwap = insRes.rows[0];
+    }
+
+    // Send In-App & Web Push Notification to target colleague
+    await createNotification(
+      cleanTarId,
+      `🔄 มีคำขอแลกกะจาก ${reqEmp.name}`,
+      `ขอยื่นแลกกะวันที่ ${requesterDate} (${requesterShift}) กับกะของคุณวันที่ ${targetDate} (${targetShift}) เหตุผล: ${reason || '-'}`,
+      'SHIFT_SWAP_REQUESTED',
+      createdSwap.id
+    );
+
+    // Send confirmation to requester
+    await createNotification(
+      cleanReqId,
+      '📤 ยื่นคำขอแลกกะเรียบร้อยแล้ว',
+      `คำขอแลกกะกับ ${tarEmp.name} (วันที่ ${requesterDate} ⇄ ${targetDate}) อยู่ในสถานะรอเพื่อนร่วมงานตอบรับ`,
+      'SHIFT_SWAP_SUBMITTED',
+      createdSwap.id
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'ยื่นคำขอแลกกะเรียบร้อยแล้ว รอเพื่อนร่วมงานตอบรับ',
+      swap: createdSwap
+    });
+  } catch (error) {
+    console.error('Create shift swap error:', error);
+    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการยื่นขอแลกกะ: ' + error.message });
+  }
+});
+
+// PATCH /api/shift-swaps/:id/peer-response - Colleague responds (ACCEPT or REJECT)
+app.patch('/api/shift-swaps/:id/peer-response', async (req, res) => {
+  try {
+    const swapId = parseInt(req.params.id, 10);
+    const { employeeId, action, reason } = req.body;
+
+    if (!employeeId || !action || !['ACCEPT', 'REJECT'].includes(action.toUpperCase())) {
+      return res.status(400).json({ error: 'ข้อมูลการตอบรับไม่ถูกต้อง (employeeId and action: ACCEPT/REJECT required)' });
+    }
+
+    const cleanEmpId = employeeId.trim().toUpperCase();
+    const cleanAction = action.toUpperCase();
+
+    let swap = null;
+    if (!pool) {
+      swap = demoShiftSwaps.find(s => s.id === swapId);
+    } else {
+      const q = await query(`
+        SELECT sw.*, req.name as requester_name, tar.name as target_name 
+        FROM shift_swap_requests sw
+        JOIN employees req ON sw.requester_id = req.id
+        JOIN employees tar ON sw.target_employee_id = tar.id
+        WHERE sw.id = $1
+      `, [swapId]);
+      swap = q.rows[0];
+    }
+
+    if (!swap) {
+      return res.status(404).json({ error: 'ไม่พบรายการคำขอแลกกะนี้' });
+    }
+
+    if (swap.target_employee_id !== cleanEmpId) {
+      return res.status(403).json({ error: 'คุณไม่มีสิทธิ์ตอบรับคำขอนี้ เนื่องจากไม่ใช่ผู้ถูกขอแลก' });
+    }
+
+    if (swap.status !== 'PENDING_PEER') {
+      return res.status(400).json({ error: `ไม่สามารถตอบรับได้ เนื่องจากรายการอยู่ในสถานะ ${swap.status}` });
+    }
+
+    const newStatus = cleanAction === 'ACCEPT' ? 'PENDING_SUPERVISOR' : 'REJECTED_BY_PEER';
+
+    if (!pool) {
+      swap.status = newStatus;
+      swap.peer_responded_at = new Date().toISOString();
+      swap.peer_rejection_reason = cleanAction === 'REJECT' ? (reason || 'เพื่อนร่วมงานไม่สะดวกแลกกะ') : null;
+    } else {
+      await query(
+        `UPDATE shift_swap_requests 
+         SET status = $1, peer_responded_at = CURRENT_TIMESTAMP, peer_rejection_reason = $2
+         WHERE id = $3`,
+        [newStatus, cleanAction === 'REJECT' ? (reason || 'เพื่อนร่วมงานไม่สะดวกแลกกะ') : null, swapId]
+      );
+    }
+
+    const targetName = swap.target_name || swap.target_employee_name || 'เพื่อนร่วมงาน';
+    const reqName = swap.requester_name || swap.requester_id;
+
+    if (cleanAction === 'ACCEPT') {
+      // Notify requester that peer accepted
+      await createNotification(
+        swap.requester_id,
+        '🤝 เพื่อนร่วมงานยอมรับการแลกกะแล้ว',
+        `${targetName} ยอมรับคำขอแลกกะแล้ว (วันที่ ${swap.requester_date} ⇄ ${swap.target_date}) รายการถูกส่งต่อให้หัวหน้างานพิจารณาอนุมัติ`,
+        'SHIFT_SWAP_PEER_ACCEPTED',
+        swapId
+      );
+
+      // Notify supervisors of the department
+      let supervisors = [];
+      if (!pool) {
+        supervisors = [{ id: 'SUP-001' }];
+      } else {
+        const sRes = await query("SELECT id FROM employees WHERE department = $1 AND role IN ('SUPERVISOR', 'ADMIN')", [swap.department]);
+        supervisors = sRes.rows;
+      }
+      for (const sup of supervisors) {
+        await createNotification(
+          sup.id,
+          '⏳ มีคำขอแลกกะรอการอนุมัติ',
+          `${reqName} และ ${targetName} แผนก ${swap.department} ได้ตกลงแลกกะกัน และรอคุณพิจารณาอนุมัติ`,
+          'SHIFT_SWAP_PENDING_SUPERVISOR',
+          swapId
+        );
+      }
+    } else {
+      // Notify requester that peer rejected
+      await createNotification(
+        swap.requester_id,
+        '❌ เพื่อนร่วมงานไม่สะดวกแลกกะ',
+        `${targetName} ปฏิเสธคำขอแลกกะ (${reason || 'ไม่สะดวกในวันดังกล่าว'})`,
+        'SHIFT_SWAP_PEER_REJECTED',
+        swapId
+      );
+    }
+
+    res.json({
+      success: true,
+      message: cleanAction === 'ACCEPT' ? 'ยอมรับการแลกกะแล้ว ส่งต่อให้หัวหน้างานพิจารณา' : 'ปฏิเสธคำขอแลกกะเรียบร้อยแล้ว',
+      status: newStatus
+    });
+  } catch (error) {
+    console.error('Peer response error:', error);
+    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการตอบรับคำขอ: ' + error.message });
+  }
+});
+
+// PATCH /api/shift-swaps/:id/supervisor-review - Supervisor approves or rejects
+app.patch('/api/shift-swaps/:id/supervisor-review', async (req, res) => {
+  try {
+    const swapId = parseInt(req.params.id, 10);
+    const { supervisorId, action, reason } = req.body;
+
+    if (!supervisorId || !action || !['APPROVE', 'REJECT'].includes(action.toUpperCase())) {
+      return res.status(400).json({ error: 'ข้อมูลการพิจารณาไม่ถูกต้อง (supervisorId and action: APPROVE/REJECT required)' });
+    }
+
+    const cleanSupId = supervisorId.trim().toUpperCase();
+    const cleanAction = action.toUpperCase();
+
+    // Verify supervisor role
+    let supEmp = null;
+    if (!pool) {
+      supEmp = { id: cleanSupId, name: 'หัวหน้างาน', role: 'SUPERVISOR' };
+    } else {
+      const supRes = await query("SELECT id, name, role, department FROM employees WHERE id = $1 AND role IN ('SUPERVISOR', 'ADMIN', 'HR')", [cleanSupId]);
+      supEmp = supRes.rows[0];
+    }
+
+    if (!supEmp) {
+      return res.status(403).json({ error: 'เฉพาะหัวหน้างาน (Supervisor), HR หรือ Admin เท่านั้นที่มีสิทธิ์อนุมัติ' });
+    }
+
+    let swap = null;
+    if (!pool) {
+      swap = demoShiftSwaps.find(s => s.id === swapId);
+    } else {
+      const q = await query(`
+        SELECT sw.*, req.name as requester_name, tar.name as target_name 
+        FROM shift_swap_requests sw
+        JOIN employees req ON sw.requester_id = req.id
+        JOIN employees tar ON sw.target_employee_id = tar.id
+        WHERE sw.id = $1
+      `, [swapId]);
+      swap = q.rows[0];
+    }
+
+    if (!swap) {
+      return res.status(404).json({ error: 'ไม่พบรายการคำขอแลกกะนี้' });
+    }
+
+    if (swap.status !== 'PENDING_SUPERVISOR') {
+      return res.status(400).json({ error: `ไม่สามารถพิจารณาได้เนื่องจากรายการอยู่ในสถานะ ${swap.status}` });
+    }
+
+    const newStatus = cleanAction === 'APPROVE' ? 'APPROVED' : 'REJECTED_BY_SUPERVISOR';
+
+    if (!pool) {
+      swap.status = newStatus;
+      swap.reviewed_by = cleanSupId;
+      swap.reviewer_name = supEmp.name;
+      swap.reviewed_at = new Date().toISOString();
+      swap.supervisor_rejection_reason = cleanAction === 'REJECT' ? (reason || 'หัวหน้างานไม่อนุมัติ') : null;
+    } else {
+      await query(
+        `UPDATE shift_swap_requests 
+         SET status = $1, reviewed_by = $2, reviewed_at = CURRENT_TIMESTAMP, supervisor_rejection_reason = $3
+         WHERE id = $4`,
+        [newStatus, cleanSupId, cleanAction === 'REJECT' ? (reason || 'หัวหน้างานไม่อนุมัติ') : null, swapId]
+      );
+    }
+
+    const reqName = swap.requester_name || swap.requester_id;
+    const targetName = swap.target_name || swap.target_employee_id;
+
+    if (cleanAction === 'APPROVE') {
+      await createNotification(
+        swap.requester_id,
+        '✅ หัวหน้างานอนุมัติการแลกกะแล้ว',
+        `การแลกกะกับ ${targetName} ได้รับการอนุมัติแล้ว คุณปฏิบัติงานวันที่ ${swap.target_date} (กะ ${swap.target_shift})`,
+        'SHIFT_SWAP_APPROVED',
+        swapId
+      );
+      await createNotification(
+        swap.target_employee_id,
+        '✅ หัวหน้างานอนุมัติการแลกกะแล้ว',
+        `การแลกกะกับ ${reqName} ได้รับการอนุมัติแล้ว คุณปฏิบัติงานวันที่ ${swap.requester_date} (กะ ${swap.requester_shift})`,
+        'SHIFT_SWAP_APPROVED',
+        swapId
+      );
+    } else {
+      const rejReason = reason || 'หัวหน้างานไม่อนุมัติ';
+      await createNotification(
+        swap.requester_id,
+        '❌ หัวหน้างานไม่อนุมัติการแลกกะ',
+        `คำขอแลกกะกับ ${targetName} ไม่ได้รับการอนุมัติ (เหตุผล: ${rejReason})`,
+        'SHIFT_SWAP_REJECTED',
+        swapId
+      );
+      await createNotification(
+        swap.target_employee_id,
+        '❌ คำขอแลกกะไม่ได้รับการอนุมัติ',
+        `คำขอแลกกะกับ ${reqName} ไม่ได้รับการอนุมัติจากหัวหน้างาน (เหตุผล: ${rejReason})`,
+        'SHIFT_SWAP_REJECTED',
+        swapId
+      );
+    }
+
+    res.json({
+      success: true,
+      message: cleanAction === 'APPROVE' ? 'อนุมัติการแลกกะเรียบร้อยแล้ว' : 'ปฏิเสธการแลกกะเรียบร้อยแล้ว',
+      status: newStatus
+    });
+  } catch (error) {
+    console.error('Supervisor review error:', error);
+    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการพิจารณาการแลกกะ: ' + error.message });
+  }
+});
+
+// PATCH /api/shift-swaps/:id/cancel - Requester cancels swap request
+app.patch('/api/shift-swaps/:id/cancel', async (req, res) => {
+  try {
+    const swapId = parseInt(req.params.id, 10);
+    const { employeeId } = req.body;
+
+    if (!employeeId) {
+      return res.status(400).json({ error: 'ต้องระบุ employeeId' });
+    }
+
+    const cleanEmpId = employeeId.trim().toUpperCase();
+
+    let swap = null;
+    if (!pool) {
+      swap = demoShiftSwaps.find(s => s.id === swapId);
+    } else {
+      const q = await query('SELECT * FROM shift_swap_requests WHERE id = $1', [swapId]);
+      swap = q.rows[0];
+    }
+
+    if (!swap) {
+      return res.status(404).json({ error: 'ไม่พบรายการคำขอแลกกะนี้' });
+    }
+
+    if (swap.requester_id !== cleanEmpId) {
+      return res.status(403).json({ error: 'คุณสามารถยกเลิกได้เฉพาะคำขอที่คุณเป็นผู้ยื่นเท่านั้น' });
+    }
+
+    if (!['PENDING_PEER', 'PENDING_SUPERVISOR'].includes(swap.status)) {
+      return res.status(400).json({ error: 'ไม่สามารถยกเลิกคำขอนี้ได้เนื่องจากผ่านการพิจารณาแล้ว' });
+    }
+
+    if (!pool) {
+      swap.status = 'CANCELLED';
+    } else {
+      await query("UPDATE shift_swap_requests SET status = 'CANCELLED' WHERE id = $1", [swapId]);
+    }
+
+    res.json({ success: true, message: 'ยกเลิกคำขอแลกกะเรียบร้อยแล้ว' });
+  } catch (error) {
+    console.error('Cancel swap error:', error);
+    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการยกเลิกคำขอ: ' + error.message });
   }
 });
 

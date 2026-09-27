@@ -677,6 +677,41 @@
                         <p class="text-xs text-gray-400 text-center py-6">ยังไม่มีประวัติการขอลา</p>
                     </div>
                 </div>
+
+                <!-- My Shift Swap Requests Card -->
+                <div class="glass-card p-6 sm:p-7 rounded-3xl space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100/90 pb-3">
+                        <div class="flex items-center space-x-2.5">
+                            <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center text-sm shadow-xs">
+                                🔄
+                            </div>
+                            <div>
+                                <h2 class="text-base font-bold text-gray-900 font-heading">รายการแลกกะการทำงาน (Shift Swap)</h2>
+                                <p class="text-xs text-gray-500">ขอยื่นแลกกะกับเพื่อนร่วมงานในแผนกเดียวกันเพื่อลดการขาดงาน</p>
+                            </div>
+                        </div>
+                        <button type="button" onclick="openShiftSwapModal()" class="btn-premium px-4 py-2.5 rounded-2xl text-xs font-semibold shadow-md transition flex items-center justify-center space-x-1.5 active:scale-95 shrink-0">
+                            <span>➕ ขอยื่นแลกกะใหม่</span>
+                        </button>
+                    </div>
+
+                    <!-- Swap Subtabs -->
+                    <div class="flex items-center space-x-2 bg-slate-100/90 p-1.5 rounded-2xl text-xs font-semibold">
+                        <button type="button" id="tab-swap-incoming" onclick="switchSwapSubTab('incoming')" class="flex-1 py-2 rounded-xl transition flex items-center justify-center space-x-1.5 bg-white text-indigo-700 shadow-xs font-bold">
+                            <span>📥 รอฉันตอบรับ</span>
+                            <span id="badge-swap-incoming" class="hidden ml-1 bg-amber-500 text-white px-2 py-0.2 rounded-full text-[10px] font-bold">0</span>
+                        </button>
+                        <button type="button" id="tab-swap-outgoing" onclick="switchSwapSubTab('outgoing')" class="flex-1 py-2 rounded-xl transition flex items-center justify-center space-x-1.5 text-gray-600 hover:text-gray-900">
+                            <span>📤 คำขอที่ฉันยื่นไป</span>
+                            <span id="badge-swap-outgoing" class="hidden ml-1 bg-indigo-600 text-white px-2 py-0.2 rounded-full text-[10px] font-bold">0</span>
+                        </button>
+                    </div>
+
+                    <!-- Swaps Content Container -->
+                    <div id="swap-requests-list" class="space-y-3 pt-1">
+                        <p class="text-xs text-gray-400 text-center py-6">กำลังโหลดข้อมูลการแลกกะ...</p>
+                    </div>
+                </div>
             </div>
 
             <!-- 3. SUPERVISOR VIEW -->
@@ -772,6 +807,10 @@
                         </button>
                         <button id="tab-sup-analytics" type="button" onclick="switchSupervisorTab('analytics')" class="px-3.5 py-2 rounded-lg text-xs font-semibold text-gray-600 hover:text-gray-900 transition flex items-center space-x-1.5">
                             <span>📈 สถิติและกราฟ (Analytics)</span>
+                        </button>
+                        <button id="tab-sup-swaps" type="button" onclick="switchSupervisorTab('swaps')" class="px-3.5 py-2 rounded-lg text-xs font-semibold text-gray-600 hover:text-gray-900 transition flex items-center space-x-1.5">
+                            <span>🔄 อนุมัติการแลกกะ (Shift Swaps)</span>
+                            <span id="sup-badge-swaps" class="hidden ml-1 bg-amber-500 text-white px-2 py-0.2 rounded-full text-[10px] font-bold">0</span>
                         </button>
                     </div>
                     <button type="button" onclick="refreshSupervisorData()" class="bg-white hover:bg-slate-50 border border-slate-200 text-gray-700 px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center justify-center space-x-1.5 shadow-2xs self-end sm:self-auto active:scale-95">
@@ -1465,6 +1504,37 @@
                     </div>
                 </div>
 
+                <!-- Supervisor Shift Swaps Container -->
+                <div id="supervisor-swaps-container" class="hidden-view space-y-4">
+                    <div class="glass-card p-4 sm:p-6 rounded-3xl space-y-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-3">
+                            <div>
+                                <h2 class="text-base font-bold text-gray-900 flex items-center space-x-2 font-heading">
+                                    <span class="text-xl">🔄</span>
+                                    <span>พิจารณาคำขอแลกกะการทำงาน (Shift Swap Approvals)</span>
+                                </h2>
+                                <p class="text-xs text-gray-500 mt-0.5">รายการคำขอที่พนักงานทั้งสองฝ่ายตกลงแลกกะกันเรียบร้อยแล้ว รอหัวหน้างานอนุมัติ</p>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <select id="sup-swap-filter-status" onchange="loadSupervisorShiftSwaps()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-semibold text-gray-700 focus:bg-white focus:border-indigo-600 focus:outline-none">
+                                    <option value="PENDING_SUPERVISOR">⏳ รออนุมัติ (Pending)</option>
+                                    <option value="APPROVED">✅ อนุมัติแล้ว (Approved)</option>
+                                    <option value="REJECTED_BY_SUPERVISOR">❌ ไม่อนุมัติ (Rejected)</option>
+                                    <option value="ALL">📋 ทั้งหมด (All)</option>
+                                </select>
+                                <button type="button" onclick="loadSupervisorShiftSwaps()" class="bg-white hover:bg-slate-50 border border-slate-200 text-gray-700 px-3 py-1.5 rounded-xl text-xs font-semibold transition active:scale-95 shadow-2xs">
+                                    🔄 รีเฟรช
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Swaps List -->
+                        <div id="sup-swap-requests-list" class="space-y-3">
+                            <p class="text-xs text-gray-400 text-center py-8">กำลังโหลดข้อมูลคำขอแลกกะ...</p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Supervisor Department Leave Calendar Card -->
                 <div class="glass-card p-4 sm:p-6 rounded-3xl space-y-4">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100/90 pb-3.5">
@@ -1846,6 +1916,116 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Shift Swap Request Modal -->
+    <div id="shift-swap-modal" class="hidden-view fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="glass-card bg-white w-full max-w-lg rounded-3xl p-5 sm:p-6 space-y-4 shadow-2xl border border-white/80 animate-fade-in-up">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center text-sm shadow-xs">
+                        🔄
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-gray-900 font-heading">ยื่นคำขอแลกกะการทำงาน (Shift Swap)</h3>
+                        <p class="text-[11px] text-gray-500">เลือกเพื่อนร่วมงานในแผนกเดียวกันเพื่อขอสลับกะ</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeShiftSwapModal()" class="text-gray-400 hover:text-gray-600 text-sm p-1.5 rounded-xl hover:bg-gray-100 transition">✕</button>
+            </div>
+
+            <!-- Modal Form -->
+            <form id="shift-swap-form" onsubmit="event.preventDefault(); submitShiftSwapRequest();" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">
+                        <span>เพื่อนร่วมงานที่ต้องการขอแลกกะ (Colleague)</span>
+                        <span class="text-rose-500">*</span>
+                    </label>
+                    <select id="swap-target-employee" required onchange="onSwapTargetEmployeeChange()" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-2.5 text-xs font-medium text-gray-700 focus:bg-white focus:border-indigo-600 focus:outline-none transition">
+                        <option value="">-- เลือกเพื่อนร่วมงานในแผนกเดียวกัน --</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 bg-slate-50/90 rounded-2xl border border-slate-200/80">
+                    <!-- Requester Side -->
+                    <div class="space-y-2">
+                        <span class="text-[11px] font-bold text-indigo-900 flex items-center space-x-1">
+                            <span>👤 กะของคุณ (ฉัน)</span>
+                        </span>
+                        <div>
+                            <label class="block text-[10px] text-gray-500 mb-0.5">วันที่ต้องการขอแลก:</label>
+                            <input type="date" id="swap-req-date" required class="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-gray-800 focus:border-indigo-600 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-gray-500 mb-0.5">กะของคุณในวันนั้น:</label>
+                            <select id="swap-req-shift" required class="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-gray-800 focus:border-indigo-600 focus:outline-none">
+                                <option value="A">กะ A</option>
+                                <option value="B">กะ B</option>
+                                <option value="Morning">กะเช้า (Morning)</option>
+                                <option value="Night">กะดึก (Night)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Target Colleague Side -->
+                    <div class="space-y-2 sm:border-l sm:border-slate-200 sm:pl-3">
+                        <span class="text-[11px] font-bold text-purple-900 flex items-center space-x-1">
+                            <span>🤝 กะของเพื่อนร่วมงาน</span>
+                        </span>
+                        <div>
+                            <label class="block text-[10px] text-gray-500 mb-0.5">วันที่ของเพื่อนร่วมงาน:</label>
+                            <input type="date" id="swap-target-date" required class="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-gray-800 focus:border-indigo-600 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-gray-500 mb-0.5">กะของเพื่อนร่วมงานในวันนั้น:</label>
+                            <select id="swap-target-shift" required class="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-gray-800 focus:border-indigo-600 focus:outline-none">
+                                <option value="B">กะ B</option>
+                                <option value="A">กะ A</option>
+                                <option value="Morning">กะเช้า (Morning)</option>
+                                <option value="Night">กะดึก (Night)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">
+                        <span>เหตุผลในการขอแลกกะ (Reason)</span>
+                        <span class="text-rose-500">*</span>
+                    </label>
+                    <textarea id="swap-reason" rows="2" required placeholder="ระบุเหตุผล เช่น ติดธุระส่วนตัวจำเป็น, สลับดูแลครอบครัว..." class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:outline-none transition"></textarea>
+                </div>
+
+                <div class="flex space-x-2.5 pt-2">
+                    <button type="button" onclick="closeShiftSwapModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-3 rounded-2xl font-semibold text-xs transition active:scale-95">ยกเลิก</button>
+                    <button type="submit" id="btn-submit-swap-modal" class="flex-1 btn-premium py-3 rounded-2xl font-semibold text-xs transition shadow-md flex items-center justify-center space-x-1.5 active:scale-95">
+                        <span>ส่งคำขอแลกกะ</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Shift Swap Reject Reason Modal -->
+    <div id="reject-swap-modal" class="hidden-view fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="glass-card bg-white w-full max-w-sm rounded-3xl p-5 space-y-3.5 shadow-2xl border border-white/80 animate-fade-in-up">
+            <div class="flex items-center justify-between border-b border-gray-100 pb-2.5">
+                <h3 class="text-sm font-bold text-gray-900 font-heading">ระบุเหตุผลที่ไม่อนุมัติ / ปฏิเสธ</h3>
+                <button type="button" onclick="closeRejectSwapModal()" class="text-gray-400 hover:text-gray-600 text-sm p-1.5 rounded-xl hover:bg-gray-100 transition">✕</button>
+            </div>
+            <div id="reject-swap-modal-info" class="text-xs text-rose-800 bg-rose-50 p-2.5 rounded-xl border border-rose-100">
+                <!-- details -->
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-700 mb-1">เหตุผล:</label>
+                <textarea id="reject-swap-reason-input" rows="3" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:outline-none transition" placeholder="ระบุเหตุผลที่ปฏิเสธ..."></textarea>
+            </div>
+            <div class="flex space-x-2 pt-1">
+                <button type="button" onclick="closeRejectSwapModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2.5 rounded-xl font-semibold text-xs transition active:scale-95">ยกเลิก</button>
+                <button type="button" onclick="confirmRejectSwapAction()" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white py-2.5 rounded-xl font-semibold text-xs transition shadow-md active:scale-95">ยืนยันปฏิเสธ</button>
+            </div>
         </div>
     </div>
 
@@ -3273,6 +3453,7 @@
         // Load Employee Requests History (Modern Timeline Cards)
         async function loadMyLeaveRequests() {
             if (!currentUser) return;
+            loadMyShiftSwaps();
             const listEl = document.getElementById('my-requests-list');
             if (!listEl) return;
             try {
@@ -3760,19 +3941,21 @@
             }
         }
 
-        // Switch Supervisor / Admin Tabs (Employees vs Pending vs History vs Reports vs Analytics)
+        // Switch Supervisor / Admin Tabs (Employees vs Pending vs History vs Reports vs Analytics vs Swaps)
         function switchSupervisorTab(tab) {
             const btnEmployees = document.getElementById('tab-admin-employees');
             const btnPending = document.getElementById('tab-sup-pending');
             const btnHistory = document.getElementById('tab-sup-history');
             const btnReports = document.getElementById('tab-sup-reports');
             const btnAnalytics = document.getElementById('tab-sup-analytics');
+            const btnSwaps = document.getElementById('tab-sup-swaps');
             
             const containerEmployees = document.getElementById('admin-employees-container');
             const containerPending = document.getElementById('supervisor-pending-container');
             const containerHistory = document.getElementById('supervisor-history-container');
             const containerReports = document.getElementById('supervisor-reports-container');
             const containerAnalytics = document.getElementById('supervisor-analytics-container');
+            const containerSwaps = document.getElementById('supervisor-swaps-container');
 
             // Reset tab styles
             const inactiveClass = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold text-gray-600 hover:text-gray-900 transition flex items-center space-x-1.5';
@@ -3783,12 +3966,14 @@
             if (btnHistory) btnHistory.className = tab === 'history' ? activeClass : inactiveClass;
             if (btnReports) btnReports.className = tab === 'reports' ? activeClass : inactiveClass;
             if (btnAnalytics) btnAnalytics.className = tab === 'analytics' ? activeClass : inactiveClass;
+            if (btnSwaps) btnSwaps.className = tab === 'swaps' ? activeClass : inactiveClass;
 
             if (containerEmployees) containerEmployees.classList.toggle('hidden-view', tab !== 'employees');
             if (containerPending) containerPending.classList.toggle('hidden-view', tab !== 'pending');
             if (containerHistory) containerHistory.classList.toggle('hidden-view', tab !== 'history');
             if (containerReports) containerReports.classList.toggle('hidden-view', tab !== 'reports');
             if (containerAnalytics) containerAnalytics.classList.toggle('hidden-view', tab !== 'analytics');
+            if (containerSwaps) containerSwaps.classList.toggle('hidden-view', tab !== 'swaps');
 
             if (tab === 'employees') {
                 loadAdminEmployeesList();
@@ -3800,6 +3985,8 @@
                 initReportTab();
             } else if (tab === 'analytics') {
                 initAnalyticsTab();
+            } else if (tab === 'swaps') {
+                loadSupervisorShiftSwaps();
             }
         }
 
@@ -3927,6 +4114,7 @@
             loadPendingRequests();
             loadSupervisorHistory();
             loadDepartmentCalendar();
+            loadSupervisorShiftSwaps();
             const repCont = document.getElementById('supervisor-reports-container');
             if (repCont && !repCont.classList.contains('hidden-view')) {
                 loadLeaveReportData();
@@ -5955,6 +6143,542 @@
                         }
                     }
                 });
+            }
+        }
+
+        // =========================================================================
+        // SHIFT SWAP SYSTEM (ระบบสลับกะ/แลกกะการทำงาน)
+        // =========================================================================
+        let currentSwapSubTab = 'incoming';
+        let myCachedShiftSwaps = [];
+        let rejectSwapState = { id: null, type: 'PEER', summary: '' };
+
+        function switchSwapSubTab(tab) {
+            currentSwapSubTab = tab;
+            const btnIn = document.getElementById('tab-swap-incoming');
+            const btnOut = document.getElementById('tab-swap-outgoing');
+            if (btnIn) {
+                if (tab === 'incoming') {
+                    btnIn.className = 'flex-1 py-2 rounded-xl transition flex items-center justify-center space-x-1.5 bg-white text-indigo-700 shadow-xs font-bold';
+                } else {
+                    btnIn.className = 'flex-1 py-2 rounded-xl transition flex items-center justify-center space-x-1.5 text-gray-600 hover:text-gray-900';
+                }
+            }
+            if (btnOut) {
+                if (tab === 'outgoing') {
+                    btnOut.className = 'flex-1 py-2 rounded-xl transition flex items-center justify-center space-x-1.5 bg-white text-indigo-700 shadow-xs font-bold';
+                } else {
+                    btnOut.className = 'flex-1 py-2 rounded-xl transition flex items-center justify-center space-x-1.5 text-gray-600 hover:text-gray-900';
+                }
+            }
+            renderMyShiftSwapsList();
+        }
+
+        async function openShiftSwapModal() {
+            if (!currentUser) return;
+            const modal = document.getElementById('shift-swap-modal');
+            const selectTarget = document.getElementById('swap-target-employee');
+            const reqDateInput = document.getElementById('swap-req-date');
+            const targetDateInput = document.getElementById('swap-target-date');
+            const reqShiftSelect = document.getElementById('swap-req-shift');
+            const reasonInput = document.getElementById('swap-reason');
+
+            // Default dates to tomorrow
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+            if (reqDateInput) reqDateInput.value = tomorrowStr;
+            if (targetDateInput) targetDateInput.value = tomorrowStr;
+            if (reqShiftSelect && currentUser.shift) reqShiftSelect.value = currentUser.shift;
+            if (reasonInput) reasonInput.value = '';
+
+            // Load department colleagues
+            if (selectTarget) {
+                selectTarget.innerHTML = '<option value="">-- กำลังโหลดรายชื่อเพื่อนร่วมงาน... --</option>';
+                try {
+                    const res = await safeFetch('/api/employees');
+                    const emps = await res.json();
+                    const colleagues = (emps || []).filter(e => 
+                        e.id !== currentUser.id && 
+                        (e.department || '').toUpperCase() === (currentUser.department || '').toUpperCase()
+                    );
+
+                    if (colleagues.length === 0) {
+                        selectTarget.innerHTML = '<option value="">-- ไม่พบเพื่อนร่วมงานในแผนกเดียวกัน --</option>';
+                    } else {
+                        selectTarget.innerHTML = '<option value="">-- เลือกเพื่อนร่วมงานในแผนกเดียวกัน --</option>' +
+                            colleagues.map(c => `<option value="${escapeHtml(c.id)}" data-shift="${escapeHtml(c.shift || 'B')}">${escapeHtml(c.name)} (${escapeHtml(c.id)}) - กะปัจจุบัน: ${escapeHtml(c.shift || '-')}</option>`).join('');
+                    }
+                } catch (err) {
+                    console.error('Fetch colleagues error:', err);
+                    selectTarget.innerHTML = '<option value="">-- โหลดข้อมูลไม่สำเร็จ กรุณาลองใหม่ --</option>';
+                }
+            }
+
+            if (modal) modal.classList.remove('hidden-view');
+        }
+
+        function closeShiftSwapModal() {
+            const modal = document.getElementById('shift-swap-modal');
+            if (modal) modal.classList.add('hidden-view');
+        }
+
+        function onSwapTargetEmployeeChange() {
+            const selectTarget = document.getElementById('swap-target-employee');
+            const targetShiftSelect = document.getElementById('swap-target-shift');
+            if (!selectTarget || !targetShiftSelect) return;
+            const selectedOpt = selectTarget.options[selectTarget.selectedIndex];
+            if (selectedOpt && selectedOpt.dataset.shift) {
+                targetShiftSelect.value = selectedOpt.dataset.shift;
+            }
+        }
+
+        async function submitShiftSwapRequest() {
+            if (!currentUser) return;
+            const targetId = document.getElementById('swap-target-employee')?.value;
+            const reqDate = document.getElementById('swap-req-date')?.value;
+            const reqShift = document.getElementById('swap-req-shift')?.value;
+            const targetDate = document.getElementById('swap-target-date')?.value;
+            const targetShift = document.getElementById('swap-target-shift')?.value;
+            const reason = document.getElementById('swap-reason')?.value?.trim();
+            const btnSubmit = document.getElementById('btn-submit-swap-modal');
+
+            if (!targetId) {
+                showToast('กรุณาเลือกเพื่อนร่วมงานที่ต้องการขอแลกกะ', 'error');
+                return;
+            }
+            if (!reqDate || !targetDate || !reqShift || !targetShift || !reason) {
+                showToast('กรุณากรอกข้อมูลวันที่ กะ และเหตุผลให้ครบถ้วน', 'error');
+                return;
+            }
+
+            if (btnSubmit) {
+                btnSubmit.disabled = true;
+                btnSubmit.innerText = 'กำลังส่งคำขอ...';
+            }
+
+            try {
+                const res = await safeFetch('/api/shift-swaps', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        requesterId: currentUser.id,
+                        targetEmployeeId: targetId,
+                        requesterDate: reqDate,
+                        requesterShift: reqShift,
+                        targetDate: targetDate,
+                        targetShift: targetShift,
+                        reason: reason
+                    })
+                });
+
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'ไม่สามารถส่งคำขอแลกกะได้');
+                }
+
+                showToast('ส่งคำขอแลกกะสำเร็จแล้ว! รอเพื่อนร่วมงานตอบรับ', 'success');
+                closeShiftSwapModal();
+                switchSwapSubTab('outgoing');
+                loadMyShiftSwaps();
+            } catch (err) {
+                console.error('Submit swap error:', err);
+                showToast(err.message, 'error');
+            } finally {
+                if (btnSubmit) {
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = '<span>ส่งคำขอแลกกะ</span>';
+                }
+            }
+        }
+
+        async function loadMyShiftSwaps() {
+            if (!currentUser) return;
+            const listEl = document.getElementById('swap-requests-list');
+            try {
+                const res = await safeFetch(`/api/shift-swaps?employeeId=${encodeURIComponent(currentUser.id)}`);
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'โหลดข้อมูลไม่สำเร็จ');
+                }
+
+                myCachedShiftSwaps = data.swaps || [];
+
+                // Badges update
+                const incomingPending = myCachedShiftSwaps.filter(s => s.target_employee_id === currentUser.id && s.status === 'PENDING_PEER').length;
+                const outgoingPending = myCachedShiftSwaps.filter(s => s.requester_id === currentUser.id && ['PENDING_PEER', 'PENDING_SUPERVISOR'].includes(s.status)).length;
+
+                const badgeIn = document.getElementById('badge-swap-incoming');
+                const badgeOut = document.getElementById('badge-swap-outgoing');
+
+                if (badgeIn) {
+                    badgeIn.innerText = incomingPending;
+                    badgeIn.classList.toggle('hidden', incomingPending === 0);
+                }
+                if (badgeOut) {
+                    badgeOut.innerText = outgoingPending;
+                    badgeOut.classList.toggle('hidden', outgoingPending === 0);
+                }
+
+                renderMyShiftSwapsList();
+            } catch (err) {
+                console.error('Load my shift swaps error:', err);
+                if (listEl) {
+                    listEl.innerHTML = '<div class="text-center py-6 text-xs text-rose-500 font-medium">เกิดข้อผิดพลาดในการโหลดรายการแลกกะ</div>';
+                }
+            }
+        }
+
+        function renderMyShiftSwapsList() {
+            const listEl = document.getElementById('swap-requests-list');
+            if (!listEl || !currentUser) return;
+
+            const isIncoming = currentSwapSubTab === 'incoming';
+            const filtered = myCachedShiftSwaps.filter(s => isIncoming ? (s.target_employee_id === currentUser.id) : (s.requester_id === currentUser.id));
+
+            if (filtered.length === 0) {
+                listEl.innerHTML = `
+                    <div class="text-center py-8 text-xs text-gray-400">
+                        <div class="text-2xl mb-1">${isIncoming ? '📥' : '📤'}</div>
+                        <div>${isIncoming ? 'ยังไม่มีคำขอแลกกะที่ส่งถึงคุณ' : 'คุณยังไม่มียื่นคำขอแลกกะใดๆ'}</div>
+                    </div>
+                `;
+                return;
+            }
+
+            listEl.innerHTML = filtered.map(item => {
+                let badge = '';
+                if (item.status === 'PENDING_PEER') {
+                    badge = `<span class="bg-amber-50 text-amber-700 border border-amber-200 text-[11px] px-2.5 py-0.5 rounded-full font-semibold">⏳ รอ${isIncoming ? 'ฉัน' : 'เพื่อนร่วมงาน'}ตอบรับ</span>`;
+                } else if (item.status === 'PENDING_SUPERVISOR') {
+                    badge = '<span class="bg-indigo-50 text-indigo-700 border border-indigo-200 text-[11px] px-2.5 py-0.5 rounded-full font-semibold">⌛ รอหัวหน้างานอนุมัติ</span>';
+                } else if (item.status === 'APPROVED') {
+                    badge = '<span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] px-2.5 py-0.5 rounded-full font-semibold">✅ อนุมัติสำเร็จ</span>';
+                } else if (item.status === 'REJECTED_BY_PEER') {
+                    badge = '<span class="bg-rose-50 text-rose-700 border border-rose-200 text-[11px] px-2.5 py-0.5 rounded-full font-semibold">❌ เพื่อนร่วมงานปฏิเสธ</span>';
+                } else if (item.status === 'REJECTED_BY_SUPERVISOR') {
+                    badge = '<span class="bg-rose-50 text-rose-700 border border-rose-200 text-[11px] px-2.5 py-0.5 rounded-full font-semibold">❌ หัวหน้างานไม่อนุมัติ</span>';
+                } else if (item.status === 'CANCELLED') {
+                    badge = '<span class="bg-gray-100 text-gray-500 border border-gray-200 text-[11px] px-2.5 py-0.5 rounded-full font-semibold">🚫 ยกเลิกแล้ว</span>';
+                }
+
+                let actions = '';
+                if (isIncoming && item.status === 'PENDING_PEER') {
+                    actions = `
+                        <div class="flex items-center space-x-2 pt-2 border-t border-slate-100">
+                            <button type="button" onclick="respondToShiftSwap(${item.id}, 'ACCEPT')" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold py-2 rounded-xl transition shadow-xs flex items-center justify-center space-x-1 active:scale-95">
+                                <span>✓ ยอมรับการแลกกะ</span>
+                            </button>
+                            <button type="button" onclick="openRejectSwapModal(${item.id}, 'PEER', 'ปฏิเสธคำขอแลกกะจาก ${escapeHtml(item.requester_name || item.requester_id)}')" class="flex-1 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-semibold py-2 rounded-xl transition flex items-center justify-center space-x-1 active:scale-95">
+                                <span>✕ ปฏิเสธ</span>
+                            </button>
+                        </div>
+                    `;
+                } else if (!isIncoming && ['PENDING_PEER', 'PENDING_SUPERVISOR'].includes(item.status)) {
+                    actions = `
+                        <div class="flex justify-end pt-2 border-t border-slate-100">
+                            <button type="button" onclick="cancelShiftSwap(${item.id})" class="text-[11px] text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-3 py-1 rounded-xl transition font-semibold flex items-center space-x-1 active:scale-95">
+                                <span>🗑️ ยกเลิกคำขอนี้</span>
+                            </button>
+                        </div>
+                    `;
+                }
+
+                let rejectionMsg = '';
+                if (item.peer_rejection_reason) {
+                    rejectionMsg = `<div class="text-[11px] text-rose-700 bg-rose-50/70 p-2 rounded-xl border border-rose-100"><strong>เหตุผลที่เพื่อนปฏิเสธ:</strong> ${escapeHtml(item.peer_rejection_reason)}</div>`;
+                } else if (item.supervisor_rejection_reason) {
+                    rejectionMsg = `<div class="text-[11px] text-rose-700 bg-rose-50/70 p-2 rounded-xl border border-rose-100"><strong>เหตุผลที่หัวหน้าไม่อนุมัติ:</strong> ${escapeHtml(item.supervisor_rejection_reason)}</div>`;
+                }
+
+                const otherPersonName = isIncoming ? (item.requester_name || item.requester_id) : (item.target_employee_name || item.target_employee_id);
+                const roleLabel = isIncoming ? 'ผู้ยื่นคำขอแลก' : 'ขอแลกกับเพื่อนร่วมงาน';
+
+                return `
+                    <div class="p-3.5 sm:p-4 rounded-2xl bg-white border border-slate-200/80 shadow-2xs space-y-2.5 transition hover:shadow-xs">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-sm">🔄</span>
+                                <div>
+                                    <span class="text-xs font-bold text-gray-800">${roleLabel}: <span class="text-indigo-600">${escapeHtml(otherPersonName)}</span></span>
+                                    <div class="text-[10px] text-gray-400">สร้างเมื่อ: ${new Date(item.created_at).toLocaleString('th-TH')}</div>
+                                </div>
+                            </div>
+                            <div>${badge}</div>
+                        </div>
+
+                        <!-- Shift Swap Matrix -->
+                        <div class="grid grid-cols-2 gap-2 p-2.5 bg-slate-50/80 rounded-xl border border-slate-100 text-xs">
+                            <div class="border-r border-slate-200 pr-2">
+                                <div class="text-[10px] font-semibold text-gray-500">${escapeHtml(item.requester_name || item.requester_id)}:</div>
+                                <div class="font-bold text-gray-800 text-[11px]">📅 ${escapeHtml(item.requester_date)}</div>
+                                <div class="text-[10px] text-indigo-700 font-semibold">กะ: ${escapeHtml(item.requester_shift)}</div>
+                            </div>
+                            <div class="pl-1">
+                                <div class="text-[10px] font-semibold text-gray-500">${escapeHtml(item.target_employee_name || item.target_employee_id)}:</div>
+                                <div class="font-bold text-gray-800 text-[11px]">📅 ${escapeHtml(item.target_date)}</div>
+                                <div class="text-[10px] text-purple-700 font-semibold">กะ: ${escapeHtml(item.target_shift)}</div>
+                            </div>
+                        </div>
+
+                        <div class="text-xs text-gray-600">
+                            <span class="font-semibold text-gray-700">เหตุผล:</span> ${escapeHtml(item.reason || '-')}
+                        </div>
+
+                        ${rejectionMsg}
+                        ${actions}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function respondToShiftSwap(swapId, action) {
+            if (!currentUser) return;
+            const confirmMsg = action === 'ACCEPT' 
+                ? 'ยืนยันยอมรับการแลกกะหรือไม่? ระบบจะส่งต่อให้หัวหน้างานพิจารณาอนุมัติ' 
+                : 'ยืนยันปฏิเสธการแลกกะหรือไม่?';
+            if (!confirm(confirmMsg)) return;
+
+            try {
+                const res = await safeFetch(`/api/shift-swaps/${swapId}/peer-response`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ employeeId: currentUser.id, action: action })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'ไม่สามารถดำเนินการได้');
+                }
+                showToast(data.message || 'ดำเนินการเรียบร้อย', 'success');
+                loadMyShiftSwaps();
+            } catch (err) {
+                console.error('Peer respond error:', err);
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function cancelShiftSwap(swapId) {
+            if (!currentUser) return;
+            if (!confirm('ยืนยันยกเลิกคำขอแลกกะนี้หรือไม่?')) return;
+
+            try {
+                const res = await safeFetch(`/api/shift-swaps/${swapId}/cancel`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ employeeId: currentUser.id })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'ไม่สามารถยกเลิกคำขอได้');
+                }
+                showToast('ยกเลิกคำขอแลกกะเรียบร้อยแล้ว', 'success');
+                loadMyShiftSwaps();
+            } catch (err) {
+                console.error('Cancel shift swap error:', err);
+                showToast(err.message, 'error');
+            }
+        }
+
+        // Supervisor Shift Swaps Management
+        async function loadSupervisorShiftSwaps() {
+            if (!currentUser || !currentUser.isSupervisor) return;
+            const listEl = document.getElementById('sup-swap-requests-list');
+            const statusFilter = document.getElementById('sup-swap-filter-status')?.value || 'PENDING_SUPERVISOR';
+            const dept = (currentUser.isAdmin || currentUser.isHR) ? 'ALL' : currentUser.department;
+
+            if (listEl) {
+                listEl.innerHTML = '<p class="text-xs text-gray-400 text-center py-6">กำลังโหลดข้อมูลคำขอแลกกะ...</p>';
+            }
+
+            try {
+                const res = await safeFetch(`/api/shift-swaps?department=${encodeURIComponent(dept)}&status=${encodeURIComponent(statusFilter)}`);
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'เกิดข้อผิดพลาดในการโหลดข้อมูล');
+                }
+
+                const swaps = data.swaps || [];
+
+                // Also fetch pending badge count
+                safeFetch(`/api/shift-swaps?department=${encodeURIComponent(dept)}&status=PENDING_SUPERVISOR`)
+                    .then(r => r.json())
+                    .then(pData => {
+                        const count = (pData.swaps || []).length;
+                        const badge = document.getElementById('sup-badge-swaps');
+                        if (badge) {
+                            badge.innerText = count;
+                            badge.classList.toggle('hidden', count === 0);
+                        }
+                    })
+                    .catch(() => {});
+
+                if (!listEl) return;
+
+                if (swaps.length === 0) {
+                    listEl.innerHTML = '<div class="text-center py-8 text-xs text-gray-400">ไม่มีคำขอแลกกะในสถานะนี้</div>';
+                    return;
+                }
+
+                listEl.innerHTML = swaps.map(swap => {
+                    let badge = '';
+                    if (swap.status === 'PENDING_SUPERVISOR') {
+                        badge = '<span class="bg-amber-50 text-amber-700 border border-amber-200 text-xs px-2.5 py-0.5 rounded-full font-semibold">⏳ รออนุมัติ</span>';
+                    } else if (swap.status === 'APPROVED') {
+                        badge = '<span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs px-2.5 py-0.5 rounded-full font-semibold">✅ อนุมัติแล้ว</span>';
+                    } else if (swap.status === 'REJECTED_BY_SUPERVISOR') {
+                        badge = '<span class="bg-rose-50 text-rose-700 border border-rose-200 text-xs px-2.5 py-0.5 rounded-full font-semibold">❌ ไม่อนุมัติ</span>';
+                    } else {
+                        badge = `<span class="bg-gray-100 text-gray-600 text-xs px-2.5 py-0.5 rounded-full font-semibold">${escapeHtml(swap.status)}</span>`;
+                    }
+
+                    let actionButtons = '';
+                    if (swap.status === 'PENDING_SUPERVISOR') {
+                        actionButtons = `
+                            <div class="flex items-center space-x-2 pt-2 border-t border-slate-100">
+                                <button type="button" onclick="reviewSupervisorShiftSwap(${swap.id}, 'APPROVE')" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold py-2.5 rounded-xl transition shadow-xs flex items-center justify-center space-x-1 active:scale-95">
+                                    <span>✓ อนุมัติการแลกกะ</span>
+                                </button>
+                                <button type="button" onclick="openRejectSwapModal(${swap.id}, 'SUPERVISOR', 'คำขอแลกกะระหว่าง ${escapeHtml(swap.requester_name || swap.requester_id)} และ ${escapeHtml(swap.target_employee_name || swap.target_employee_id)}')" class="flex-1 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-semibold py-2.5 rounded-xl transition flex items-center justify-center space-x-1 active:scale-95">
+                                    <span>✕ ไม่อนุมัติ</span>
+                                </button>
+                            </div>
+                        `;
+                    } else if (swap.reviewed_at) {
+                        actionButtons = `
+                            <div class="text-[11px] text-gray-500 pt-2 border-t border-slate-100 flex items-center justify-between">
+                                <span>พิจารณาโดย: <strong class="text-gray-700">${escapeHtml(swap.reviewer_name || swap.reviewed_by || '-')}</strong></span>
+                                <span>${new Date(swap.reviewed_at).toLocaleString('th-TH')}</span>
+                            </div>
+                        `;
+                    }
+
+                    let rejectionMsg = '';
+                    if (swap.supervisor_rejection_reason) {
+                        rejectionMsg = `<div class="text-xs text-rose-700 bg-rose-50 p-2.5 rounded-xl border border-rose-100"><strong>เหตุผลที่ไม่อนุมัติ:</strong> ${escapeHtml(swap.supervisor_rejection_reason)}</div>`;
+                    }
+
+                    return `
+                        <div class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs space-y-3 transition hover:shadow-xs">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-lg">🔄</span>
+                                    <div>
+                                        <div class="text-xs font-bold text-gray-900">
+                                            <span>${escapeHtml(swap.requester_name || swap.requester_id)}</span>
+                                            <span class="text-indigo-600 mx-1">⇄</span>
+                                            <span>${escapeHtml(swap.target_employee_name || swap.target_employee_id)}</span>
+                                        </div>
+                                        <div class="text-[10px] text-gray-400">แผนก: ${escapeHtml(swap.department || '-')} • ยื่นเมื่อ: ${new Date(swap.created_at).toLocaleString('th-TH')}</div>
+                                    </div>
+                                </div>
+                                <div>${badge}</div>
+                            </div>
+
+                            <!-- Swap Details -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-slate-50/90 rounded-2xl border border-slate-100 text-xs">
+                                <div class="space-y-1">
+                                    <div class="text-[11px] font-bold text-indigo-900">👤 ผู้ขอยื่น: ${escapeHtml(swap.requester_name || swap.requester_id)}</div>
+                                    <div class="text-gray-600">วันที่: <strong class="text-gray-800">${escapeHtml(swap.requester_date)}</strong></div>
+                                    <div class="text-gray-600">กะที่ขอแลก: <span class="font-bold text-indigo-700">${escapeHtml(swap.requester_shift)}</span></div>
+                                </div>
+                                <div class="space-y-1 sm:border-l sm:border-slate-200 sm:pl-3">
+                                    <div class="text-[11px] font-bold text-purple-900">🤝 ผู้ถูกขอ: ${escapeHtml(swap.target_employee_name || swap.target_employee_id)}</div>
+                                    <div class="text-gray-600">วันที่: <strong class="text-gray-800">${escapeHtml(swap.target_date)}</strong></div>
+                                    <div class="text-gray-600">กะที่ขอแลก: <span class="font-bold text-purple-700">${escapeHtml(swap.target_shift)}</span></div>
+                                </div>
+                            </div>
+
+                            <div class="text-xs text-gray-700">
+                                <span class="font-semibold">เหตุผล:</span> ${escapeHtml(swap.reason || '-')}
+                            </div>
+
+                            ${rejectionMsg}
+                            ${actionButtons}
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error('Load supervisor shift swaps error:', err);
+                if (listEl) {
+                    listEl.innerHTML = '<div class="text-center py-6 text-xs text-rose-500">เกิดข้อผิดพลาดในการโหลดคำขอแลกกะ</div>';
+                }
+            }
+        }
+
+        async function reviewSupervisorShiftSwap(swapId, action, reason = null) {
+            if (!currentUser || !currentUser.isSupervisor) return;
+            if (action === 'APPROVE') {
+                if (!confirm('ยืนยันอนุมัติการแลกกะนี้หรือไม่? ระบบจะบันทึกผลและแจ้งเตือนพนักงานทั้งสองฝ่าย')) return;
+            }
+
+            try {
+                const res = await safeFetch(`/api/shift-swaps/${swapId}/supervisor-review`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        supervisorId: currentUser.id,
+                        action: action,
+                        reason: reason
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'ไม่สามารถพิจารณาคำขอได้');
+                }
+                showToast(data.message || 'ดำเนินการเรียบร้อยแล้ว', 'success');
+                loadSupervisorShiftSwaps();
+            } catch (err) {
+                console.error('Review supervisor swap error:', err);
+                showToast(err.message, 'error');
+            }
+        }
+
+        // Rejection Modal Functions
+        function openRejectSwapModal(swapId, type, summaryText) {
+            rejectSwapState = { id: swapId, type: type, summary: summaryText };
+            const modal = document.getElementById('reject-swap-modal');
+            const infoEl = document.getElementById('reject-swap-modal-info');
+            const inputEl = document.getElementById('reject-swap-reason-input');
+
+            if (infoEl) infoEl.innerText = summaryText || 'โปรดระบุเหตุผลในการปฏิเสธ';
+            if (inputEl) inputEl.value = '';
+            if (modal) modal.classList.remove('hidden-view');
+        }
+
+        function closeRejectSwapModal() {
+            const modal = document.getElementById('reject-swap-modal');
+            if (modal) modal.classList.add('hidden-view');
+        }
+
+        async function confirmRejectSwapAction() {
+            const inputEl = document.getElementById('reject-swap-reason-input');
+            const reason = inputEl ? inputEl.value.trim() : '';
+
+            if (!reason) {
+                showToast('กรุณาระบุเหตุผลในการปฏิเสธ', 'error');
+                return;
+            }
+
+            const { id, type } = rejectSwapState;
+            closeRejectSwapModal();
+
+            if (type === 'PEER') {
+                try {
+                    const res = await safeFetch(`/api/shift-swaps/${id}/peer-response`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ employeeId: currentUser.id, action: 'REJECT', reason: reason })
+                    });
+                    const data = await res.json();
+                    if (!res.ok || !data.success) throw new Error(data.error || 'ปฏิเสธไม่สำเร็จ');
+                    showToast('ปฏิเสธคำขอแลกกะเรียบร้อยแล้ว', 'info');
+                    loadMyShiftSwaps();
+                } catch (err) {
+                    showToast(err.message, 'error');
+                }
+            } else if (type === 'SUPERVISOR') {
+                reviewSupervisorShiftSwap(id, 'REJECT', reason);
             }
         }
     </script>
