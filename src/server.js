@@ -1182,9 +1182,47 @@ app.put('/api/leave-requests/:id', async (req, res) => {
     const isHourly = durationType === 'HOURLY';
     const actualEndDate = isHourly ? startDate : (endDate || startDate);
 
+    // Validation: Date validity
+    const startObj = new Date(startDate);
+    const endObj = new Date(actualEndDate);
+    if (isNaN(startObj.getTime()) || isNaN(endObj.getTime())) {
+      return res.status(400).json({ error: 'รูปแบบวันที่ไม่ถูกต้อง' });
+    }
+
     // Validation: Start Date <= End Date
-    if (new Date(startDate) > new Date(actualEndDate)) {
+    if (startObj > endObj) {
       return res.status(400).json({ error: 'วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุด' });
+    }
+
+    // Business Rule Validation: Past Date Restrictions
+    const todayBangkok = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Bangkok',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).format(new Date());
+
+    if (normalizedType !== 'Sick') {
+      if (startDate < todayBangkok) {
+        return res.status(400).json({
+          error: 'การลาพักร้อนและลากิจต้องยื่นล่วงหน้า ไม่สามารถเลือกวันที่ในอดีตได้'
+        });
+      }
+    } else {
+      const threeDaysAgo = new Date();
+      threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+      const minSickDate = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Bangkok',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).format(threeDaysAgo);
+
+      if (startDate < minSickDate) {
+        return res.status(400).json({
+          error: 'การยื่นขอลาป่วยย้อนหลังสามารถทำได้ไม่เกิน 3 วันทำการ'
+        });
+      }
     }
 
     let daysCount = 1;
@@ -3201,6 +3239,29 @@ app.post('/api/shift-swaps', async (req, res) => {
       return res.status(400).json({ error: 'ไม่สามารถยื่นขอแลกกะกับตัวเองได้' });
     }
 
+    // Validation: Date validity
+    const rDateObj = new Date(requesterDate);
+    const tDateObj = new Date(targetDate);
+    if (isNaN(rDateObj.getTime()) || isNaN(tDateObj.getTime())) {
+      return res.status(400).json({ error: 'รูปแบบวันที่สำหรับการแลกกะไม่ถูกต้อง' });
+    }
+
+    // Business Rule Validation: Past Date Restrictions
+    const todayBangkok = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Bangkok',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).format(new Date());
+
+    if (requesterDate < todayBangkok || targetDate < todayBangkok) {
+      return res.status(400).json({ error: 'ไม่สามารถขอแลกกะย้อนหลังในอดีตได้' });
+    }
+
+    if (requesterDate === targetDate && requesterShift.trim().toUpperCase() === targetShift.trim().toUpperCase()) {
+      return res.status(400).json({ error: 'ไม่สามารถแลกกะในวันและกะเดียวกันได้' });
+    }
+
     // Check employees in database or demo
     let reqEmp = null;
     let tarEmp = null;
@@ -3220,6 +3281,37 @@ app.post('/api/shift-swaps', async (req, res) => {
 
     if (reqEmp.department && tarEmp.department && reqEmp.department.toUpperCase() !== tarEmp.department.toUpperCase()) {
       return res.status(400).json({ error: 'สามารถแลกกะได้เฉพาะเพื่อนร่วมงานในแผนกเดียวกันเท่านั้น' });
+    }
+
+    // Check if either employee has conflicting approved/pending leave
+    if (pool) {
+      const reqLeaveRes = await query(
+        `SELECT id, leave_type FROM leave_requests 
+         WHERE UPPER(employee_id) = $1 
+           AND status IN ('PENDING', 'APPROVED') 
+           AND $2::date BETWEEN start_date AND end_date 
+         LIMIT 1`,
+        [cleanReqId, targetDate]
+      );
+      if (reqLeaveRes.rows.length > 0) {
+        return res.status(400).json({
+          error: `คุณมีคำขอลางาน (${reqLeaveRes.rows[0].leave_type}) ในวันที่ ${targetDate} อยู่แล้ว ไม่สามารถรับกะมาทำแทนได้`
+        });
+      }
+
+      const tarLeaveRes = await query(
+        `SELECT id, leave_type FROM leave_requests 
+         WHERE UPPER(employee_id) = $1 
+           AND status IN ('PENDING', 'APPROVED') 
+           AND $2::date BETWEEN start_date AND end_date 
+         LIMIT 1`,
+        [cleanTarId, requesterDate]
+      );
+      if (tarLeaveRes.rows.length > 0) {
+        return res.status(400).json({
+          error: `เพื่อนร่วมงานมีคำขอลางานในวันที่ ${requesterDate} อยู่แล้ว ไม่สามารถแลกกะมารับหน้าที่แทนได้`
+        });
+      }
     }
 
     const dept = reqEmp.department || 'Assembly';

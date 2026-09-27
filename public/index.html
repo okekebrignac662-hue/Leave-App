@@ -945,7 +945,7 @@
                                     <div class="flex items-center space-x-2">
                                         <h3 class="text-base font-bold text-white">Google Sheets Integration</h3>
                                         <span id="sheets-status-pill" class="bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[10px] px-2.5 py-0.5 rounded-full font-semibold flex items-center space-x-1">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                                            <span id="sheets-badge-status" class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
                                             <span id="sheets-status-text">ยังไม่ได้ตั้งค่า Webhook</span>
                                         </span>
                                     </div>
@@ -6269,7 +6269,7 @@
 
                     let attachBtn = '<span class="text-gray-300">-</span>';
                     if (r.attachment_url) {
-                        attachBtn = `<button type="button" onclick="openAttachmentModal('${escapeHtml(r.attachment_url)}', 'หลักฐานการลา')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-lg text-[10px] font-bold transition flex items-center space-x-1 mx-auto"><span>📎 ดูไฟล์</span></button>`;
+                        attachBtn = `<button type="button" onclick="viewAttachment('${escapeHtml(r.attachment_url)}', '${escapeHtml(r.employee_name || r.employee_id)}', '${escapeHtml(typeLabel)}')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-lg text-[10px] font-bold transition flex items-center space-x-1 mx-auto"><span>📎 ดูไฟล์</span></button>`;
                     }
 
                     return `
