@@ -2129,6 +2129,123 @@
         </div>
     </div>
 
+    <!-- Edit Leave Request Modal -->
+    <div id="edit-leave-modal" class="hidden-view fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-3 sm:p-5">
+        <div class="glass-card bg-white w-full max-w-lg rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-white/80 animate-fade-in-up">
+            <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-9 h-9 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg shadow-2xs">
+                        ✏️
+                    </div>
+                    <div>
+                        <h3 class="text-sm sm:text-base font-bold text-gray-900 font-heading">แก้ไขคำขอลางาน</h3>
+                        <p class="text-[11px] text-gray-500">ปรับเปลี่ยนข้อมูล วันที่ หรือแนบเอกสารเพิ่มเติมได้ทันที</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeEditLeaveRequestModal()" class="text-gray-400 hover:text-gray-600 text-sm p-1.5 rounded-xl hover:bg-gray-100 transition">✕</button>
+            </div>
+
+            <form id="edit-leave-form" onsubmit="event.preventDefault(); submitEditLeaveRequest();" class="space-y-3.5">
+                <input type="hidden" id="edit-req-id">
+
+                <!-- Leave Type -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">
+                        <span>ประเภทการลา (Leave Type)</span>
+                        <span class="text-rose-500">*</span>
+                    </label>
+                    <select id="edit-leave-type" required class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-2.5 text-xs font-semibold text-gray-800 focus:bg-white focus:border-indigo-600 focus:outline-none transition">
+                        <option value="Vacation">🏖️ ลาพักร้อน (Vacation)</option>
+                        <option value="Personal">💼 ลากิจ (Personal)</option>
+                        <option value="Sick">🏥 ลาป่วย (Sick)</option>
+                        <option value="Unpaid">📋 ลาไม่รับค่าจ้าง (Unpaid)</option>
+                    </select>
+                </div>
+
+                <!-- Duration Type -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">รูปแบบการลา</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="flex items-center justify-center space-x-1.5 p-2 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-indigo-50/50 has-checked:bg-indigo-50 has-checked:border-indigo-500 text-xs font-semibold text-gray-700 transition">
+                            <input type="radio" name="edit-duration-radio" id="edit-dur-full" value="FULL_DAY" onchange="toggleEditDurationFields()" class="text-indigo-600" checked>
+                            <span>📅 เต็มวัน / หลายวัน</span>
+                        </label>
+                        <label class="flex items-center justify-center space-x-1.5 p-2 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-indigo-50/50 has-checked:bg-indigo-50 has-checked:border-indigo-500 text-xs font-semibold text-gray-700 transition">
+                            <input type="radio" name="edit-duration-radio" id="edit-dur-hourly" value="HOURLY" onchange="toggleEditDurationFields()" class="text-indigo-600">
+                            <span>⏰ รายชั่วโมง</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Date Range (Full Day) -->
+                <div id="edit-dates-container" class="grid grid-cols-2 gap-2.5">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-gray-600 mb-0.5">วันที่เริ่มลา:</label>
+                        <input type="date" id="edit-start-date" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-gray-800 focus:border-indigo-600 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-gray-600 mb-0.5">ถึงวันที่:</label>
+                        <input type="date" id="edit-end-date" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-gray-800 focus:border-indigo-600 focus:outline-none">
+                    </div>
+                </div>
+
+                <!-- Hourly Container (Hidden initially) -->
+                <div id="edit-hourly-container" class="hidden-view space-y-2 p-3 bg-indigo-50/60 rounded-2xl border border-indigo-100">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-gray-600 mb-0.5">วันที่ลา:</label>
+                        <input type="date" id="edit-hourly-date" class="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-gray-800 focus:border-indigo-600 focus:outline-none">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[10px] text-gray-500 mb-0.5">เวลาเริ่มต้น:</label>
+                            <input type="time" id="edit-start-time" class="w-full bg-white border border-slate-200 rounded-xl px-2 py-1.5 text-xs font-semibold text-gray-800 focus:border-indigo-600 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-gray-500 mb-0.5">เวลาสิ้นสุด:</label>
+                            <input type="time" id="edit-end-time" class="w-full bg-white border border-slate-200 rounded-xl px-2 py-1.5 text-xs font-semibold text-gray-800 focus:border-indigo-600 focus:outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reason -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">
+                        <span>เหตุผลการลา (Reason)</span>
+                        <span class="text-rose-500">*</span>
+                    </label>
+                    <textarea id="edit-reason" rows="2" required placeholder="ระบุเหตุผลการลา..." class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-2.5 text-xs focus:bg-white focus:border-indigo-600 focus:outline-none transition"></textarea>
+                </div>
+
+                <!-- Attachment in Edit Modal -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">รูปถ่าย / ใบรับรองแพทย์แนบ</label>
+                    <div id="edit-attachment-preview-box" class="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between text-xs">
+                        <div class="flex items-center space-x-2.5 min-w-0">
+                            <img id="edit-attachment-img" src="" class="w-10 h-10 rounded-lg object-cover border border-slate-200 hidden">
+                            <span id="edit-attachment-icon" class="text-xl">📎</span>
+                            <span id="edit-attachment-status" class="text-gray-500 truncate">ไม่มีเอกสารแนบ</span>
+                        </div>
+                        <div class="flex items-center space-x-1.5 shrink-0">
+                            <button type="button" id="btn-edit-att-view" onclick="viewEditAttachment()" class="hidden px-2.5 py-1 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold text-[11px] transition">ดูภาพ</button>
+                            <button type="button" onclick="openCameraForEditModal()" class="px-2.5 py-1 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-semibold text-[11px] transition">📸 ถ่ายใหม่</button>
+                            <button type="button" onclick="document.getElementById('edit-att-file-input').click()" class="px-2.5 py-1 rounded-xl bg-white border border-slate-200 text-slate-700 font-semibold text-[11px] hover:bg-slate-100 transition">📁 เลือกไฟล์</button>
+                            <button type="button" id="btn-edit-att-remove" onclick="removeEditAttachment()" class="hidden text-rose-500 hover:text-rose-700 p-1 rounded-lg">✕</button>
+                        </div>
+                    </div>
+                    <input type="file" id="edit-att-file-input" accept="image/*,application/pdf" onchange="handleEditAttachmentSelect(event)" class="hidden">
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="flex space-x-2.5 pt-2">
+                    <button type="button" onclick="closeEditLeaveRequestModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-3 rounded-2xl font-semibold text-xs transition active:scale-95">ยกเลิก</button>
+                    <button type="submit" id="btn-submit-edit-modal" class="flex-1 btn-premium py-3 rounded-2xl font-semibold text-xs transition shadow-md flex items-center justify-center space-x-1.5 active:scale-95">
+                        <span>💾 บันทึกการแก้ไข</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="text-center py-6 text-xs text-slate-400 font-medium border-t border-slate-200/50 mt-8 flex flex-col items-center justify-center space-y-1">
         <div>Department Leave Management &copy; 2026</div>
@@ -3570,16 +3687,31 @@
                 const countEl = document.getElementById('history-count');
                 if (countEl) countEl.innerText = `${data.requests.length} รายการ`;
 
+                window.cachedMyRequestsMap = window.cachedMyRequestsMap || {};
+                data.requests.forEach(r => { window.cachedMyRequestsMap[r.id] = r; });
+
                 listEl.innerHTML = data.requests.map(req => {
                     let statusBadge = '<span class="bg-amber-50 text-amber-700 border border-amber-200/80 text-[11px] px-2.5 py-0.5 rounded-full font-semibold flex items-center space-x-1"><span>⏳</span><span>รออนุมัติ</span></span>';
-                    let cancelBtn = '';
+                    let actionBtns = '';
 
                     if (req.status === 'PENDING') {
-                        cancelBtn = `<button onclick="cancelLeaveRequest(${req.id})" class="text-[11px] text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/80 px-2 py-0.5 rounded-lg transition font-medium flex items-center space-x-1 shadow-2xs" title="ยกเลิกคำขอนี้"><span>🗑️</span><span>ยกเลิก</span></button>`;
-                    } else if (req.status === 'APPROVED') {
-                        statusBadge = '<span class="bg-emerald-50 text-emerald-700 border border-emerald-200/80 text-[11px] px-2.5 py-0.5 rounded-full font-semibold flex items-center space-x-1"><span>✓</span><span>อนุมัติแล้ว</span></span>';
+                        actionBtns = `
+                            <button type="button" onclick="openEditLeaveRequestModal(${req.id})" class="text-[11px] text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 px-2 py-0.5 rounded-lg transition font-semibold flex items-center space-x-1 shadow-2xs active:scale-95" title="แก้ไขคำขอนี้">
+                                <span>✏️</span><span>แก้ไข</span>
+                            </button>
+                            <button type="button" onclick="cancelLeaveRequest(${req.id})" class="text-[11px] text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/80 px-2 py-0.5 rounded-lg transition font-medium flex items-center space-x-1 shadow-2xs active:scale-95" title="ยกเลิกคำขอนี้">
+                                <span>🗑️</span><span>ยกเลิก</span>
+                            </button>
+                        `;
                     } else if (req.status === 'REJECTED') {
                         statusBadge = '<span class="bg-rose-50 text-rose-700 border border-rose-200/80 text-[11px] px-2.5 py-0.5 rounded-full font-semibold flex items-center space-x-1"><span>✕</span><span>ไม่อนุมัติ</span></span>';
+                        actionBtns = `
+                            <button type="button" onclick="openEditLeaveRequestModal(${req.id})" class="text-[11px] text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-lg transition font-semibold flex items-center space-x-1 shadow-2xs active:scale-95" title="แก้ไขข้อมูลเพื่อยื่นใหม่">
+                                <span>✏️</span><span>แก้ไข/ยื่นใหม่</span>
+                            </button>
+                        `;
+                    } else if (req.status === 'APPROVED') {
+                        statusBadge = '<span class="bg-emerald-50 text-emerald-700 border border-emerald-200/80 text-[11px] px-2.5 py-0.5 rounded-full font-semibold flex items-center space-x-1"><span>✓</span><span>อนุมัติแล้ว</span></span>';
                     } else if (req.status === 'CANCELLED') {
                         statusBadge = '<span class="bg-gray-100 text-gray-500 border border-gray-200 text-[11px] px-2.5 py-0.5 rounded-full font-semibold flex items-center space-x-1"><span>🚫</span><span>ยกเลิกแล้ว</span></span>';
                     }
@@ -3606,9 +3738,9 @@
                                     <span>${translateLeaveType(req.leave_type)}</span>
                                     ${durationChip}
                                 </div>
-                                <div class="flex items-center space-x-2">
+                                <div class="flex items-center space-x-1.5">
                                     ${statusBadge}
-                                    ${cancelBtn}
+                                    ${actionBtns}
                                 </div>
                             </div>
                             <div class="text-gray-600 flex items-center space-x-1.5 text-xs">
@@ -3663,6 +3795,298 @@
             } catch (err) {
                 console.error('Cancel request error:', err);
                 showToast(err.message || 'เกิดข้อผิดพลาดในการยกเลิกคำขอ', 'error');
+            }
+        }
+
+        // --- Edit Leave Request Controller Functions ---
+        let currentEditingRequestId = null;
+        let currentEditAttachmentDataUrl = undefined;
+        window.cameraTargetMode = 'CREATE';
+
+        function openEditLeaveRequestModal(requestId) {
+            const req = window.cachedMyRequestsMap && window.cachedMyRequestsMap[requestId];
+            if (!req) {
+                showToast('ไม่พบข้อมูลคำขอลางานนี้ กรุณารีเฟรชหน้าเว็บ', 'error');
+                return;
+            }
+            if (req.status !== 'PENDING' && req.status !== 'REJECTED') {
+                showToast('สามารถแก้ไขได้เฉพาะคำขอที่รออนุมัติหรือไม่อนุมัติเท่านั้น', 'warning');
+                return;
+            }
+
+            currentEditingRequestId = req.id;
+            currentEditAttachmentDataUrl = undefined; // undefined = keep existing
+
+            const idEl = document.getElementById('edit-req-id');
+            const typeEl = document.getElementById('edit-leave-type');
+            const reasonEl = document.getElementById('edit-reason');
+            if (idEl) idEl.value = req.id;
+            if (typeEl) typeEl.value = req.leave_type || 'Vacation';
+            if (reasonEl) reasonEl.value = req.reason || '';
+
+            const isHourly = req.duration_type === 'HOURLY';
+            const durFull = document.getElementById('edit-dur-full');
+            const durHourly = document.getElementById('edit-dur-hourly');
+            if (durFull) durFull.checked = !isHourly;
+            if (durHourly) durHourly.checked = isHourly;
+
+            const sDate = (req.start_date || '').split('T')[0];
+            const eDate = (req.end_date || '').split('T')[0];
+
+            const editStart = document.getElementById('edit-start-date');
+            const editEnd = document.getElementById('edit-end-date');
+            const editHDate = document.getElementById('edit-hourly-date');
+            const editHStart = document.getElementById('edit-start-time');
+            const editHEnd = document.getElementById('edit-end-time');
+
+            if (editStart) editStart.value = sDate;
+            if (editEnd) editEnd.value = eDate;
+            if (editHDate) editHDate.value = sDate;
+            if (editHStart) editHStart.value = req.start_time || '08:00';
+            if (editHEnd) editHEnd.value = req.end_time || '17:00';
+
+            toggleEditDurationFields();
+
+            // Setup attachment preview
+            const imgEl = document.getElementById('edit-attachment-img');
+            const iconEl = document.getElementById('edit-attachment-icon');
+            const statusEl = document.getElementById('edit-attachment-status');
+            const btnView = document.getElementById('btn-edit-att-view');
+            const btnRemove = document.getElementById('btn-edit-att-remove');
+            const fileInput = document.getElementById('edit-att-file-input');
+            if (fileInput) fileInput.value = '';
+
+            if (req.attachment_url) {
+                if (req.attachment_url.startsWith('data:image/') || req.attachment_url.startsWith('http')) {
+                    if (imgEl) { imgEl.src = req.attachment_url; imgEl.classList.remove('hidden'); }
+                    if (iconEl) iconEl.classList.add('hidden');
+                } else {
+                    if (imgEl) imgEl.classList.add('hidden');
+                    if (iconEl) iconEl.classList.remove('hidden');
+                }
+                if (statusEl) statusEl.innerText = 'มีเอกสารแนบเดิม';
+                if (btnView) btnView.classList.remove('hidden');
+                if (btnRemove) btnRemove.classList.remove('hidden');
+            } else {
+                if (imgEl) { imgEl.src = ''; imgEl.classList.add('hidden'); }
+                if (iconEl) iconEl.classList.remove('hidden');
+                if (statusEl) statusEl.innerText = 'ไม่มีเอกสารแนบ';
+                if (btnView) btnView.classList.add('hidden');
+                if (btnRemove) btnRemove.classList.add('hidden');
+            }
+
+            const modal = document.getElementById('edit-leave-modal');
+            if (modal) modal.classList.remove('hidden-view');
+        }
+
+        function closeEditLeaveRequestModal() {
+            const modal = document.getElementById('edit-leave-modal');
+            if (modal) modal.classList.add('hidden-view');
+            currentEditingRequestId = null;
+            currentEditAttachmentDataUrl = undefined;
+            window.cameraTargetMode = 'CREATE';
+        }
+
+        function toggleEditDurationFields() {
+            const isHourly = document.getElementById('edit-dur-hourly')?.checked;
+            const datesContainer = document.getElementById('edit-dates-container');
+            const hourlyContainer = document.getElementById('edit-hourly-container');
+            const sDate = document.getElementById('edit-start-date');
+            const eDate = document.getElementById('edit-end-date');
+            const hDate = document.getElementById('edit-hourly-date');
+            const sTime = document.getElementById('edit-start-time');
+            const eTime = document.getElementById('edit-end-time');
+
+            if (isHourly) {
+                if (datesContainer) datesContainer.classList.add('hidden-view');
+                if (hourlyContainer) hourlyContainer.classList.remove('hidden-view');
+                if (sDate) sDate.removeAttribute('required');
+                if (eDate) eDate.removeAttribute('required');
+                if (hDate) hDate.setAttribute('required', 'true');
+                if (sTime) sTime.setAttribute('required', 'true');
+                if (eTime) eTime.setAttribute('required', 'true');
+            } else {
+                if (datesContainer) datesContainer.classList.remove('hidden-view');
+                if (hourlyContainer) hourlyContainer.classList.add('hidden-view');
+                if (sDate) sDate.setAttribute('required', 'true');
+                if (eDate) eDate.setAttribute('required', 'true');
+                if (hDate) hDate.removeAttribute('required');
+                if (sTime) sTime.removeAttribute('required');
+                if (eTime) eTime.removeAttribute('required');
+            }
+        }
+
+        function openCameraForEditModal() {
+            window.cameraTargetMode = 'EDIT';
+            openCameraModal();
+        }
+
+        async function handleEditAttachmentSelect(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+
+            try {
+                let finalDataUrl = '';
+                if (file.type.startsWith('image/')) {
+                    const { dataUrl, size } = await compressImageFile(file, 1600, 1600, 0.82);
+                    finalDataUrl = dataUrl;
+                    const sizeKb = Math.round(size / 1024);
+                    const statusEl = document.getElementById('edit-attachment-status');
+                    const imgEl = document.getElementById('edit-attachment-img');
+                    const iconEl = document.getElementById('edit-attachment-icon');
+                    if (statusEl) statusEl.innerText = `${file.name} (${sizeKb} KB)`;
+                    if (imgEl) { imgEl.src = dataUrl; imgEl.classList.remove('hidden'); }
+                    if (iconEl) iconEl.classList.add('hidden');
+                } else {
+                    finalDataUrl = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = () => resolve(reader.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(file);
+                    });
+                    const sizeKb = Math.round(file.size / 1024);
+                    const statusEl = document.getElementById('edit-attachment-status');
+                    const imgEl = document.getElementById('edit-attachment-img');
+                    const iconEl = document.getElementById('edit-attachment-icon');
+                    if (statusEl) statusEl.innerText = `${file.name} (${sizeKb} KB)`;
+                    if (imgEl) imgEl.classList.add('hidden');
+                    if (iconEl) iconEl.classList.remove('hidden');
+                }
+
+                currentEditAttachmentDataUrl = finalDataUrl;
+                const btnView = document.getElementById('btn-edit-att-view');
+                const btnRemove = document.getElementById('btn-edit-att-remove');
+                if (btnView) btnView.classList.remove('hidden');
+                if (btnRemove) btnRemove.classList.remove('hidden');
+            } catch (err) {
+                console.error('Edit attachment error:', err);
+                showToast('ไม่สามารถประมวลผลไฟล์แนบได้', 'error');
+            }
+        }
+
+        function removeEditAttachment() {
+            currentEditAttachmentDataUrl = null;
+            const imgEl = document.getElementById('edit-attachment-img');
+            const iconEl = document.getElementById('edit-attachment-icon');
+            const statusEl = document.getElementById('edit-attachment-status');
+            const btnView = document.getElementById('btn-edit-att-view');
+            const btnRemove = document.getElementById('btn-edit-att-remove');
+            const fileInput = document.getElementById('edit-att-file-input');
+
+            if (imgEl) { imgEl.src = ''; imgEl.classList.add('hidden'); }
+            if (iconEl) iconEl.classList.remove('hidden');
+            if (statusEl) statusEl.innerText = 'ไม่มีเอกสารแนบ';
+            if (btnView) btnView.classList.add('hidden');
+            if (btnRemove) btnRemove.classList.add('hidden');
+            if (fileInput) fileInput.value = '';
+        }
+
+        function viewEditAttachment() {
+            const req = window.cachedMyRequestsMap && window.cachedMyRequestsMap[currentEditingRequestId];
+            const url = currentEditAttachmentDataUrl !== undefined 
+                ? currentEditAttachmentDataUrl 
+                : (req ? req.attachment_url : null);
+
+            if (!url) {
+                showToast('ไม่มีไฟล์สำหรับเปิดดู', 'warning');
+                return;
+            }
+            const empName = currentUser ? currentUser.name : '';
+            const leaveType = translateLeaveType(document.getElementById('edit-leave-type').value);
+            viewAttachment(url, empName, leaveType);
+        }
+
+        async function submitEditLeaveRequest() {
+            if (!currentUser || !currentEditingRequestId) return;
+
+            const leaveType = document.getElementById('edit-leave-type').value;
+            const isHourly = document.getElementById('edit-dur-hourly')?.checked;
+            const durationType = isHourly ? 'HOURLY' : 'FULL_DAY';
+            const reason = document.getElementById('edit-reason').value.trim();
+
+            let startDate, endDate, startTime, endTime;
+            if (isHourly) {
+                startDate = document.getElementById('edit-hourly-date').value;
+                endDate = startDate;
+                startTime = document.getElementById('edit-start-time').value;
+                endTime = document.getElementById('edit-end-time').value;
+
+                if (!startDate || !startTime || !endTime) {
+                    showToast('กรุณาระบุวันที่และเวลาเริ่มต้น-สิ้นสุดให้ครบถ้วน', 'warning');
+                    return;
+                }
+                if (startTime >= endTime) {
+                    showToast('เวลาสิ้นสุดต้องมากกว่าเวลาเริ่มต้น', 'warning');
+                    return;
+                }
+            } else {
+                startDate = document.getElementById('edit-start-date').value;
+                endDate = document.getElementById('edit-end-date').value;
+
+                if (!startDate || !endDate) {
+                    showToast('กรุณาระบุวันที่เริ่มต้นและวันที่สิ้นสุดให้ครบถ้วน', 'warning');
+                    return;
+                }
+                if (startDate > endDate) {
+                    showToast('วันที่สิ้นสุดต้องไม่มาก่อนวันที่เริ่มต้น', 'warning');
+                    return;
+                }
+            }
+
+            if (!reason) {
+                showToast('กรุณาระบุเหตุผลการลา', 'warning');
+                return;
+            }
+
+            const btnSubmit = document.getElementById('btn-submit-edit-modal');
+            if (btnSubmit) {
+                btnSubmit.disabled = true;
+                btnSubmit.innerHTML = '<span>⏳ กำลังบันทึก...</span>';
+            }
+
+            try {
+                const payload = {
+                    employeeId: currentUser.id,
+                    leaveType,
+                    startDate,
+                    endDate,
+                    durationType,
+                    startTime: isHourly ? startTime : null,
+                    endTime: isHourly ? endTime : null,
+                    reason
+                };
+
+                if (currentEditAttachmentDataUrl !== undefined) {
+                    payload.attachmentUrl = currentEditAttachmentDataUrl;
+                }
+
+                const res = await safeFetch(`/api/leave-requests/${currentEditingRequestId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    showToast(data.error || 'ไม่สามารถบันทึกการแก้ไขได้', 'error');
+                    return;
+                }
+
+                showToast('แก้ไขคำขอลางานสำเร็จ ระบบได้ส่งคำขอใหม่อีกครั้งแล้ว ✨', 'success');
+                closeEditLeaveRequestModal();
+
+                loadEmployeeQuota();
+                loadMyLeaveRequests();
+                loadDepartmentCalendar();
+                loadNotifications();
+            } catch (err) {
+                console.error('Submit edit leave request error:', err);
+                showToast(err.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์', 'error');
+            } finally {
+                if (btnSubmit) {
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = '<span>💾 บันทึกการแก้ไข</span>';
+                }
             }
         }
 
@@ -5352,6 +5776,27 @@
                 const file = new File([blob], `medical_cert_${timeStamp}.jpg`, { type: 'image/jpeg' });
 
                 const { dataUrl, size } = await compressImageFile(file, 1600, 1600, 0.82);
+                const sizeKb = Math.round(size / 1024);
+
+                if (window.cameraTargetMode === 'EDIT') {
+                    currentEditAttachmentDataUrl = dataUrl;
+                    const imgEl = document.getElementById('edit-attachment-img');
+                    const iconEl = document.getElementById('edit-attachment-icon');
+                    const statusEl = document.getElementById('edit-attachment-status');
+                    const btnView = document.getElementById('btn-edit-att-view');
+                    const btnRemove = document.getElementById('btn-edit-att-remove');
+
+                    if (imgEl) { imgEl.src = dataUrl; imgEl.classList.remove('hidden'); }
+                    if (iconEl) iconEl.classList.add('hidden');
+                    if (statusEl) statusEl.innerText = `📸 ถ่ายจากกล้อง (${sizeKb} KB)`;
+                    if (btnView) btnView.classList.remove('hidden');
+                    if (btnRemove) btnRemove.classList.remove('hidden');
+
+                    closeCameraModal();
+                    window.cameraTargetMode = 'CREATE';
+                    showToast(`ถ่ายภาพและบีบอัดเรียบร้อย (${sizeKb} KB)`, 'success');
+                    return;
+                }
 
                 currentSelectedAttachmentDataUrl = dataUrl;
                 currentSelectedAttachmentMeta = {
@@ -5372,7 +5817,6 @@
                 if (previewState) previewState.classList.remove('hidden');
 
                 if (fileNameEl) fileNameEl.textContent = file.name;
-                const sizeKb = Math.round(size / 1024);
                 if (fileSizeEl) {
                     fileSizeEl.innerHTML = `<span class="text-emerald-600 font-bold">📸 ถ่ายจากกล้อง • ${sizeKb} KB</span> <span class="text-indigo-600 font-medium">(บีบอัดแล้ว)</span>`;
                 }
