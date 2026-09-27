@@ -2304,6 +2304,257 @@ app.delete('/api/notifications/:id', async (req, res) => {
   }
 });
 
+// ==========================================
+// 11. Analytics & Visual Charts API
+// ==========================================
+app.get('/api/analytics/summary', async (req, res) => {
+  try {
+    const year = parseInt(req.query.year, 10) || new Date().getFullYear();
+    const department = (req.query.department || 'ALL').trim();
+    const shift = (req.query.shift || 'ALL').trim();
+
+    const thaiMonthNames = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+    const thaiDayNames = ['วันอาทิตย์', 'วันจันทร์', 'วันอังคาร', 'วันพุธ', 'วันพฤหัสบดี', 'วันศุกร์', 'วันเสาร์'];
+
+    if (!pool) {
+      // Demo analytics response
+      const demoMonths = thaiMonthNames.map((name, idx) => ({
+        month: idx + 1,
+        monthName: name,
+        approvedDays: [2, 3, 5, 8, 4, 3, 2, 4, 6, 3, 5, 7][idx],
+        approvedCount: [2, 2, 4, 6, 3, 2, 2, 3, 4, 2, 4, 5][idx],
+        pendingCount: idx === 8 ? 2 : 0
+      }));
+
+      return res.json({
+        success: true,
+        year,
+        department,
+        shift,
+        summary: {
+          totalApprovedDays: 52,
+          totalApprovedRequests: 39,
+          pendingRequests: 2,
+          sickLeaveRate: 23.1,
+          peakDayOfWeek: 'วันศุกร์',
+          peakMonth: 'เม.ย.'
+        },
+        monthlyTrend: demoMonths,
+        byType: {
+          Vacation: { days: 24, count: 18, percentage: 46.2 },
+          Personal: { days: 12, count: 10, percentage: 23.1 },
+          Sick: { days: 12, count: 8, percentage: 23.1 },
+          Unpaid: { days: 4, count: 3, percentage: 7.7 }
+        },
+        byDayOfWeek: [
+          { dayName: 'วันจันทร์', days: 12, count: 9 },
+          { dayName: 'วันอังคาร', days: 6, count: 4 },
+          { dayName: 'วันพุธ', days: 5, count: 4 },
+          { dayName: 'วันพฤหัสบดี', days: 7, count: 5 },
+          { dayName: 'วันศุกร์', days: 18, count: 14 },
+          { dayName: 'วันเสาร์', days: 4, count: 3 },
+          { dayName: 'วันอาทิตย์', days: 0, count: 0 }
+        ],
+        byDepartment: [
+          { department: 'Assembly', days: 28, count: 21 },
+          { department: 'Crimping 1', days: 14, count: 10 },
+          { department: 'QC', days: 6, count: 5 },
+          { department: 'HR', days: 4, count: 3 }
+        ],
+        byShift: [
+          { shift: 'A', days: 26, count: 19 },
+          { shift: 'B', days: 20, count: 15 },
+          { shift: 'Morning', days: 6, count: 5 }
+        ]
+      });
+    }
+
+    // Dynamic SQL Query with filters
+    let sql = `
+      SELECT 
+        lr.id,
+        lr.leave_type,
+        TO_CHAR(lr.start_date, 'YYYY-MM-DD') AS start_date,
+        TO_CHAR(lr.end_date, 'YYYY-MM-DD') AS end_date,
+        EXTRACT(MONTH FROM lr.start_date)::int AS leave_month,
+        EXTRACT(DOW FROM lr.start_date)::int AS day_of_week,
+        lr.days_count,
+        lr.duration_type,
+        lr.hours_count,
+        lr.status,
+        COALESCE(e.department, 'Assembly') AS department,
+        COALESCE(e.shift, 'A') AS shift,
+        e.name AS employee_name
+      FROM leave_requests lr
+      JOIN employees e ON lr.employee_id = e.id
+      WHERE EXTRACT(YEAR FROM lr.start_date) = $1
+    `;
+    const params = [year];
+
+    if (department && department.toUpperCase() !== 'ALL') {
+      params.push(department.toUpperCase());
+      sql += ` AND UPPER(e.department) = $${params.length}`;
+    }
+
+    if (shift && shift.toUpperCase() !== 'ALL') {
+      params.push(shift.trim().toUpperCase());
+      sql += ` AND UPPER(COALESCE(e.shift, 'A')) = $${params.length}`;
+    }
+
+    const { rows } = await query(sql, params);
+
+    // Calculate aggregated metrics
+    const monthlyMap = {};
+    for (let m = 1; m <= 12; m++) {
+      monthlyMap[m] = {
+        month: m,
+        monthName: thaiMonthNames[m - 1],
+        approvedDays: 0,
+        approvedCount: 0,
+        pendingCount: 0
+      };
+    }
+
+    const typeMap = {
+      Vacation: { days: 0, count: 0 },
+      Personal: { days: 0, count: 0 },
+      Sick: { days: 0, count: 0 },
+      Unpaid: { days: 0, count: 0 }
+    };
+
+    const dowMap = {};
+    for (let d = 0; d < 7; d++) {
+      dowMap[d] = { dayIndex: d, dayName: thaiDayNames[d], days: 0, count: 0 };
+    }
+
+    const deptMap = {};
+    const shiftMap = {};
+
+    let totalApprovedDays = 0;
+    let totalApprovedRequests = 0;
+    let pendingRequests = 0;
+
+    rows.forEach(r => {
+      const days = parseFloat(r.days_count) || 0;
+      const m = r.leave_month;
+      const dow = r.day_of_week;
+      const normType = normalizeLeaveType(r.leave_type);
+      const isApproved = (r.status || '').toUpperCase() === 'APPROVED';
+      const isPending = (r.status || '').toUpperCase() === 'PENDING';
+
+      if (isPending) {
+        pendingRequests++;
+        if (monthlyMap[m]) monthlyMap[m].pendingCount++;
+      }
+
+      if (isApproved) {
+        totalApprovedDays += days;
+        totalApprovedRequests++;
+
+        if (monthlyMap[m]) {
+          monthlyMap[m].approvedDays += days;
+          monthlyMap[m].approvedCount++;
+        }
+
+        if (typeMap[normType]) {
+          typeMap[normType].days += days;
+          typeMap[normType].count++;
+        }
+
+        if (dowMap[dow]) {
+          dowMap[dow].days += days;
+          dowMap[dow].count++;
+        }
+
+        // Dept Map
+        const dName = r.department || 'Other';
+        if (!deptMap[dName]) deptMap[dName] = { department: dName, days: 0, count: 0 };
+        deptMap[dName].days += days;
+        deptMap[dName].count++;
+
+        // Shift Map
+        const sName = (r.shift || 'A').toUpperCase() === 'B' ? 'B' : ((r.shift || '').toUpperCase() === 'MORNING' ? 'Morning' : 'A');
+        if (!shiftMap[sName]) shiftMap[sName] = { shift: sName, days: 0, count: 0 };
+        shiftMap[sName].days += days;
+        shiftMap[sName].count++;
+      }
+    });
+
+    // Rounding & Percentage Calculations
+    totalApprovedDays = Number(totalApprovedDays.toFixed(2));
+    Object.keys(monthlyMap).forEach(m => {
+      monthlyMap[m].approvedDays = Number(monthlyMap[m].approvedDays.toFixed(2));
+    });
+
+    const byType = {};
+    Object.keys(typeMap).forEach(t => {
+      const d = Number(typeMap[t].days.toFixed(2));
+      const pct = totalApprovedDays > 0 ? Number(((d / totalApprovedDays) * 100).toFixed(1)) : 0;
+      byType[t] = { days: d, count: typeMap[t].count, percentage: pct };
+    });
+
+    const byDayOfWeek = Object.values(dowMap).map(d => ({
+      ...d,
+      days: Number(d.days.toFixed(2))
+    }));
+
+    const byDepartment = Object.values(deptMap).map(d => ({
+      ...d,
+      days: Number(d.days.toFixed(2))
+    })).sort((a, b) => b.days - a.days);
+
+    const byShift = Object.values(shiftMap).map(s => ({
+      ...s,
+      days: Number(s.days.toFixed(2))
+    })).sort((a, b) => b.days - a.days);
+
+    // Peak insights
+    const sickDays = byType.Sick ? byType.Sick.days : 0;
+    const sickLeaveRate = totalApprovedDays > 0 ? Number(((sickDays / totalApprovedDays) * 100).toFixed(1)) : 0;
+
+    let peakDayOfWeek = '-';
+    let maxDowDays = -1;
+    byDayOfWeek.forEach(d => {
+      if (d.days > maxDowDays && d.days > 0) {
+        maxDowDays = d.days;
+        peakDayOfWeek = d.dayName;
+      }
+    });
+
+    let peakMonth = '-';
+    let maxMonthDays = -1;
+    Object.values(monthlyMap).forEach(m => {
+      if (m.approvedDays > maxMonthDays && m.approvedDays > 0) {
+        maxMonthDays = m.approvedDays;
+        peakMonth = m.monthName;
+      }
+    });
+
+    res.json({
+      success: true,
+      year,
+      department,
+      shift,
+      summary: {
+        totalApprovedDays,
+        totalApprovedRequests,
+        pendingRequests,
+        sickLeaveRate,
+        peakDayOfWeek,
+        peakMonth
+      },
+      monthlyTrend: Object.values(monthlyMap),
+      byType,
+      byDayOfWeek,
+      byDepartment,
+      byShift
+    });
+  } catch (error) {
+    console.error('Analytics summary error:', error);
+    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการดึงข้อมูลสถิติ: ' + error.message });
+  }
+});
+
 // Start Server
 app.listen(PORT, () => {
   console.log(`🚀 Leave Management Server is running on http://localhost:${PORT}`);

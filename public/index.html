@@ -19,6 +19,7 @@
     <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/app-style.css">
     <style>
@@ -697,6 +698,9 @@
                         </div>
                     </div>
                     <div class="flex items-center space-x-2.5 w-full sm:w-auto">
+                        <button type="button" onclick="switchSupervisorTab('analytics')" class="flex-1 sm:flex-initial bg-white/10 hover:bg-white/20 text-white border border-white/20 px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition flex items-center justify-center space-x-1 shrink-0">
+                            <span>📈 กราฟสถิติ</span>
+                        </button>
                         <button type="button" onclick="switchSupervisorTab('reports')" class="flex-1 sm:flex-initial bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white px-4 py-2.5 rounded-2xl text-xs font-semibold shadow-md transition flex items-center justify-center space-x-1.5 shrink-0 transform active:scale-95">
                             <span>📊 ส่งออกรายงาน Excel / CSV</span>
                         </button>
@@ -745,6 +749,9 @@
                         </button>
                         <button id="tab-sup-reports" type="button" onclick="switchSupervisorTab('reports')" class="px-3.5 py-2 rounded-lg text-xs font-semibold text-gray-600 hover:text-gray-900 transition flex items-center space-x-1.5">
                             <span>📊 ส่งออกรายงาน (HR Export)</span>
+                        </button>
+                        <button id="tab-sup-analytics" type="button" onclick="switchSupervisorTab('analytics')" class="px-3.5 py-2 rounded-lg text-xs font-semibold text-gray-600 hover:text-gray-900 transition flex items-center space-x-1.5">
+                            <span>📈 สถิติและกราฟ (Analytics)</span>
                         </button>
                     </div>
                     <button type="button" onclick="refreshSupervisorData()" class="bg-white hover:bg-slate-50 border border-slate-200 text-gray-700 px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center justify-center space-x-1.5 shadow-2xs self-end sm:self-auto active:scale-95">
@@ -1290,6 +1297,150 @@
                                     </tr>
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Supervisor Analytics Dashboard Container -->
+                <div id="supervisor-analytics-container" class="hidden-view space-y-5">
+                    <!-- Filters & Controls Card -->
+                    <div class="glass-card p-4 sm:p-5 rounded-3xl space-y-4">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-gray-100 pb-3">
+                            <div>
+                                <h2 class="text-base font-bold text-gray-900 flex items-center space-x-2 font-heading">
+                                    <span class="text-xl">📈</span>
+                                    <span>สถิติและแนวโน้มการลา (Leave Analytics & Trends)</span>
+                                </h2>
+                                <p class="text-xs text-gray-500 mt-0.5">ภาพรวมสถิติแนวโน้มการลา จำแนกตามประเภท แผนก กะ และวันในสัปดาห์</p>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <div class="flex items-center space-x-1.5">
+                                    <label class="text-xs font-semibold text-gray-600">ปี:</label>
+                                    <select id="analytics-filter-year" onchange="loadAnalyticsData()" class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:bg-white focus:border-indigo-600 focus:outline-none">
+                                        <!-- populated dynamically -->
+                                    </select>
+                                </div>
+                                <div class="flex items-center space-x-1.5">
+                                    <label class="text-xs font-semibold text-gray-600">แผนก:</label>
+                                    <select id="analytics-filter-dept" onchange="loadAnalyticsData()" class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:bg-white focus:border-indigo-600 focus:outline-none">
+                                        <option value="ALL">ทุกแผนก (All Departments)</option>
+                                    </select>
+                                </div>
+                                <div class="flex items-center space-x-1.5">
+                                    <label class="text-xs font-semibold text-gray-600">กะ:</label>
+                                    <select id="analytics-filter-shift" onchange="loadAnalyticsData()" class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:bg-white focus:border-indigo-600 focus:outline-none">
+                                        <option value="ALL">ทุกกะ (All Shifts)</option>
+                                        <option value="A">กะ A</option>
+                                        <option value="B">กะ B</option>
+                                        <option value="Morning">กะเช้า (Morning)</option>
+                                    </select>
+                                </div>
+                                <button type="button" onclick="loadAnalyticsData()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center space-x-1 active:scale-95">
+                                    <span>🔄 อัปเดต</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- KPI Summary Cards -->
+                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                            <div class="bg-white/90 border border-indigo-100 p-3.5 rounded-2xl shadow-2xs">
+                                <span class="text-[11px] font-semibold text-gray-500 block">วันลาอนุมัติรวม</span>
+                                <div class="flex items-baseline space-x-1 mt-1">
+                                    <span id="kpi-total-days" class="text-xl font-black text-indigo-700">0</span>
+                                    <span class="text-xs text-gray-500">วัน</span>
+                                </div>
+                            </div>
+                            <div class="bg-white/90 border border-emerald-100 p-3.5 rounded-2xl shadow-2xs">
+                                <span class="text-[11px] font-semibold text-gray-500 block">คำขอที่อนุมัติ</span>
+                                <div class="flex items-baseline space-x-1 mt-1">
+                                    <span id="kpi-total-requests" class="text-xl font-black text-emerald-700">0</span>
+                                    <span class="text-xs text-gray-500">รายการ</span>
+                                </div>
+                            </div>
+                            <div class="bg-white/90 border border-amber-100 p-3.5 rounded-2xl shadow-2xs">
+                                <span class="text-[11px] font-semibold text-gray-500 block">คำขอรออนุมัติ</span>
+                                <div class="flex items-baseline space-x-1 mt-1">
+                                    <span id="kpi-pending-requests" class="text-xl font-black text-amber-600">0</span>
+                                    <span class="text-xs text-gray-500">รายการ</span>
+                                </div>
+                            </div>
+                            <div class="bg-white/90 border border-rose-100 p-3.5 rounded-2xl shadow-2xs">
+                                <span class="text-[11px] font-semibold text-gray-500 block">อัตราการลาป่วย</span>
+                                <div class="flex items-baseline space-x-1 mt-1">
+                                    <span id="kpi-sick-rate" class="text-xl font-black text-rose-600">0%</span>
+                                </div>
+                            </div>
+                            <div class="bg-white/90 border border-purple-100 p-3.5 rounded-2xl shadow-2xs">
+                                <span class="text-[11px] font-semibold text-gray-500 block">วันลาบ่อยที่สุด</span>
+                                <div class="mt-1">
+                                    <span id="kpi-peak-day" class="text-sm font-black text-purple-700 truncate block">-</span>
+                                </div>
+                            </div>
+                            <div class="bg-white/90 border border-cyan-100 p-3.5 rounded-2xl shadow-2xs">
+                                <span class="text-[11px] font-semibold text-gray-500 block">เดือนที่ลาสูงสุด</span>
+                                <div class="mt-1">
+                                    <span id="kpi-peak-month" class="text-sm font-black text-cyan-700 truncate block">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Grid -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <!-- Chart 1: Monthly Trend -->
+                        <div class="glass-card p-4 sm:p-5 rounded-3xl space-y-3">
+                            <div class="flex items-center justify-between border-b border-gray-100 pb-2.5">
+                                <h3 class="text-xs font-bold text-gray-800 flex items-center space-x-1.5">
+                                    <span>📅</span>
+                                    <span>แนวโน้มการลาแต่ละเดือน (Monthly Leave Trend)</span>
+                                </h3>
+                                <span class="text-[10px] text-gray-400 font-medium">12 เดือน</span>
+                            </div>
+                            <div class="relative h-64 w-full">
+                                <canvas id="chart-monthly-trend"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Chart 2: Leave Types Breakdown -->
+                        <div class="glass-card p-4 sm:p-5 rounded-3xl space-y-3">
+                            <div class="flex items-center justify-between border-b border-gray-100 pb-2.5">
+                                <h3 class="text-xs font-bold text-gray-800 flex items-center space-x-1.5">
+                                    <span>🥧</span>
+                                    <span>สัดส่วนประเภทการลา (Leave Types Distribution)</span>
+                                </h3>
+                                <span class="text-[10px] text-gray-400 font-medium">สัดส่วนวันลาสะสม</span>
+                            </div>
+                            <div class="relative h-64 w-full flex items-center justify-center">
+                                <canvas id="chart-leave-types"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Chart 3: Day of Week Distribution -->
+                        <div class="glass-card p-4 sm:p-5 rounded-3xl space-y-3">
+                            <div class="flex items-center justify-between border-b border-gray-100 pb-2.5">
+                                <h3 class="text-xs font-bold text-gray-800 flex items-center space-x-1.5">
+                                    <span>📊</span>
+                                    <span>การกระจายตัวตามวันในสัปดาห์ (Day of Week Frequency)</span>
+                                </h3>
+                                <span class="text-[10px] text-gray-400 font-medium">จันทร์ - อาทิตย์</span>
+                            </div>
+                            <div class="relative h-64 w-full">
+                                <canvas id="chart-day-of-week"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Chart 4: Department / Shift Comparison -->
+                        <div class="glass-card p-4 sm:p-5 rounded-3xl space-y-3">
+                            <div class="flex items-center justify-between border-b border-gray-100 pb-2.5">
+                                <h3 class="text-xs font-bold text-gray-800 flex items-center space-x-1.5">
+                                    <span>🏢</span>
+                                    <span>สถิติการลาจำแนกตามแผนก / กะ (Department & Shift Breakdown)</span>
+                                </h3>
+                                <span class="text-[10px] text-gray-400 font-medium">เปรียบเทียบจำนวนวันลา</span>
+                            </div>
+                            <div class="relative h-64 w-full">
+                                <canvas id="chart-dept-shift"></canvas>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -3436,17 +3587,19 @@
             }
         }
 
-        // Switch Supervisor / Admin Tabs (Employees vs Pending vs History vs Reports)
+        // Switch Supervisor / Admin Tabs (Employees vs Pending vs History vs Reports vs Analytics)
         function switchSupervisorTab(tab) {
             const btnEmployees = document.getElementById('tab-admin-employees');
             const btnPending = document.getElementById('tab-sup-pending');
             const btnHistory = document.getElementById('tab-sup-history');
             const btnReports = document.getElementById('tab-sup-reports');
+            const btnAnalytics = document.getElementById('tab-sup-analytics');
             
             const containerEmployees = document.getElementById('admin-employees-container');
             const containerPending = document.getElementById('supervisor-pending-container');
             const containerHistory = document.getElementById('supervisor-history-container');
             const containerReports = document.getElementById('supervisor-reports-container');
+            const containerAnalytics = document.getElementById('supervisor-analytics-container');
 
             // Reset tab styles
             const inactiveClass = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold text-gray-600 hover:text-gray-900 transition flex items-center space-x-1.5';
@@ -3456,11 +3609,13 @@
             if (btnPending) btnPending.className = tab === 'pending' ? activeClass : inactiveClass;
             if (btnHistory) btnHistory.className = tab === 'history' ? activeClass : inactiveClass;
             if (btnReports) btnReports.className = tab === 'reports' ? activeClass : inactiveClass;
+            if (btnAnalytics) btnAnalytics.className = tab === 'analytics' ? activeClass : inactiveClass;
 
             if (containerEmployees) containerEmployees.classList.toggle('hidden-view', tab !== 'employees');
             if (containerPending) containerPending.classList.toggle('hidden-view', tab !== 'pending');
             if (containerHistory) containerHistory.classList.toggle('hidden-view', tab !== 'history');
             if (containerReports) containerReports.classList.toggle('hidden-view', tab !== 'reports');
+            if (containerAnalytics) containerAnalytics.classList.toggle('hidden-view', tab !== 'analytics');
 
             if (tab === 'employees') {
                 loadAdminEmployeesList();
@@ -3470,6 +3625,8 @@
                 loadSupervisorHistory();
             } else if (tab === 'reports') {
                 initReportTab();
+            } else if (tab === 'analytics') {
+                initAnalyticsTab();
             }
         }
 
@@ -5240,6 +5397,392 @@
             `;
 
             window.print();
+        }
+
+        // ==========================================
+        // LEAVE ANALYTICS & VISUAL CHARTS MODULE
+        // ==========================================
+        let analyticsYearInitialized = false;
+        let chartMonthlyTrendInstance = null;
+        let chartLeaveTypesInstance = null;
+        let chartDayOfWeekInstance = null;
+        let chartDeptShiftInstance = null;
+
+        async function initAnalyticsTab() {
+            if (!analyticsYearInitialized) {
+                const yearSelect = document.getElementById('analytics-filter-year');
+                if (yearSelect) {
+                    const currentYear = new Date().getFullYear();
+                    let html = '';
+                    for (let y = currentYear; y >= currentYear - 3; y--) {
+                        html += `<option value="${y}">ปี ${y} (${y + 543})</option>`;
+                    }
+                    yearSelect.innerHTML = html;
+                    yearSelect.value = currentYear;
+                }
+
+                if (!reportDeptsLoaded) {
+                    await loadReportDepartments();
+                }
+
+                const deptSelect = document.getElementById('analytics-filter-dept');
+                const repDeptSelect = document.getElementById('report-filter-dept');
+                if (deptSelect && repDeptSelect) {
+                    deptSelect.innerHTML = repDeptSelect.innerHTML;
+                    if (currentUser && !currentUser.isAdmin && !currentUser.isHR && currentUser.department) {
+                        deptSelect.value = currentUser.department;
+                    } else {
+                        deptSelect.value = 'ALL';
+                    }
+                }
+
+                analyticsYearInitialized = true;
+            }
+
+            await loadAnalyticsData();
+        }
+
+        async function loadAnalyticsData() {
+            const yearSelect = document.getElementById('analytics-filter-year');
+            const deptSelect = document.getElementById('analytics-filter-dept');
+            const shiftSelect = document.getElementById('analytics-filter-shift');
+
+            const year = yearSelect ? yearSelect.value : new Date().getFullYear();
+            const dept = deptSelect ? deptSelect.value : 'ALL';
+            const shift = shiftSelect ? shiftSelect.value : 'ALL';
+
+            const kpiDays = document.getElementById('kpi-total-days');
+            const kpiReqs = document.getElementById('kpi-total-requests');
+            const kpiPending = document.getElementById('kpi-pending-requests');
+            const kpiSick = document.getElementById('kpi-sick-rate');
+            const kpiPeakDay = document.getElementById('kpi-peak-day');
+            const kpiPeakMonth = document.getElementById('kpi-peak-month');
+
+            if (kpiDays) kpiDays.innerText = '...';
+            if (kpiReqs) kpiReqs.innerText = '...';
+            if (kpiPending) kpiPending.innerText = '...';
+            if (kpiSick) kpiSick.innerText = '...';
+            if (kpiPeakDay) kpiPeakDay.innerText = '...';
+            if (kpiPeakMonth) kpiPeakMonth.innerText = '...';
+
+            try {
+                const params = new URLSearchParams({ year, department: dept, shift });
+                const res = await safeFetch(`/api/analytics/summary?${params.toString()}`);
+                const data = await res.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to fetch analytics data');
+                }
+
+                const s = data.summary || {};
+                if (kpiDays) kpiDays.innerText = (s.totalApprovedDays || 0).toLocaleString();
+                if (kpiReqs) kpiReqs.innerText = (s.totalApprovedRequests || 0).toLocaleString();
+                if (kpiPending) kpiPending.innerText = (s.pendingRequests || 0).toLocaleString();
+                if (kpiSick) kpiSick.innerText = `${s.sickLeaveRate || 0}%`;
+                if (kpiPeakDay) kpiPeakDay.innerText = s.peakDayOfWeek || '-';
+                if (kpiPeakMonth) kpiPeakMonth.innerText = s.peakMonth || '-';
+
+                renderAnalyticsCharts(data);
+            } catch (err) {
+                console.error('Error loading analytics:', err);
+                if (kpiDays) kpiDays.innerText = '0';
+                if (kpiReqs) kpiReqs.innerText = '0';
+                if (kpiPending) kpiPending.innerText = '0';
+                if (kpiSick) kpiSick.innerText = '0%';
+                if (kpiPeakDay) kpiPeakDay.innerText = '-';
+                if (kpiPeakMonth) kpiPeakMonth.innerText = '-';
+            }
+        }
+
+        function destroyAnalyticsCharts() {
+            if (chartMonthlyTrendInstance) {
+                chartMonthlyTrendInstance.destroy();
+                chartMonthlyTrendInstance = null;
+            }
+            if (chartLeaveTypesInstance) {
+                chartLeaveTypesInstance.destroy();
+                chartLeaveTypesInstance = null;
+            }
+            if (chartDayOfWeekInstance) {
+                chartDayOfWeekInstance.destroy();
+                chartDayOfWeekInstance = null;
+            }
+            if (chartDeptShiftInstance) {
+                chartDeptShiftInstance.destroy();
+                chartDeptShiftInstance = null;
+            }
+        }
+
+        function renderAnalyticsCharts(data) {
+            if (typeof Chart === 'undefined') {
+                console.warn('Chart.js library is not loaded');
+                return;
+            }
+
+            destroyAnalyticsCharts();
+
+            // 1. Monthly Trend Chart
+            const monthlyCtx = document.getElementById('chart-monthly-trend');
+            if (monthlyCtx) {
+                const trend = data.monthlyTrend || [];
+                const labels = trend.map(t => t.monthName || `ด.${t.month}`);
+                const daysData = trend.map(t => t.approvedDays || 0);
+                const countData = trend.map(t => t.approvedCount || 0);
+
+                chartMonthlyTrendInstance = new Chart(monthlyCtx, {
+                    type: 'bar',
+                    data: {
+                        labels,
+                        datasets: [
+                            {
+                                label: 'วันลาอนุมัติ (วัน)',
+                                data: daysData,
+                                backgroundColor: 'rgba(99, 102, 241, 0.75)',
+                                borderColor: '#4f46e5',
+                                borderWidth: 1.5,
+                                borderRadius: 6,
+                                order: 2,
+                                yAxisID: 'y'
+                            },
+                            {
+                                label: 'จำนวนคำขอ (รายการ)',
+                                data: countData,
+                                type: 'line',
+                                borderColor: '#ec4899',
+                                backgroundColor: 'rgba(236, 72, 153, 0.15)',
+                                borderWidth: 2.5,
+                                pointBackgroundColor: '#ec4899',
+                                pointRadius: 4,
+                                pointHoverRadius: 6,
+                                tension: 0.35,
+                                order: 1,
+                                yAxisID: 'y1'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    font: { family: "'Plus Jakarta Sans', 'Prompt', sans-serif", size: 11, weight: '600' },
+                                    boxWidth: 12,
+                                    usePointStyle: true
+                                }
+                            },
+                            tooltip: {
+                                padding: 10,
+                                cornerRadius: 10
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { display: false },
+                                ticks: { font: { family: "'Plus Jakarta Sans', 'Prompt', sans-serif", size: 11 } }
+                            },
+                            y: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                beginAtZero: true,
+                                title: { display: true, text: 'จำนวนวันลา (วัน)', font: { size: 10 } },
+                                grid: { color: 'rgba(226, 232, 240, 0.6)' }
+                            },
+                            y1: {
+                                type: 'linear',
+                                display: true,
+                                position: 'right',
+                                beginAtZero: true,
+                                grid: { drawOnChartArea: false },
+                                title: { display: true, text: 'จำนวนคำขอ', font: { size: 10 } },
+                                ticks: { precision: 0 }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 2. Leave Types Breakdown (Doughnut)
+            const typeCtx = document.getElementById('chart-leave-types');
+            if (typeCtx) {
+                const types = data.byType || {};
+                const labels = ['ลาพักร้อน (Vacation)', 'ลากิจ (Personal)', 'ลาป่วย (Sick)', 'ลาไม่รับค่าจ้าง (Unpaid)'];
+                const days = [
+                    types.Vacation ? types.Vacation.days : 0,
+                    types.Personal ? types.Personal.days : 0,
+                    types.Sick ? types.Sick.days : 0,
+                    types.Unpaid ? types.Unpaid.days : 0
+                ];
+                const bgColors = ['#3b82f6', '#8b5cf6', '#f43f5e', '#f59e0b'];
+
+                chartLeaveTypesInstance = new Chart(typeCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels,
+                        datasets: [{
+                            data: days,
+                            backgroundColor: bgColors,
+                            borderWidth: 2,
+                            borderColor: '#ffffff',
+                            hoverOffset: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '65%',
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    font: { family: "'Plus Jakarta Sans', 'Prompt', sans-serif", size: 11, weight: '500' },
+                                    boxWidth: 12,
+                                    padding: 12
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const val = context.parsed || 0;
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+                                        return ` ${context.label}: ${val} วัน (${pct}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 3. Day of Week Distribution
+            const dowCtx = document.getElementById('chart-day-of-week');
+            if (dowCtx) {
+                const dowData = data.byDayOfWeek || [];
+                const orderedDow = [
+                    dowData.find(d => d.dayIndex === 1) || { dayName: 'วันจันทร์', days: 0 },
+                    dowData.find(d => d.dayIndex === 2) || { dayName: 'วันอังคาร', days: 0 },
+                    dowData.find(d => d.dayIndex === 3) || { dayName: 'วันพุธ', days: 0 },
+                    dowData.find(d => d.dayIndex === 4) || { dayName: 'วันพฤหัสบดี', days: 0 },
+                    dowData.find(d => d.dayIndex === 5) || { dayName: 'วันศุกร์', days: 0 },
+                    dowData.find(d => d.dayIndex === 6) || { dayName: 'วันเสาร์', days: 0 },
+                    dowData.find(d => d.dayIndex === 0) || { dayName: 'วันอาทิตย์', days: 0 }
+                ];
+
+                const maxVal = Math.max(...orderedDow.map(d => d.days), 0);
+                const bgColors = orderedDow.map(d => (d.days === maxVal && maxVal > 0) ? 'rgba(16, 185, 129, 0.85)' : 'rgba(99, 102, 241, 0.7)');
+                const borderColors = orderedDow.map(d => (d.days === maxVal && maxVal > 0) ? '#059669' : '#4f46e5');
+
+                chartDayOfWeekInstance = new Chart(dowCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: orderedDow.map(d => d.dayName),
+                        datasets: [{
+                            label: 'วันลาสะสม (วัน)',
+                            data: orderedDow.map(d => d.days),
+                            backgroundColor: bgColors,
+                            borderColor: borderColors,
+                            borderWidth: 1.5,
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    afterLabel: function(ctx) {
+                                        const idx = ctx.dataIndex;
+                                        if (orderedDow[idx] && orderedDow[idx].days === maxVal && maxVal > 0) {
+                                            return '⭐ วันที่มีการลาบ่อยที่สุด (Peak)';
+                                        }
+                                        return '';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { display: false },
+                                ticks: { font: { family: "'Plus Jakarta Sans', 'Prompt', sans-serif", size: 10 } }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                title: { display: true, text: 'จำนวนวันลา (วัน)', font: { size: 10 } },
+                                grid: { color: 'rgba(226, 232, 240, 0.6)' }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 4. Department / Shift Breakdown
+            const deptShiftCtx = document.getElementById('chart-dept-shift');
+            if (deptShiftCtx) {
+                const isAllDept = !data.department || data.department === 'ALL';
+                const items = isAllDept ? (data.byDepartment || []) : (data.byShift || []);
+                const labels = items.map(i => isAllDept ? i.department : `กะ ${i.shift}`);
+                const days = items.map(i => i.days);
+                const counts = items.map(i => i.count);
+
+                chartDeptShiftInstance = new Chart(deptShiftCtx, {
+                    type: 'bar',
+                    data: {
+                        labels,
+                        datasets: [
+                            {
+                                label: 'วันลาอนุมัติ (วัน)',
+                                data: days,
+                                backgroundColor: 'rgba(139, 92, 246, 0.75)',
+                                borderColor: '#7c3aed',
+                                borderWidth: 1.5,
+                                borderRadius: 6
+                            },
+                            {
+                                label: 'จำนวนคำขอ (รายการ)',
+                                data: counts,
+                                backgroundColor: 'rgba(14, 165, 233, 0.6)',
+                                borderColor: '#0284c7',
+                                borderWidth: 1.5,
+                                borderRadius: 6
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: 'y',
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    font: { family: "'Plus Jakarta Sans', 'Prompt', sans-serif", size: 11, weight: '600' },
+                                    boxWidth: 12
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                grid: { color: 'rgba(226, 232, 240, 0.6)' },
+                                ticks: { font: { family: "'Plus Jakarta Sans', 'Prompt', sans-serif", size: 10 } }
+                            },
+                            y: {
+                                grid: { display: false },
+                                ticks: { font: { family: "'Plus Jakarta Sans', 'Prompt', sans-serif", size: 11 } }
+                            }
+                        }
+                    }
+                });
+            }
         }
     </script>
 
